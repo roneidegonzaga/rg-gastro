@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Análise de Vendas Operacional — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#011E34;--navy2:#062d4e;--gold:#F7B700;--gold2:#FCC740;--coral:#F25C54;--cream:#FFFEE8;--cream2:#F0EECC;--white:#ffffff;--gray:#6b7280;--gray-l:#e5e7eb;--ok:#22c55e;--ok-l:#dcfce7;--warn:#f59e0b;--warn-l:#fef3c7;--nao:#ef4444;--nao-l:#fee2e2;--info:#3b82f6;--info-l:#dbeafe;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;}
+  .header{background:var(--navy);padding:20px 32px 16px;border-bottom:3px solid var(--gold);}
+  .header-eyebrow{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+  .header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);}
+  .id-bar{background:var(--navy2);padding:12px 32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px 20px;}
+  .id-field{display:flex;flex-direction:column;gap:3px;}
+  .id-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .id-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.2);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:3px 0;outline:none;width:100%;}
+  .id-input::placeholder{color:rgba(255,255,255,.3);}
+  .id-input:focus{border-bottom-color:var(--gold);}
+  .main{max-width:1200px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+  .resumo{background:var(--navy);border-radius:8px;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;}
+  .resumo-card{background:rgba(255,255,255,.06);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:4px;}
+  .resumo-num{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1;color:var(--gold);}
+  .resumo-card.ok .resumo-num{color:#4ade80;}
+  .resumo-card.alerta .resumo-num{color:#fbbf24;}
+  .resumo-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);}
+  .section{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);overflow:hidden;}
+  .sec-header{background:var(--navy);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .sec-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--white);}
+  .filtros{display:flex;gap:6px;flex-wrap:wrap;}
+  .filtro-btn{padding:4px 12px;border-radius:20px;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.7);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.5px;}
+  .filtro-btn:hover,.filtro-btn.ativo{background:var(--gold);border-color:var(--gold);color:var(--navy);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--cream2);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);padding:8px 10px;text-align:left;border-bottom:1px solid var(--gray-l);}
+  thead th.c{text-align:center;}
+  tbody tr:hover{background:#fafaf2;}
+  td{padding:7px 10px;border-bottom:1px solid var(--gray-l);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .td-num{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;color:var(--gold);text-align:center;width:40px;}
+  .cell-in{border:1px solid var(--gray-l);border-radius:3px;padding:4px 6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:var(--cream);outline:none;width:100%;}
+  .cell-in:focus{border-color:var(--gold);}
+  .cell-sel{border:1px solid var(--gray-l);border-radius:3px;padding:4px 5px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--navy);background:var(--cream);outline:none;cursor:pointer;width:100%;}
+  .cell-num{text-align:center;width:80px;}
+  .classi-badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap;}
+  .c-estrela{background:var(--ok-l);color:var(--ok);}
+  .c-vaca{background:var(--warn-l);color:var(--warn);}
+  .c-interrogacao{background:var(--info-l);color:var(--info);}
+  .c-abacaxi{background:var(--nao-l);color:var(--nao);}
+  .margem-pos{color:var(--ok);font-weight:700;text-align:center;}
+  .margem-neg{color:var(--nao);font-weight:700;text-align:center;}
+  .btn-rem{background:transparent;border:none;color:var(--gray-l);font-size:15px;cursor:pointer;padding:0 3px;transition:color .15s;}
+  .btn-rem:hover{color:var(--nao);}
+  .btn-add{width:100%;padding:10px;border:1.5px dashed var(--gold);border-top:none;background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;border-radius:0 0 8px 8px;}
+  .btn-add:hover{background:var(--gold);color:var(--navy);}
+  .legenda-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
+  .legenda-item{padding:12px 14px;border-radius:6px;display:flex;flex-direction:column;gap:4px;}
+  .legenda-titulo{font-size:12px;font-weight:700;}
+  .legenda-desc{font-size:11px;line-height:1.5;}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn-acao{padding:10px 24px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+  .btn-acao.primario{background:var(--gold);color:var(--navy);}
+  .btn-acao.primario:hover{background:var(--gold2);}
+  .btn-acao.secundario{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-acao.secundario:hover{background:var(--navy);color:white;}
+  @media print{.acoes,.btn-add,.btn-rem,.filtros{display:none;}body{background:white;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-eyebrow">RG Gastrô Educação</div>
+  <div class="header-title">Análise de Vendas Operacional</div>
+</div>
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" id="estab" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Período</span><input class="id-input" type="text" id="periodo" placeholder="Ex: Junho/2026" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Responsável</span><input class="id-input" type="text" id="resp" placeholder="Nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" id="consultor" placeholder="Seu nome" onchange="salvar()"></div>
+</div>
+<div class="main">
+  <div class="resumo" id="resumo"></div>
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-title">Pratos e Itens</span>
+      <div class="filtros" id="filtros">
+        <button class="filtro-btn ativo" onclick="setFiltro('todos',this)">Todos</button>
+        <button class="filtro-btn" onclick="setFiltro('estrela',this)">⭐ Estrela</button>
+        <button class="filtro-btn" onclick="setFiltro('vaca',this)">🐄 Vaca</button>
+        <button class="filtro-btn" onclick="setFiltro('interrogacao',this)">❓ Interrogação</button>
+        <button class="filtro-btn" onclick="setFiltro('abacaxi',this)">🍍 Abacaxi</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:40px" class="c">#</th>
+        <th>Prato / Item</th>
+        <th style="width:110px">Categoria</th>
+        <th style="width:90px" class="c">Qtd Vendida</th>
+        <th style="width:110px" class="c">Preço Venda (R$)</th>
+        <th style="width:110px" class="c">CMV Unit. (R$)</th>
+        <th style="width:110px" class="c">Margem Unit. (R$)</th>
+        <th style="width:90px" class="c">Margem (%)</th>
+        <th style="width:130px" class="c">Classificação</th>
+        <th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <button class="btn-add" onclick="addItem()">+ Adicionar prato</button>
+  </div>
+  <div class="section">
+    <div class="sec-header"><span class="sec-title">Legenda de Classificação Operacional</span></div>
+    <div class="legenda-grid">
+      <div class="legenda-item" style="background:var(--ok-l)"><span class="legenda-titulo" style="color:var(--ok)">⭐ Estrela</span><span class="legenda-desc" style="color:#166534">Alta venda + Alta margem. Proteger e priorizar na produção. Não remover do cardápio sem análise.</span></div>
+      <div class="legenda-item" style="background:var(--warn-l)"><span class="legenda-titulo" style="color:var(--warn)">🐄 Vaca</span><span class="legenda-desc" style="color:#92400e">Alta venda + Baixa margem. Revisar CMV ou reposicionar preço. Cuidado com remoção: venda alta sustenta o caixa.</span></div>
+      <div class="legenda-item" style="background:var(--info-l)"><span class="legenda-titulo" style="color:var(--info)">❓ Interrogação</span><span class="legenda-desc" style="color:#1e3a8a">Baixa venda + Alta margem. Melhorar visibilidade no cardápio. Pode ser um prato com potencial não explorado.</span></div>
+      <div class="legenda-item" style="background:var(--nao-l)"><span class="legenda-titulo" style="color:var(--nao)">🍍 Abacaxi</span><span class="legenda-desc" style="color:#7f1d1d">Baixa venda + Baixa margem. Avaliar reformulação, reposicionamento ou retirada. Ocupa espaço e não retorna.</span></div>
+    </div>
+  </div>
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="salvar()">Salvar</button>
+  </div>
+</div>
+<script>
+const KEY='rgGastro_vendas';
+const CATS=['Entradas','Pratos principais','Bebidas','Sobremesas','Acompanhamentos','Outros'];
+let itens=[]; let filtroAtivo='todos';
+try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);itens=d.itens||[];document.getElementById('estab').value=d.estab||'';document.getElementById('periodo').value=d.periodo||'';document.getElementById('resp').value=d.resp||'';document.getElementById('consultor').value=d.consultor||'';}}catch(e){}
+if(itens.length===0){[['Filé ao molho','Pratos principais'],['Salada Caesar','Entradas'],['Suco de laranja','Bebidas']].forEach(([n,c])=>itens.push({nome:n,categoria:c,qtd:'',preco:'',cmv:'',classi:''}));}
+
+function fmt(n){return isNaN(parseFloat(n))?'—':'R$ '+parseFloat(n).toFixed(2).replace('.',',');}
+
+function margemPerc(item){
+  if(!item.preco||!item.cmv)return null;
+  const preco=parseFloat(item.preco);
+  if(!preco)return null;
+  return (preco-parseFloat(item.cmv))/preco*100;
+}
+
+function calcClassi(item){
+  if(!item.qtd||!item.preco||!item.cmv)return item.classi||'';
+  const qtd=parseFloat(item.qtd),margPerc=margemPerc(item);
+  // Comparação por % de margem, não por valor absoluto em R$: um item barato (ex: suco)
+  // pode ter margem percentual ótima mesmo com margem em R$ pequena. Classificar pelo
+  // valor absoluto penaliza injustamente itens de ticket baixo.
+  const qtdMedia=itens.filter(i=>i.qtd).reduce((a,i)=>a+parseFloat(i.qtd),0)/(itens.filter(i=>i.qtd).length||1);
+  const itensComMargem=itens.filter(i=>margemPerc(i)!==null);
+  const margMedia=itensComMargem.reduce((a,i)=>a+margemPerc(i),0)/(itensComMargem.length||1);
+  const altaQtd=qtd>=qtdMedia; const altaMarg=margPerc>=margMedia;
+  if(altaQtd&&altaMarg)return'estrela';
+  if(altaQtd&&!altaMarg)return'vaca';
+  if(!altaQtd&&altaMarg)return'interrogacao';
+  return'abacaxi';
+}
+
+function classiLabel(c){const m={estrela:'⭐ Estrela',vaca:'🐄 Vaca',interrogacao:'❓ Interrogação',abacaxi:'🍍 Abacaxi'};return m[c]||'—';}
+function classiClass(c){return c?'classi-badge c-'+c:'';}
+
+function setFiltro(f,btn){filtroAtivo=f;document.querySelectorAll('.filtro-btn').forEach(b=>b.classList.remove('ativo'));btn.classList.add('ativo');renderTabela();}
+
+function render(){renderTabela();renderResumo();}
+
+function renderTabela(){
+  const tbody=document.getElementById('tbody');tbody.innerHTML='';
+  let idx=0;
+  itens.forEach((item,i)=>{
+    const classi=calcClassi(item)||(item.classi||'');
+    if(filtroAtivo!=='todos'&&classi!==filtroAtivo)return;
+    idx++;
+    const margem=item.preco&&item.cmv?parseFloat(item.preco)-parseFloat(item.cmv):null;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-num">${String(idx).padStart(2,'0')}</td>
+      <td><input class="cell-in" type="text" placeholder="Nome do prato..." value="${item.nome||''}" onchange="itens[${i}].nome=this.value;salvar()"></td>
+      <td><select class="cell-sel" onchange="itens[${i}].categoria=this.value;salvar()">${CATS.map(c=>`<option${c===item.categoria?' selected':''}>${c}</option>`).join('')}</select></td>
+      <td><input class="cell-in cell-num" type="number" min="0" value="${item.qtd||''}" placeholder="0" onchange="itens[${i}].qtd=this.value;salvar();render()"></td>
+      <td><input class="cell-in cell-num" type="number" min="0" step="0.01" value="${item.preco||''}" placeholder="0,00" onchange="itens[${i}].preco=this.value;salvar();render()"></td>
+      <td><input class="cell-in cell-num" type="number" min="0" step="0.01" value="${item.cmv||''}" placeholder="0,00" onchange="itens[${i}].cmv=this.value;salvar();render()"></td>
+      <td class="${margem!==null?(margem>=0?'margem-pos':'margem-neg'):''}">${margem!==null?fmt(margem):'—'}</td>
+      <td class="${(()=>{const mp=margemPerc(item);return mp!==null?(mp>=0?'margem-pos':'margem-neg'):'';})()}">${(()=>{const mp=margemPerc(item);return mp!==null?mp.toFixed(1)+'%':'—';})()}</td>
+      <td style="text-align:center">${classi?'<span class="'+classiClass(classi)+'" onclick="ciclarClassi('+i+')">'+classiLabel(classi)+'</span>':'<button style=\"font-size:10px;padding:3px 8px;border:1px solid var(--gray-l);border-radius:4px;background:transparent;cursor:pointer\" onclick=\"ciclarClassi('+i+')\" >+ Classificar</button>'}</td>
+      <td><button class="btn-rem" onclick="removeItem(${i})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function ciclarClassi(i){
+  const ordem=['estrela','vaca','interrogacao','abacaxi',''];
+  const auto=calcClassi(itens[i]);
+  const manual=itens[i].classi||'';
+  const idx=ordem.indexOf(manual);
+  itens[i].classi=ordem[(idx+1)%ordem.length];
+  salvar();render();
+}
+
+function renderResumo(){
+  const counts={estrela:0,vaca:0,interrogacao:0,abacaxi:0,sem:0};
+  itens.forEach(item=>{const c=calcClassi(item)||(item.classi||'');if(c)counts[c]=(counts[c]||0)+1;else counts.sem++;});
+  const totalVendas=itens.reduce((a,i)=>a+(i.qtd&&i.preco?parseFloat(i.qtd)*parseFloat(i.preco):0),0);
+  document.getElementById('resumo').innerHTML=`
+    <div class="resumo-card"><span class="resumo-num">${itens.length}</span><span class="resumo-label">Total de pratos</span></div>
+    <div class="resumo-card ok"><span class="resumo-num">${counts.estrela}</span><span class="resumo-label">⭐ Estrela</span></div>
+    <div class="resumo-card alerta"><span class="resumo-num">${counts.vaca}</span><span class="resumo-label">🐄 Vaca</span></div>
+    <div class="resumo-card"><span class="resumo-num">${counts.interrogacao}</span><span class="resumo-label">❓ Interrogação</span></div>
+    <div class="resumo-card"><span class="resumo-num">${counts.abacaxi}</span><span class="resumo-label">🍍 Abacaxi</span></div>
+    <div class="resumo-card ok"><span class="resumo-num">${fmt(totalVendas)}</span><span class="resumo-label">Faturamento total</span></div>`;
+}
+
+function addItem(){itens.push({nome:'',categoria:CATS[0],qtd:'',preco:'',cmv:'',classi:''});render();}
+function removeItem(i){itens.splice(i,1);render();}
+function salvar(){try{localStorage.setItem(KEY,JSON.stringify({estab:document.getElementById('estab').value,periodo:document.getElementById('periodo').value,resp:document.getElementById('resp').value,consultor:document.getElementById('consultor').value,itens}));}catch(e){}}
+render();
+</script>
+</body>
+</html>

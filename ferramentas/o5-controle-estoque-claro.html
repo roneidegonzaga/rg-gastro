@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Estoque | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --charcoal-soft: #f9e8d7;
+  --gold: #025291; --gold-light: #013a68; --muted: #33475c;
+  --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 420px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+/* STATS */
+.stats-bar { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.stat-item { padding: 14px 28px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.stat-num { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; color: var(--gold); line-height: 1; }
+.stat-num.alerta { color: #7a2020; }
+.stat-num.verde { color: #1a5e2a; }
+.stat-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+
+/* TABS */
+.tabs-bar { display: flex; align-items: center; gap: 0; padding: 0 48px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 14px 20px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn:hover:not(.active) { color: var(--cream); }
+
+/* MAIN */
+main { max-width: 1100px; margin: 0 auto; padding: 32px 48px 80px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* TOOLBAR */
+.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.search-wrap { flex: 1; min-width: 180px; position: relative; }
+.search-input { font-family: 'Manrope', sans-serif; font-size: 12px; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); width: 100%; padding: 9px 36px 9px 14px; outline: none; transition: border-color 0.25s; border-radius: 1px; }
+.search-input::placeholder { color: rgba(1,30,52,0.4); }
+.search-input:focus { border-color: var(--gold); }
+.search-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+.filter-wrap { position: relative; }
+.filter-sel { font-family: 'Manrope', sans-serif; font-size: 11px; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--muted); padding: 9px 28px 9px 12px; outline: none; cursor: pointer; appearance: none; color-scheme: light; min-width: 150px; }
+.filter-sel option { background: #f9e8d7; color: #011e34; }
+.filter-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 18px; cursor: pointer; transition: all 0.2s; white-space: nowrap; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--border-h); }
+.btn-outline:hover { background: rgba(2,82,145,0.06); }
+.btn-green { background: rgba(26,94,42,0.15); color: #1a5e2a; border: 1px solid rgba(26,94,42,0.35); }
+.btn-green:hover { background: rgba(26,94,42,0.25); }
+.btn-red-sm { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); font-size: 10px; padding: 5px 10px; }
+.btn-red-sm:hover { background: rgba(122,32,32,0.25); }
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+
+/* FORM CADASTRO */
+.form-card { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 22px 26px; margin-bottom: 24px; display: none; }
+.form-card.open { display: block; }
+.form-card-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold-light); margin-bottom: 16px; }
+.form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.form-grid-2 { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 12px; margin-bottom: 16px; }
+.fb { display: flex; flex-direction: column; gap: 6px; }
+.fb-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+input[type="text"].f, input[type="number"].f, select.f {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 9px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="text"].f::placeholder, input[type="number"].f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="text"].f:focus, input[type="number"].f:focus, select.f:focus { border-color: var(--gold); }
+select.f { cursor: pointer; color-scheme: light; }
+select.f option { background: #f9e8d7; color: #011e34; }
+.sw { position: relative; }
+.sa { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+.form-actions { display: flex; gap: 10px; }
+
+/* TABELA ESTOQUE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 400; white-space: nowrap; cursor: pointer; transition: color 0.2s; user-select: none; }
+thead th:hover { color: var(--gold); }
+thead th.sorted { color: var(--gold); }
+tbody tr { border-bottom: 1px solid rgba(91,145,188,0.06); transition: background 0.15s; }
+tbody tr:hover { background: rgba(1,30,52,0.04); }
+td { padding: 11px 12px; vertical-align: middle; }
+.td-nome { font-weight: 500; color: var(--cream); }
+.td-muted { color: var(--muted); font-size: 11px; }
+.td-num { font-family: 'Manrope', sans-serif; font-size: 17px; font-weight: 300; color: var(--gold-light); }
+.td-custo { font-family: 'Manrope', sans-serif; font-size: 17px; font-weight: 300; color: var(--gold); }
+
+/* STATUS BADGES */
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 20px; }
+.badge-ok { background: rgba(26,94,42,0.15); color: #1a5e2a; }
+.badge-alerta { background: rgba(122,64,8,0.15); color: #7a4008; }
+.badge-critico { background: rgba(122,32,32,0.15); color: #7a2020; }
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; }
+.badge-ok .badge-dot { background: #4a7c59; }
+.badge-alerta .badge-dot { background: #b97e10; }
+.badge-critico .badge-dot { background: #8b3a3a; }
+
+/* BARRA DE ESTOQUE */
+.stock-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.stock-bar-track { width: 80px; height: 4px; background: rgba(1,30,52,0.04); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.stock-bar-fill { height: 100%; border-radius: 2px; }
+
+/* MOVIMENTAÇÃO */
+.mov-form { background: rgba(1,30,52,0.04); border: 1px solid var(--border); padding: 20px 24px; margin-bottom: 20px; }
+.mov-form-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold-light); margin-bottom: 16px; }
+.mov-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr auto; gap: 12px; align-items: end; }
+.tipo-btns { display: flex; gap: 4px; }
+.tipo-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 14px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.tipo-btn.entrada.active { background: rgba(26,94,42,0.15); border-color: var(--green); color: #1a5e2a; }
+.tipo-btn.saida.active { background: rgba(122,32,32,0.12); border-color: #c17070; color: #c07070; }
+.tipo-btn:hover:not(.active) { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+
+/* HISTÓRICO */
+.hist-table tbody tr.entrada { }
+.hist-table tbody tr.saida { }
+.hist-tipo { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.hist-tipo.entrada { color: #1a5e2a; }
+.hist-tipo.saida { color: #c07070; }
+.hist-sinal { font-size: 14px; line-height: 1; }
+
+/* INVENTÁRIO */
+.inv-info { background: rgba(74,106,138,0.08); border: 1px solid rgba(74,106,138,0.25); border-left: 3px solid #6b7fa3; padding: 14px 18px; margin-bottom: 20px; font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.7; }
+.inv-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 8px; }
+.inv-nome { font-size: 12px; font-weight: 500; color: var(--cream); }
+.inv-atual { font-family: 'Manrope', sans-serif; font-size: 16px; color: var(--muted); }
+.inv-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 10px; }
+.ih { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+.empty-icon { font-size: 36px; margin-bottom: 14px; opacity: 0.35; }
+.empty-title { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; line-height: 1.7; }
+
+/* PDF OVERLAY */
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 768px) {
+  header, .session-bar, .tabs-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .mov-grid { grid-template-columns: 1fr 1fr; }
+  .inv-grid, .inv-header { grid-template-columns: 1fr 1fr 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando relatório</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Controle de<br><em>Estoque</em></h1>
+    <p class="hsub">Cadastre os itens, registre entradas e saídas e acompanhe o saldo em tempo real. Alertas automáticos quando o estoque cair abaixo do mínimo.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo O · O5</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item"><span class="stat-num" id="statTotal">0</span><span class="stat-label">Itens cadastrados</span></div>
+  <div class="stat-item"><span class="stat-num alerta" id="statAlerta">0</span><span class="stat-label">Abaixo do mínimo</span></div>
+  <div class="stat-item"><span class="stat-num" id="statCusto">R$ 0,00</span><span class="stat-label">Custo total do estoque</span></div>
+  <div class="stat-item"><span class="stat-num" id="statMovs">0</span><span class="stat-label">Movimentações</span></div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="ativarTab('estoque',this)">Estoque atual</button>
+  <button class="tab-btn" onclick="ativarTab('movimentacao',this)">Registrar movimentação</button>
+  <button class="tab-btn" onclick="ativarTab('historico',this)">Histórico</button>
+  <button class="tab-btn" onclick="ativarTab('inventario',this)">Inventário</button>
+</div>
+
+<main>
+
+  <!-- TAB: ESTOQUE ATUAL -->
+  <div class="tab-panel active" id="tab-estoque">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="searchEstoque" placeholder="Buscar item..." oninput="renderEstoque()">
+        <span class="search-icon">⌕</span>
+      </div>
+      <div class="filter-wrap">
+        <select class="filter-sel" id="filterCat" onchange="renderEstoque()">
+          <option value="">Todas as categorias</option>
+          <option>Carnes e proteínas</option>
+          <option>Hortifrútti</option>
+          <option>Laticínios</option>
+          <option>Grãos e secos</option>
+          <option>Bebidas</option>
+          <option>Embalagens</option>
+          <option>Higiene e limpeza</option>
+          <option>Outros</option>
+        </select>
+        <span class="filter-arrow">▾</span>
+      </div>
+      <div class="filter-wrap">
+        <select class="filter-sel" id="filterStatus" onchange="renderEstoque()">
+          <option value="">Todos os status</option>
+          <option value="critico">Crítico</option>
+          <option value="alerta">Alerta</option>
+          <option value="ok">OK</option>
+        </select>
+        <span class="filter-arrow">▾</span>
+      </div>
+      <button class="btn btn-gold" onclick="toggleFormCadastro()">+ Cadastrar item</button>
+      <button class="btn btn-green" onclick="exportarExcel()">Exportar Excel</button>
+    </div>
+
+    <!-- FORM CADASTRO -->
+    <div class="form-card" id="formCadastro">
+      <p class="form-card-title" id="formCadTitle">Novo item de estoque</p>
+      <div class="form-grid">
+        <div class="fb"><label class="fb-label">Nome do item</label><input type="text" class="f" id="cad_nome" placeholder="Ex: Filé mignon, Farinha de trigo..."></div>
+        <div class="fb"><label class="fb-label">Categoria</label>
+          <div class="sw"><select class="f" id="cad_cat">
+            <option value="">Selecione</option>
+            <option>Carnes e proteínas</option><option>Hortifrútti</option>
+            <option>Laticínios</option><option>Grãos e secos</option>
+            <option>Bebidas</option><option>Embalagens</option>
+            <option>Higiene e limpeza</option><option>Outros</option>
+          </select><span class="sa">▾</span></div>
+        </div>
+        <div class="fb"><label class="fb-label">Unidade</label>
+          <div class="sw"><select class="f" id="cad_unidade">
+            <option>kg</option><option>g</option><option>L</option><option>ml</option>
+            <option>unidade</option><option>pacote</option><option>caixa</option>
+          </select><span class="sa">▾</span></div>
+        </div>
+        <div class="fb"><label class="fb-label">Estoque mínimo</label><input type="number" class="f" id="cad_min" placeholder="Ex: 5" min="0" step="0.1"></div>
+        <div class="fb"><label class="fb-label">Estoque máximo</label><input type="number" class="f" id="cad_max" placeholder="Ex: 20" min="0" step="0.1"></div>
+        <div class="fb"><label class="fb-label">Custo unitário (R$)</label><input type="number" class="f" id="cad_custo" placeholder="0,00" min="0" step="0.01"></div>
+      </div>
+      <div class="form-grid-2">
+        <div class="fb"><label class="fb-label">Saldo inicial</label><input type="number" class="f" id="cad_saldo" placeholder="Quantidade atual em estoque" min="0" step="0.1"></div>
+        <div class="fb"><label class="fb-label">Fornecedor (opcional)</label><input type="text" class="f" id="cad_fornecedor" placeholder="Ex: Distribuidora São José"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="salvarCadastro()">Salvar item</button>
+        <button class="btn btn-outline" onclick="fecharFormCadastro()">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="ordenarEstoque('nome')">Item</th>
+            <th onclick="ordenarEstoque('categoria')">Categoria</th>
+            <th onclick="ordenarEstoque('saldo')">Saldo atual</th>
+            <th>Mín / Máx</th>
+            <th>Status</th>
+            <th onclick="ordenarEstoque('custoTotal')">Custo em estoque</th>
+            <th>Fornecedor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyEstoque"></tbody>
+      </table>
+      <div class="empty-state" id="emptyEstoque">
+        <div class="empty-icon">📦</div>
+        <p class="empty-title">Nenhum item cadastrado</p>
+        <p class="empty-sub">Clique em "Cadastrar item" para começar.<br>Cada item cadastrado aqui terá seu estoque monitorado em tempo real.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: MOVIMENTAÇÃO -->
+  <div class="tab-panel" id="tab-movimentacao">
+    <div class="mov-form">
+      <p class="mov-form-title">Registrar movimentação</p>
+      <div class="mov-grid">
+        <div class="fb"><label class="fb-label">Item</label>
+          <div class="sw"><select class="f" id="mov_item">
+            <option value="">Selecione o item</option>
+          </select><span class="sa">▾</span></div>
+        </div>
+        <div class="fb"><label class="fb-label">Tipo</label>
+          <div class="tipo-btns">
+            <button class="tipo-btn entrada active" id="btnEntrada" onclick="setTipoMov('entrada')">Entrada</button>
+            <button class="tipo-btn saida" id="btnSaida" onclick="setTipoMov('saida')">Saída</button>
+          </div>
+        </div>
+        <div class="fb"><label class="fb-label">Quantidade</label><input type="number" class="f" id="mov_qtd" placeholder="0" min="0.001" step="0.1"></div>
+        <div class="fb"><label class="fb-label">Data</label><input type="date" class="f" id="mov_data" style="color-scheme:dark"></div>
+        <div class="fb"><label class="fb-label">Motivo (opcional)</label><input type="text" class="f" id="mov_motivo" placeholder="Ex: compra semanal, uso na produção..."></div>
+        <div class="fb" style="justify-content:flex-end"><button class="btn btn-gold" onclick="registrarMovimentacao()" style="align-self:flex-end">Registrar</button></div>
+      </div>
+    </div>
+
+    <div id="movFeedback" style="display:none;padding:14px 16px;margin-bottom:16px;font-size:13px;font-weight:300;border:1px solid;border-radius:1px"></div>
+
+    <p style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Últimas 10 movimentações</p>
+    <div class="table-wrap">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Item</th>
+            <th>Tipo</th>
+            <th>Quantidade</th>
+            <th>Saldo após</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyMovRecentes"></tbody>
+      </table>
+      <div class="empty-state" id="emptyMovRecentes">
+        <div class="empty-icon">🔄</div>
+        <p class="empty-title">Nenhuma movimentação registrada</p>
+        <p class="empty-sub">Registre entradas de compras e saídas de consumo para acompanhar o estoque em tempo real.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: HISTÓRICO -->
+  <div class="tab-panel" id="tab-historico">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="searchHist" placeholder="Buscar por item ou motivo..." oninput="renderHistorico()">
+        <span class="search-icon">⌕</span>
+      </div>
+      <div class="filter-wrap">
+        <select class="filter-sel" id="filterHistTipo" onchange="renderHistorico()">
+          <option value="">Entradas e saídas</option>
+          <option value="entrada">Só entradas</option>
+          <option value="saida">Só saídas</option>
+        </select>
+        <span class="filter-arrow">▾</span>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="limparHistorico()">Limpar histórico</button>
+    </div>
+    <div class="table-wrap">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Item</th>
+            <th>Categoria</th>
+            <th>Tipo</th>
+            <th>Quantidade</th>
+            <th>Saldo após</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyHistorico"></tbody>
+      </table>
+      <div class="empty-state" id="emptyHistorico">
+        <div class="empty-icon">📋</div>
+        <p class="empty-title">Histórico vazio</p>
+        <p class="empty-sub">As movimentações registradas aparecerão aqui em ordem cronológica.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: INVENTÁRIO -->
+  <div class="tab-panel" id="tab-inventario">
+    <div class="inv-info">
+      O inventário permite contar o estoque físico e atualizar os saldos de todos os itens de uma vez. Preencha a quantidade real encontrada para cada item e clique em "Aplicar inventário". Uma entrada ou saída será registrada automaticamente para corrigir a diferença.
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-gold" onclick="aplicarInventario()">Aplicar inventário</button>
+      <button class="btn btn-outline" onclick="limparInventario()">Limpar contagens</button>
+    </div>
+    <div class="inv-header">
+      <span class="ih">Item</span>
+      <span class="ih">Saldo atual</span>
+      <span class="ih">Contagem física</span>
+      <span class="ih">Diferença</span>
+      <span class="ih"></span>
+    </div>
+    <div id="invContainer"></div>
+    <div class="empty-state" id="emptyInventario" style="display:none">
+      <p class="empty-sub">Cadastre itens no estoque para iniciar o inventário.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta O5 · Controle de Estoque</span>
+</footer>
+
+<script>
+
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ESTADO
+let itens = JSON.parse(localStorage.getItem('dose-estoque-itens') || '[]');
+let movimentacoes = JSON.parse(localStorage.getItem('dose-estoque-movs') || '[]');
+let editandoId = null;
+let tipoMov = 'entrada';
+let sortCol = 'nome';
+let sortAsc = true;
+
+const CAT_CORES = {
+  'Carnes e proteínas':'#8b3a3a','Hortifrútti':'#4a7c59','Laticínios':'#4a6a8a',
+  'Grãos e secos':'#b97e10','Bebidas':'#6b4fa3','Embalagens':'#5d6d7c',
+  'Higiene e limpeza':'#6b5040','Outros':'#555'
+};
+
+// INIT
+document.getElementById('rname').value = localStorage.getItem('dose-estoque-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-estoque-rname', e.target.value));
+document.getElementById('mov_data').valueAsDate = new Date();
+renderTudo();
+
+function salvar() {
+  localStorage.setItem('dose-estoque-itens', JSON.stringify(itens));
+  localStorage.setItem('dose-estoque-movs', JSON.stringify(movimentacoes));
+}
+
+function renderTudo() {
+  atualizarStats();
+  renderEstoque();
+  renderHistorico();
+  renderMovRecentes();
+  renderInventario();
+  atualizarSelectMov();
+}
+
+// STATUS
+function getStatus(item) {
+  if (item.saldo <= 0 || (item.min > 0 && item.saldo <= item.min * 0.5)) return 'critico';
+  if (item.min > 0 && item.saldo < item.min) return 'alerta';
+  return 'ok';
+}
+
+function statusBadge(item) {
+  const s = getStatus(item);
+  const labels = { ok: 'OK', alerta: 'Alerta', critico: 'Crítico' };
+  return `<span class="badge badge-${s}"><span class="badge-dot"></span>${labels[s]}</span>`;
+}
+
+function barColor(item) {
+  const s = getStatus(item);
+  return s === 'ok' ? '#4a7c59' : s === 'alerta' ? '#b97e10' : '#8b3a3a';
+}
+
+function barPct(item) {
+  if (!item.max || item.max === 0) return Math.min((item.saldo / (item.min * 2 || 10)) * 100, 100);
+  return Math.min((item.saldo / item.max) * 100, 100);
+}
+
+// STATS
+function atualizarStats() {
+  document.getElementById('statTotal').textContent = itens.length;
+  const alertas = itens.filter(i => getStatus(i) !== 'ok').length;
+  document.getElementById('statAlerta').textContent = alertas;
+  const custoTotal = itens.reduce((a, i) => a + (i.saldo * (i.custo || 0)), 0);
+  document.getElementById('statCusto').textContent = 'R$ ' + formatBRL(custoTotal);
+  document.getElementById('statMovs').textContent = movimentacoes.length;
+}
+
+// TABS
+function ativarTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'inventario') renderInventario();
+  if (id === 'historico') renderHistorico();
+  if (id === 'movimentacao') renderMovRecentes();
+}
+
+// CADASTRO
+function toggleFormCadastro() {
+  const form = document.getElementById('formCadastro');
+  if (form.classList.contains('open')) { fecharFormCadastro(); return; }
+  editandoId = null;
+  document.getElementById('formCadTitle').textContent = 'Novo item de estoque';
+  limparFormCad();
+  form.classList.add('open');
+  document.getElementById('cad_nome').focus();
+}
+
+function fecharFormCadastro() {
+  document.getElementById('formCadastro').classList.remove('open');
+  editandoId = null;
+  limparFormCad();
+}
+
+function limparFormCad() {
+  ['cad_nome','cad_cat','cad_unidade','cad_min','cad_max','cad_custo','cad_saldo','cad_fornecedor']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = el.tagName === 'SELECT' ? '' : ''; });
+}
+
+function editarItem(id) {
+  const item = itens.find(i => i.id === id);
+  if (!item) return;
+  editandoId = id;
+  document.getElementById('formCadTitle').textContent = 'Editar item';
+  document.getElementById('cad_nome').value = item.nome || '';
+  document.getElementById('cad_cat').value = item.categoria || '';
+  document.getElementById('cad_unidade').value = item.unidade || 'kg';
+  document.getElementById('cad_min').value = item.min || '';
+  document.getElementById('cad_max').value = item.max || '';
+  document.getElementById('cad_custo').value = item.custo || '';
+  document.getElementById('cad_saldo').value = item.saldo || '';
+  document.getElementById('cad_fornecedor').value = item.fornecedor || '';
+  document.getElementById('formCadastro').classList.add('open');
+  document.getElementById('formCadastro').scrollIntoView({ behavior: 'smooth' });
+}
+
+function salvarCadastro() {
+  const nome = document.getElementById('cad_nome').value.trim();
+  if (!nome) { document.getElementById('cad_nome').focus(); return; }
+  const item = {
+    id: editandoId || Date.now(),
+    nome,
+    categoria: document.getElementById('cad_cat').value,
+    unidade: document.getElementById('cad_unidade').value || 'unidade',
+    min: parseFloat(document.getElementById('cad_min').value) || 0,
+    max: parseFloat(document.getElementById('cad_max').value) || 0,
+    custo: parseFloat(document.getElementById('cad_custo').value) || 0,
+    saldo: parseFloat(document.getElementById('cad_saldo').value) || 0,
+    fornecedor: document.getElementById('cad_fornecedor').value.trim(),
+    cadastradoEm: new Date().toLocaleDateString('pt-BR'),
+  };
+  if (editandoId) {
+    const idx = itens.findIndex(i => i.id === editandoId);
+    if (idx !== -1) itens[idx] = { ...itens[idx], ...item };
+  } else {
+    itens.push(item);
+  }
+  salvar();
+  fecharFormCadastro();
+  renderTudo();
+}
+
+function removerItem(id) {
+  const item = itens.find(i => i.id === id);
+  if (!confirm(`Remover "${item?.nome}"? O histórico de movimentações deste item será mantido.`)) return;
+  itens = itens.filter(i => i.id !== id);
+  salvar();
+  renderTudo();
+}
+
+// RENDER ESTOQUE
+function renderEstoque() {
+  const busca = (document.getElementById('searchEstoque').value || '').toLowerCase();
+  const cat = document.getElementById('filterCat').value;
+  const statusF = document.getElementById('filterStatus').value;
+
+  let lista = itens.filter(i => {
+    const mBusca = !busca || i.nome.toLowerCase().includes(busca) || (i.fornecedor||'').toLowerCase().includes(busca);
+    const mCat = !cat || i.categoria === cat;
+    const mStatus = !statusF || getStatus(i) === statusF;
+    return mBusca && mCat && mStatus;
+  });
+
+  lista.sort((a, b) => {
+    let va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+    if (typeof va === 'number') return sortAsc ? va - vb : vb - va;
+    return sortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+  });
+
+  const tbody = document.getElementById('tbodyEstoque');
+  const empty = document.getElementById('emptyEstoque');
+
+  if (lista.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = lista.map(item => {
+    const pct = barPct(item);
+    const cor = barColor(item);
+    const custoTot = (item.saldo * (item.custo || 0));
+    return `<tr>
+      <td class="td-nome">${item.nome}</td>
+      <td>${item.categoria ? `<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${CAT_CORES[item.categoria] || '#555'}22;color:${CAT_CORES[item.categoria]||'#888'}">${item.categoria}</span>` : '<span class="td-muted">N/C</span>'}</td>
+      <td>
+        <div class="stock-bar-wrap">
+          <span class="td-num">${item.saldo} <span style="font-size:11px;color:var(--muted)">${item.unidade}</span></span>
+          <div class="stock-bar-track"><div class="stock-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+        </div>
+      </td>
+      <td class="td-muted">${item.min || 0} / ${item.max || '?'} ${item.unidade}</td>
+      <td>${statusBadge(item)}</td>
+      <td class="td-custo">${custoTot > 0 ? 'R$ ' + formatBRL(custoTot) : '<span class="td-muted">N/C</span>'}</td>
+      <td class="td-muted">${item.fornecedor || ''}</td>
+      <td>
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn btn-outline btn-sm" onclick="editarItem(${item.id})">Editar</button>
+          <button class="btn btn-red-sm" onclick="removerItem(${item.id})">Remover</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function ordenarEstoque(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  renderEstoque();
+}
+
+// MOVIMENTAÇÃO
+function setTipoMov(tipo) {
+  tipoMov = tipo;
+  document.getElementById('btnEntrada').classList.toggle('active', tipo === 'entrada');
+  document.getElementById('btnSaida').classList.toggle('active', tipo === 'saida');
+}
+
+function atualizarSelectMov() {
+  const sel = document.getElementById('mov_item');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione o item</option>' +
+    itens.map(i => `<option value="${i.id}" ${i.id == atual ? 'selected' : ''}>${i.nome} (saldo: ${i.saldo} ${i.unidade})</option>`).join('');
+}
+
+function registrarMovimentacao() {
+  const itemId = parseInt(document.getElementById('mov_item').value);
+  const qtd = parseFloat(document.getElementById('mov_qtd').value);
+  const data = document.getElementById('mov_data').value || new Date().toISOString().split('T')[0];
+  const motivo = document.getElementById('mov_motivo').value.trim();
+  const feedback = document.getElementById('movFeedback');
+
+  const item = itens.find(i => i.id === itemId);
+  if (!item) { mostrarFeedback('Selecione um item.', 'erro'); return; }
+  if (!qtd || qtd <= 0) { mostrarFeedback('Informe uma quantidade válida.', 'erro'); return; }
+  if (tipoMov === 'saida' && qtd > item.saldo) {
+    mostrarFeedback(`Quantidade maior que o saldo atual (${item.saldo} ${item.unidade}).`, 'erro'); return;
+  }
+
+  const saldoAntes = item.saldo;
+  item.saldo = tipoMov === 'entrada' ? item.saldo + qtd : item.saldo - qtd;
+  item.saldo = Math.max(0, Math.round(item.saldo * 1000) / 1000);
+
+  movimentacoes.unshift({
+    id: Date.now(),
+    itemId,
+    itemNome: item.nome,
+    itemCat: item.categoria,
+    itemUnidade: item.unidade,
+    tipo: tipoMov,
+    qtd,
+    saldoAntes,
+    saldoApos: item.saldo,
+    data,
+    motivo,
+  });
+
+  salvar();
+  renderTudo();
+
+  const emoji = tipoMov === 'entrada' ? '✓ Entrada registrada' : '✓ Saída registrada';
+  mostrarFeedback(`${emoji}: ${qtd} ${item.unidade} de ${item.nome}. Saldo atual: ${item.saldo} ${item.unidade}.`, 'ok');
+  document.getElementById('mov_qtd').value = '';
+  document.getElementById('mov_motivo').value = '';
+}
+
+function mostrarFeedback(msg, tipo) {
+  const el = document.getElementById('movFeedback');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.background = tipo === 'ok' ? 'rgba(26,94,42,0.1)' : 'rgba(122,32,32,0.1)';
+  el.style.borderColor = tipo === 'ok' ? 'rgba(26,94,42,0.3)' : 'rgba(122,32,32,0.3)';
+  el.style.color = tipo === 'ok' ? '#1a5e2a' : '#c07070';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function renderMovRecentes() {
+  const tbody = document.getElementById('tbodyMovRecentes');
+  const empty = document.getElementById('emptyMovRecentes');
+  const lista = movimentacoes.slice(0, 10);
+  if (lista.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(m => `<tr class="${m.tipo}">
+    <td class="td-muted">${m.data ? new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR') : ''}</td>
+    <td class="td-nome">${m.itemNome}</td>
+    <td><span class="hist-tipo ${m.tipo}"><span class="hist-sinal">${m.tipo==='entrada'?'+':'-'}</span>${m.tipo==='entrada'?'Entrada':'Saída'}</span></td>
+    <td class="td-num">${m.qtd} <span class="td-muted">${m.itemUnidade}</span></td>
+    <td class="td-muted">${m.saldoApos} ${m.itemUnidade}</td>
+    <td class="td-muted">${m.motivo||''}</td>
+  </tr>`).join('');
+}
+
+// HISTÓRICO
+function renderHistorico() {
+  const busca = (document.getElementById('searchHist').value || '').toLowerCase();
+  const tipoF = document.getElementById('filterHistTipo').value;
+  let lista = movimentacoes.filter(m => {
+    const mBusca = !busca || m.itemNome.toLowerCase().includes(busca) || (m.motivo||'').toLowerCase().includes(busca);
+    const mTipo = !tipoF || m.tipo === tipoF;
+    return mBusca && mTipo;
+  });
+  const tbody = document.getElementById('tbodyHistorico');
+  const empty = document.getElementById('emptyHistorico');
+  if (lista.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(m => `<tr>
+    <td class="td-muted">${m.data ? new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR') : ''}</td>
+    <td class="td-nome">${m.itemNome}</td>
+    <td class="td-muted">${m.itemCat||''}</td>
+    <td><span class="hist-tipo ${m.tipo}"><span class="hist-sinal">${m.tipo==='entrada'?'+':'-'}</span>${m.tipo==='entrada'?'Entrada':'Saída'}</span></td>
+    <td class="td-num">${m.qtd} <span class="td-muted">${m.itemUnidade}</span></td>
+    <td class="td-muted">${m.saldoApos} ${m.itemUnidade}</td>
+    <td class="td-muted">${m.motivo||''}</td>
+  </tr>`).join('');
+}
+
+function limparHistorico() {
+  if (!confirm('Remover todo o histórico de movimentações? Os saldos atuais não serão alterados.')) return;
+  movimentacoes = [];
+  salvar();
+  renderTudo();
+}
+
+// INVENTÁRIO
+function renderInventario() {
+  const container = document.getElementById('invContainer');
+  const empty = document.getElementById('emptyInventario');
+  if (itens.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  container.innerHTML = itens.map(item => `
+    <div class="inv-grid" id="inv_${item.id}">
+      <span class="inv-nome">${item.nome} <span class="td-muted">(${item.categoria||''})</span></span>
+      <span class="inv-atual">${item.saldo} <span class="td-muted">${item.unidade}</span></span>
+      <input type="number" class="f" id="invQtd_${item.id}" placeholder="Contagem física" min="0" step="0.1"
+        oninput="calcDiff(${item.id})" style="font-size:12px;padding:7px 10px">
+      <span id="invDiff_${item.id}" class="td-muted" style="font-size:13px"></span>
+      <span></span>
+    </div>`).join('');
+}
+
+function calcDiff(id) {
+  const item = itens.find(i => i.id === id);
+  if (!item) return;
+  const contagem = parseFloat(document.getElementById('invQtd_' + id).value);
+  const el = document.getElementById('invDiff_' + id);
+  if (isNaN(contagem)) { el.textContent = ''; return; }
+  const diff = contagem - item.saldo;
+  el.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(2) + ' ' + item.unidade;
+  el.style.color = diff > 0 ? '#1a5e2a' : diff < 0 ? '#c07070' : 'var(--muted)';
+}
+
+function aplicarInventario() {
+  let ajustados = 0;
+  const data = new Date().toISOString().split('T')[0];
+  itens.forEach(item => {
+    const el = document.getElementById('invQtd_' + item.id);
+    if (!el || el.value === '') return;
+    const contagem = parseFloat(el.value);
+    if (isNaN(contagem) || contagem === item.saldo) return;
+    const diff = contagem - item.saldo;
+    movimentacoes.unshift({
+      id: Date.now() + item.id,
+      itemId: item.id, itemNome: item.nome,
+      itemCat: item.categoria, itemUnidade: item.unidade,
+      tipo: diff > 0 ? 'entrada' : 'saida',
+      qtd: Math.abs(diff),
+      saldoAntes: item.saldo,
+      saldoApos: contagem,
+      data, motivo: 'Ajuste de inventário',
+    });
+    item.saldo = contagem;
+    ajustados++;
+  });
+  if (ajustados === 0) { alert('Nenhuma contagem preenchida.'); return; }
+  salvar();
+  renderTudo();
+  alert(`Inventário aplicado. ${ajustados} item(s) ajustado(s).`);
+}
+
+function limparInventario() {
+  itens.forEach(item => {
+    const el = document.getElementById('invQtd_' + item.id);
+    if (el) { el.value = ''; calcDiff(item.id); }
+  });
+}
+
+// EXPORTAR EXCEL
+function exportarExcel() {
+  if (itens.length === 0) { alert('Nenhum item para exportar.'); return; }
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const wb = XLSX.utils.book_new();
+  const C = { ouro:'B8965A', ouroClr:'D4AF7A', escuro:'1A1814', meiTom:'2A2620', creme:'F5F0E8', muteado:'7A7369', verde:'4A7C59', amarelo:'C17F2A', vermelho:'8B3A3A', faixaA:'222018', faixaB:'1E1C18' };
+
+  const cel = (v,bold=false,sz=10,color=C.creme,bg=C.escuro,align='left') => ({
+    v:v===null||v===undefined?'':v, t:typeof v==='number'?'n':'s',
+    s:{font:{bold,sz,color:{rgb:color},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:align,vertical:'center',wrapText:true}}
+  });
+
+  // ABA: ESTOQUE ATUAL
+  const rows = [
+    [cel('CONTROLE DE ESTOQUE',true,14,C.ouro,C.meiTom),...Array(6).fill(cel('',false,10,C.creme,C.meiTom))],
+    [cel(nome,true,10,C.creme,C.meiTom),...Array(5).fill(cel('',false,10,C.creme,C.meiTom)),cel(hoje,false,9,C.muteado,C.meiTom,'right')],
+    Array(7).fill(cel('',false,10,C.creme,C.escuro)),
+    ['ITEM','CATEGORIA','SALDO ATUAL','UNIDADE','MÍNIMO','MÁXIMO','CUSTO TOTAL'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+    ...itens.map((item,i) => {
+      const bg = i%2===0?C.faixaA:C.faixaB;
+      const status = getStatus(item);
+      const statusColor = status==='ok'?C.verde:status==='alerta'?C.amarelo:C.vermelho;
+      const mk=(v,c=C.creme,b=false,a='left')=>({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:a,vertical:'center'}}});
+      return [
+        mk(item.nome,C.creme,true),
+        mk(item.categoria),
+        {v:item.saldo,t:'n',s:{font:{bold:true,sz:11,color:{rgb:statusColor},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+        mk(item.unidade,C.muteado),
+        mk(item.min||'',C.muteado,false,'right'),
+        mk(item.max||'',C.muteado,false,'right'),
+        {v:parseFloat((item.saldo*(item.custo||0)).toFixed(2))||'',t:'n',s:{font:{bold:true,sz:11,color:{rgb:C.ouro},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+      ];
+    }),
+    Array(7).fill(cel('',false,10,C.creme,C.meiTom)),
+    [cel('Gerado pelo Sistema D.O.S.E. · Gasttro Design',false,8,C.muteado,C.meiTom),...Array(6).fill(cel('',false,8,C.muteado,C.meiTom))],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:28},{wch:20},{wch:14},{wch:10},{wch:10},{wch:10},{wch:16}];
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Estoque Atual');
+
+  // ABA: HISTÓRICO
+  if (movimentacoes.length > 0) {
+    const hRows = [
+      ['DATA','ITEM','CATEGORIA','TIPO','QUANTIDADE','UNIDADE','SALDO APÓS','MOTIVO'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+      ...movimentacoes.map((m,i)=>{
+        const bg=i%2===0?C.faixaA:C.faixaB;
+        const tCor=m.tipo==='entrada'?C.verde:C.vermelho;
+        const mk=(v,c=C.creme,b=false)=>({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}});
+        return [
+          mk(m.data?new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR'):''),
+          mk(m.itemNome,C.creme,true),
+          mk(m.itemCat),
+          {v:m.tipo==='entrada'?'Entrada':'Saída',t:'s',s:{font:{bold:true,sz:10,color:{rgb:tCor},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}},
+          {v:m.qtd,t:'n',s:{font:{bold:false,sz:10,color:{rgb:tCor},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+          mk(m.itemUnidade,C.muteado),
+          {v:m.saldoApos,t:'n',s:{font:{bold:false,sz:10,color:{rgb:C.muteado},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+          mk(m.motivo,C.muteado),
+        ];
+      }),
+    ];
+    const wsH = XLSX.utils.aoa_to_sheet(hRows);
+    wsH['!cols'] = [{wch:14},{wch:24},{wch:18},{wch:10},{wch:12},{wch:10},{wch:12},{wch:28}];
+    XLSX.utils.book_append_sheet(wb, wsH, 'Histórico');
+  }
+
+  XLSX.writeFile(wb, `Estoque-${nome.replace(/\s+/g,'-')}-${hoje.replace(/\//g,'-')}.xlsx`);
+}
+</script>
+</body>
+</html>

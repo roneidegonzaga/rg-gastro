@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar | RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  /* marca RG Gastro (manual 2022) */
+  --navy: #011e34;
+  --navy-soft: #33475c;
+  --muted: #52677a;
+  --blue: #025291;
+  --blue-hover: #013a68;
+  --coral: #f25c54;
+  --red: #cb2f41;
+  --yellow: #fcc740;
+  --cream: #fff1e6;
+  --peach: #f9d8bc;
+  --tan: #e2b691;
+  --card: #fffdfb;
+  --line: #f0dcc6;
+  --green: #2f7d5b;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Manrope', sans-serif;
+  background: var(--cream);
+  color: var(--navy);
+  display: flex;
+  overflow: hidden;
+}
+
+/* ===== PAINEL ESQUERDO: FORM ===== */
+.pane-form {
+  width: 480px;
+  min-width: 420px;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 56px 56px 40px;
+  background: var(--card);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+}
+.brand { display: flex; align-items: flex-end; gap: 13px; margin-bottom: 56px; }
+.brand-logo { height: 54px; width: auto; display: block; }
+.brand-text .t2 { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--blue); font-weight: 700; padding-bottom: 6px; }
+
+h1 { font-weight: 800; font-size: 32px; line-height: 1.12; letter-spacing: -.5px; }
+h1 em { font-style: normal; color: var(--coral); }
+.sub { font-size: 13px; font-weight: 500; color: var(--muted); margin-top: 12px; line-height: 1.7; }
+
+form { margin-top: 36px; }
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 700; }
+.input-wrap { position: relative; }
+.field input {
+  width: 100%; background: #fff; border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 13px 15px; color: var(--navy);
+  font-family: 'Manrope', sans-serif; font-size: 13.5px; font-weight: 500;
+  transition: border-color .2s;
+}
+.field input:focus { outline: none; border-color: var(--blue); }
+.btn:focus-visible, .eye:focus-visible, .row-links a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.field input::placeholder { color: #a8998a; }
+.eye {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px;
+}
+.row-links { display: flex; justify-content: space-between; margin: 4px 0 24px; }
+.row-links a { font-size: 11.5px; color: var(--blue); text-decoration: none; font-weight: 700; }
+.row-links a:hover { text-decoration: underline; }
+
+.btn {
+  width: 100%; padding: 14px; border-radius: 999px; cursor: pointer;
+  font-family: 'Manrope', sans-serif; font-size: 13px; letter-spacing: .2px;
+  font-weight: 800; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-gold { background: var(--navy); border: 1.5px solid var(--navy); color: var(--cream); }
+.btn-gold:hover { background: var(--blue); border-color: var(--blue); transform: translateY(-1px); }
+.btn-gold:disabled { opacity: 0.55; cursor: wait; transform: none; }
+.btn-ghost { background: transparent; border: 1.5px solid var(--navy); color: var(--navy); margin-top: 12px; }
+.btn-ghost:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
+.btn-google { background: #fff; border: 1.5px solid var(--line); color: var(--navy); margin-bottom: 26px; font-weight: 700; }
+.btn-google:hover { border-color: var(--tan); transform: translateY(-1px); }
+.btn-google svg { flex-shrink: 0; }
+
+.divider { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.divider span { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+
+.msg { display: none; margin: 0 0 18px; padding: 12px 15px; border-radius: 12px; font-size: 12px; font-weight: 500; line-height: 1.6; }
+.msg.error { display: block; background: #fae8ea; border: 1px solid #efc4ca; color: var(--red); }
+.msg.ok { display: block; background: #e8f3ed; border: 1px solid #c2ddce; color: var(--green); }
+
+.foot { margin-top: auto; padding-top: 40px; text-align: center; }
+.foot .secure { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.foot .copy { font-size: 10px; color: var(--muted); margin-top: 10px; line-height: 1.7; }
+
+/* ===== PAINEL DIREITO: EDITORIAL ===== */
+.pane-visual {
+  flex: 1; height: 100vh; position: relative; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center; padding: 80px;
+  background: var(--cream);
+}
+.pane-visual::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%221920%22%20height%3D%221080%22%20viewBox%3D%220%200%201920%201080%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22clip-Moodboard_-_01_226%22%3E%3Crect%20width%3D%221920%22%20height%3D%221080%22%2F%3E%3C%2FclipPath%3E%3C%2Fdefs%3E%3Cg%20id%3D%22Moodboard_-_01_226%22%20clip-path%3D%22url(%23clip-Moodboard_-_01_226)%22%3E%3Cg%20id%3D%22Grupo_115%22%3E%3Cpath%20id%3D%22Caminho_335%22%20d%3D%22M222.051%2C1080H356.546c27.607-68.316%2C25.009-147.755-17.1-217.924C320.549%2C830.575%2C245.167%2C729.085%2C0%2C670.832V786.943c5.888%2C1.68%2C166.18%2C47.6%2C224.528%2C115.087C249.672%2C931.11%2C289.307%2C1009.773%2C222.051%2C1080Z%22%20fill%3D%22%23f9d8bc%22%2F%3E%3Cpath%20id%3D%22Caminho_336%22%20d%3D%22M1567.949%2C257.89C1635.935%2C124.611%2C1664.125%2C15.748%2C1668.45%2C0H1527.865c-8.756%2C19.273-45.793%2C131.531-218.351%2C131.233-36.852-.064-151.334-2.305-235.021-131.233H938.34c39.752%2C90.251%2C107.173%2C166.889%2C195.79%2C211%2C93.829%2C46.927%2C226.617%2C49.374%2C333.146.617-1.343%2C2.693-15.441%2C30.782-29.462%2C55.551C1381.459%2C278.492%2C838.878%2C372.566%2C594.481%2C519c-62.468%2C37.43-120.874%2C83.444-150.216%2C151.3-62.573%2C144.339%2C11.046%2C311.151%2C164.295%2C349.458C811.446%2C1070.475%2C1214.067%2C834.638%2C1501.95%2C374c52.108-1.572%2C309.81-8.122%2C418.05-10.995V248.858C1847.224%2C250.723%2C1616.029%2C256.59%2C1567.949%2C257.89ZM619.058%2C901c-91.207-37.128-122.528-168.935-8.923-254.064%2C185.321-138.87%2C535.581-202.7%2C741.127-244.986C1000.582%2C892.237%2C688.237%2C929.16%2C619.058%2C901Z%22%20fill%3D%22%23f9d8bc%22%2F%3E%3Cpath%20id%3D%22Caminho_337%22%20d%3D%22M1572.95%2C696.253c88.58-11.547%2C197.416%2C54.309%2C159.466%2C145.485-27.221%2C65.4%2C88.211%2C107.238%2C115.924%2C41.324%2C103.5-246.165-322.893-429.133-509.961-171.562-121.084%2C166.719%2C7.7%2C338.238%2C32.476%2C368.5h165.233C1338.29%2C941.483%2C1399.432%2C718.872%2C1572.95%2C696.253Z%22%20fill%3D%22%23f9d8bc%22%2F%3E%3Cpath%20id%3D%22Caminho_338%22%20d%3D%22M616.27%2C0H477.884C354.94%2C176.889%2C89.8%2C250.047%2C0%2C274.872v117.44C119.2%2C363.549%2C480.493%2C268.834%2C616.27%2C0Z%22%20fill%3D%22%23f9d8bc%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E") center / cover no-repeat;
+}
+.quote { max-width: 580px; position: relative; z-index: 2; }
+.quote .eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--blue); margin-bottom: 28px; font-weight: 800; }
+.quote h2 { font-weight: 800; font-size: clamp(34px, 3.4vw, 52px); line-height: 1.14; letter-spacing: -1px; }
+.quote h2 em { font-style: normal; color: var(--coral); }
+.quote p { margin-top: 24px; font-size: 13.5px; font-weight: 500; color: var(--navy-soft); line-height: 1.9; max-width: 440px; }
+.quote .steps { display: flex; gap: 28px; margin-top: 44px; }
+.quote .step { display: flex; align-items: center; gap: 10px; }
+.quote .step b { font-size: 20px; line-height: 1; }
+.quote .step:nth-child(1) b { color: var(--coral); }
+.quote .step:nth-child(2) b { color: var(--yellow); }
+.quote .step:nth-child(3) b { color: var(--blue); }
+.quote .step:nth-child(4) b { color: var(--tan); }
+.quote .step i { font-style: normal; font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--navy-soft); font-weight: 700; }
+
+.hidden { display: none !important; }
+
+@media (max-width: 900px) {
+  .pane-visual { display: none; }
+  .pane-form { width: 100%; min-width: 0; border-right: none; padding: 44px 28px 32px; }
+}
+</style>
+</head>
+<body>
+
+<div class="pane-form">
+  <div class="brand">
+    <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%221080%22%20height%3D%22463%22%20viewBox%3D%220%200%201080%20463%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22clip-Moodboard_-_01_107%22%3E%3Crect%20width%3D%221080%22%20height%3D%22463%22%2F%3E%3C%2FclipPath%3E%3C%2Fdefs%3E%3Cg%20id%3D%22Moodboard_-_01_107%22%20clip-path%3D%22url(%23clip-Moodboard_-_01_107)%22%3E%3Cg%20id%3D%22Grupo_228%22%20transform%3D%22translate(-422.141%20-308.567)%22%3E%3Cg%20id%3D%22Grupo_225%22%3E%3Cpath%20id%3D%22Caminho_762%22%20d%3D%22M1253.491%2C599.808c-45.407-8.1-91.541-12.048-138.059-13.727-36.128-1.3-72.49-1.248-108.937-.673-26.793.421-53.625%2C1.121-80.453%2C1.819q-26.173.68-52.322%2C1.335-9.465.234-18.926.5a186.044%2C186.044%2C0%2C0%2C0%2C12.476-30.83%2C221.424%2C221.424%2C0%2C0%2C0%2C6.908-31.739%2C6.932%2C6.932%2C0%2C0%2C0-6.7-8.155c-4.675-.176-8.288%2C3.313-9.4%2C7.55-2%2C7.607-3.808%2C15.271-6.657%2C22.73a71.126%2C71.126%2C0%2C0%2C1-4.83%2C10.4%2C19.01%2C19.01%2C0%2C0%2C1-4.977%2C5.992%2C23.166%2C23.166%2C0%2C0%2C1-6.57%2C3.765%2C34.6%2C34.6%2C0%2C0%2C1-8.433%2C2.3c-1.479.251-2.967.448-4.448.564l-.567.022c-.738.028-1.478.039-2.214.038-1.446%2C0-2.89-.061-4.318-.181-.752-.062-1.506-.14-2.251-.242.068.009-1.448-.254-1.727-.286C799.7%2C568.5%2C790.78%2C560.5%2C785.5%2C550.929c-6.318-11.456-7.951-24.149-6.039-37.725%2C2.27-16.135%2C8.891-31.483%2C16.73-46.083%2C7.136-13.292%2C15.45-26.589%2C26.638-37.355%2C10.11-9.734%2C22.781-17.474%2C36.491-19.952%2C11.627-2.089%2C24.855.416%2C32.449%2C8.255%2C4.52%2C4.674%2C6.512%2C9.7%2C6.667%2C16.415a26.9%2C26.9%2C0%2C0%2C1-5.359%2C16.062%2C23.022%2C23.022%2C0%2C0%2C1-16.029%2C8.992A15.555%2C15.555%2C0%2C0%2C1%2C868.7%2C458.1c-2-1-4.109-3.622-5.168-6.2-3.7-8.975-18.939-1.844-15.237%2C7.229%2C6.82%2C16.793%2C28.349%2C20.786%2C45.374%2C10.328%2C15.443-9.466%2C23.15-27.444%2C20.665-43.119-2.525-15.944-15.054-27.409-31.011-31.243-16.557-3.963-34.776-.478-50.448%2C8.4-16.457%2C9.331-29.436%2C22.9-39.61%2C38.224-10.873%2C16.37-20.05%2C33.981-25.741%2C52.458-5.427%2C17.618-6.936%2C36.475-1.256%2C53.685%2C4.912%2C14.871%2C15.061%2C27.79%2C29.08%2C34.768%2C12.858%2C6.431%2C31.055%2C6.766%2C45.654.084-.181.363-.337.729-.523%2C1.09q-1.676%2C3.28-3.515%2C6.523c-3.97.8-7.979%2C1.9-11.792%2C2.67-8.458%2C1.71-16.9%2C3.4-25.306%2C5.225-18.4%2C3.994-36.829%2C8.488-54.3%2C15.08a150.3%2C150.3%2C0%2C0%2C0-24.166%2C11.536c-8.56%2C5.129-16.564%2C11.435-20.585%2C20.733-8.575%2C19.78%2C1.514%2C42.639%2C22.514%2C47.888a34.6%2C34.6%2C0%2C0%2C0%2C14.559.38c21.627-3.723%2C42.08-16.481%2C59-31.133%2C15.845-13.727%2C29.662-29.845%2C41.721-46.931%2C2.514-3.564%2C4.875-7.172%2C7.148-10.808q10.356-.312%2C20.712-.552%2C23.72-.591%2C47.472-1.2c24.42-.635%2C48.855-1.289%2C73.258-1.768%2C33.672-.661%2C67.291-.982%2C100.739-.312%2C43.043.861%2C85.806%2C3.367%2C128.022%2C9q17.479%2C2.332%2C34.831%2C5.415C1260.9%2C617.4%2C1263.61%2C601.659%2C1253.491%2C599.808ZM822.339%2C571.633c.271-.014.482-.02%2C0%2C0Zm-90.366%2C107.03c-.34.028-.681.059-1.022.088C729.829%2C678.845%2C731.066%2C678.6%2C731.973%2C678.663Zm36.412-13.705c-.56.353-1.123.7-1.688%2C1.048q-.4.245-.8.482c-1.282.738-2.567%2C1.467-3.869%2C2.164q-3.57%2C1.911-7.243%2C3.568a108.042%2C108.042%2C0%2C0%2C1-12.168%2C4.537c-.279.074-.56.149-.839.221-.791.2-1.577.391-2.37.564-1.28.282-2.565.528-3.855.727-1.153.179-2.3.284-3.451.382-.889-.213-1.978-.191-2.842-.315a13.09%2C13.09%2C0%2C0%2C1-4.5-1.149%2C17.759%2C17.759%2C0%2C0%2C1-11.13-15.217%2C21.921%2C21.921%2C0%2C0%2C1%2C2.093-10.713%2C23.761%2C23.761%2C0%2C0%2C1%2C7.814-8.886A91.506%2C91.506%2C0%2C0%2C1%2C743.36%2C631.1c16.415-7.249%2C32.548-11.507%2C50.08-15.566%2C10.5-2.432%2C21.064-4.557%2C31.66-6.737a277.047%2C277.047%2C0%2C0%2C1-20.834%2C25.6A178.083%2C178.083%2C0%2C0%2C1%2C768.385%2C664.958Z%22%20fill%3D%22%23011e34%22%2F%3E%3Cpath%20id%3D%22Caminho_763%22%20d%3D%22M1162.822%2C567.4c.322.062.276.068%2C0%2C0Z%22%20fill%3D%22%23011e34%22%2F%3E%3C%2Fg%3E%3Cg%20id%3D%22Grupo_226%22%3E%3Cpath%20id%3D%22Caminho_764%22%20d%3D%22M968.25%2C540.15H948.194v8.131h8.828a18.337%2C18.337%2C0%2C0%2C1-2.865%2C7.24%2C12.131%2C12.131%2C0%2C0%2C1-4.937%2C4.143A14.9%2C14.9%2C0%2C0%2C1%2C942.7%2C560.9a15.941%2C15.941%2C0%2C0%2C1-8.828-2.439%2C14.319%2C14.319%2C0%2C0%2C1-5.285-6.621%2C26.23%2C26.23%2C0%2C0%2C1-1.761-10.067%2C26.825%2C26.825%2C0%2C0%2C1%2C1.761-10.144%2C14.281%2C14.281%2C0%2C0%2C1%2C5.285-6.7%2C15.107%2C15.107%2C0%2C0%2C1%2C8.828-2.285%2C13.2%2C13.2%2C0%2C0%2C1%2C8.77%2C2.962%2C16.307%2C16.307%2C0%2C0%2C1%2C4.936%2C7.8l10.764-1.549q-2.091-9.137-8.247-14.132T942%2C512.737a26.324%2C26.324%2C0%2C0%2C0-13.261%2C3.407%2C24.714%2C24.714%2C0%2C0%2C0-9.525%2C9.893q-3.543%2C6.486-3.543%2C15.739a34.31%2C34.31%2C0%2C0%2C0%2C2.11%2C12.506%2C26.145%2C26.145%2C0%2C0%2C0%2C5.77%2C9.1%2C24.35%2C24.35%2C0%2C0%2C0%2C8.421%2C5.556%2C28.81%2C28.81%2C0%2C0%2C0%2C24.005-1.626%2C23.987%2C23.987%2C0%2C0%2C0%2C9.177-9.7%2C30.116%2C30.116%2C0%2C0%2C0%2C3.252-14.209q0-.194-.038-1.472A17.231%2C17.231%2C0%2C0%2C0%2C968.25%2C540.15Z%22%20fill%3D%22%23011e34%22%2F%3E%3Cpath%20id%3D%22Caminho_765%22%20d%3D%22M987.765%2C513.9l-17.036%2C55.755H981.57l3.531-11.616h20.994l3.585%2C11.616h10.841L1003.485%2C513.9Zm.325%2C34.3%2C7.427-24.436%2C7.542%2C24.436Z%22%20fill%3D%22%23011e34%22%2F%3E%3Cpath%20id%3D%22Caminho_766%22%20d%3D%22M1063.828%2C541.679a21.759%2C21.759%2C0%2C0%2C0-5.052-2.633q-2.634-.947-4.8-1.529l-9.68-2.633a27.588%2C27.588%2C0%2C0%2C1-3.485-1.161%2C8.318%2C8.318%2C0%2C0%2C1-2.826-1.839%2C4.043%2C4.043%2C0%2C0%2C1-1.123-2.962%2C4.756%2C4.756%2C0%2C0%2C1%2C1.374-3.408%2C8.828%2C8.828%2C0%2C0%2C1%2C3.563-2.187%2C12.939%2C12.939%2C0%2C0%2C1%2C4.665-.678%2C13.421%2C13.421%2C0%2C0%2C1%2C4.821%2C1.046%2C10.968%2C10.968%2C0%2C0%2C1%2C3.968%2C2.826%2C10.084%2C10.084%2C0%2C0%2C1%2C2.285%2C4.569l11.383-1.936a22.062%2C22.062%2C0%2C0%2C0-4.414-8.847%2C19.774%2C19.774%2C0%2C0%2C0-7.589-5.518%2C27.443%2C27.443%2C0%2C0%2C0-10.3-1.974%2C28.32%2C28.32%2C0%2C0%2C0-10.454%2C1.781%2C16.85%2C16.85%2C0%2C0%2C0-7.55%2C5.537%2C14.965%2C14.965%2C0%2C0%2C0-2.826%2C9.331%2C14.45%2C14.45%2C0%2C0%2C0%2C1.335%2C6.6%2C12.471%2C12.471%2C0%2C0%2C0%2C3.35%2C4.2%2C16.579%2C16.579%2C0%2C0%2C0%2C4.162%2C2.44q2.148.852%2C3.775%2C1.316l14.481%2C4.259a13.159%2C13.159%2C0%2C0%2C1%2C2.691%2C1.123%2C6.13%2C6.13%2C0%2C0%2C1%2C1.645%2C1.316%2C4.409%2C4.409%2C0%2C0%2C1%2C.832%2C1.491%2C5.4%2C5.4%2C0%2C0%2C1%2C.252%2C1.645%2C5.346%2C5.346%2C0%2C0%2C1-1.568%2C3.911%2C9.926%2C9.926%2C0%2C0%2C1-4.007%2C2.4%2C15.791%2C15.791%2C0%2C0%2C1-5.034.814%2C13.919%2C13.919%2C0%2C0%2C1-8.286-2.6%2C12.247%2C12.247%2C0%2C0%2C1-4.8-7.395l-11%2C1.627a20.446%2C20.446%2C0%2C0%2C0%2C4.046%2C9.737%2C20.8%2C20.8%2C0%2C0%2C0%2C8.17%2C6.273%2C27.474%2C27.474%2C0%2C0%2C0%2C11.17%2C2.187%2C31.555%2C31.555%2C0%2C0%2C0%2C8.267-1.084%2C23.22%2C23.22%2C0%2C0%2C0%2C7.182-3.272%2C16.362%2C16.362%2C0%2C0%2C0%2C5.053-5.536%2C15.767%2C15.767%2C0%2C0%2C0%2C1.878-7.841%2C13.919%2C13.919%2C0%2C0%2C0-1.569-6.969A13.368%2C13.368%2C0%2C0%2C0%2C1063.828%2C541.679Z%22%20fill%3D%22%23011e34%22%2F%3E%3Cpath%20id%3D%22Caminho_767%22%20d%3D%22M1073.256%2C523.734h17.578v45.92h10.531v-45.92h17.578V513.9h-45.688Z%22%20fill%3D%22%23011e34%22%2F%3E%3Cpath%20id%3D%22Caminho_768%22%20d%3D%22M1164.243%2C544.312a20.356%2C20.356%2C0%2C0%2C0%2C3.485-11.983%2C22.9%2C22.9%2C0%2C0%2C0-1.51-8.5%2C14.908%2C14.908%2C0%2C0%2C0-4.7-6.33%2C17.249%2C17.249%2C0%2C0%2C0-8.189-3.291%2C18.617%2C18.617%2C0%2C0%2C0-2.459-.252q-1.374-.058-2.188-.058h-23.54v55.755h10.531v-18.9h11.751l9.157%2C18.9H1168.5L1158.434%2C549A13.664%2C13.664%2C0%2C0%2C0%2C1164.243%2C544.312Zm-28.574-20.578h12.545q.813%2C0%2C1.781.077a9.157%2C9.157%2C0%2C0%2C1%2C1.781.31%2C6.357%2C6.357%2C0%2C0%2C1%2C3.291%2C1.955%2C7.776%2C7.776%2C0%2C0%2C1%2C1.607%2C3.058%2C11.687%2C11.687%2C0%2C0%2C1%2C0%2C6.389%2C7.772%2C7.772%2C0%2C0%2C1-1.607%2C3.059%2C6.35%2C6.35%2C0%2C0%2C1-3.291%2C1.955%2C9.075%2C9.075%2C0%2C0%2C1-1.781.31q-.969.078-1.781.078h-12.545Z%22%20fill%3D%22%23011e34%22%2F%3E%3Cpath%20id%3D%22Caminho_769%22%20d%3D%22M1200.794%2C501.122l5.808%2C6.969h9.679l-11.151-12.777h-8.673l-11.151%2C12.777h9.68Z%22%20fill%3D%22%23011e34%22%2F%3E%3Cpath%20id%3D%22Caminho_770%22%20d%3D%22M1224.7%2C526.56a24.246%2C24.246%2C0%2C0%2C0-9.331-10.183%2C30.392%2C30.392%2C0%2C0%2C0-28.845%2C0%2C24.239%2C24.239%2C0%2C0%2C0-9.331%2C10.183%2C37.019%2C37.019%2C0%2C0%2C0%2C0%2C30.433%2C24.24%2C24.24%2C0%2C0%2C0%2C9.331%2C10.183%2C30.4%2C30.4%2C0%2C0%2C0%2C28.845%2C0%2C24.246%2C24.246%2C0%2C0%2C0%2C9.331-10.183%2C37.019%2C37.019%2C0%2C0%2C0%2C0-30.433Zm-9.641%2C25.361a14.277%2C14.277%2C0%2C0%2C1-5.285%2C6.7%2C15.105%2C15.105%2C0%2C0%2C1-8.827%2C2.284%2C15.939%2C15.939%2C0%2C0%2C1-8.828-2.439%2C14.312%2C14.312%2C0%2C0%2C1-5.285-6.621%2C26.228%2C26.228%2C0%2C0%2C1-1.762-10.067%2C26.823%2C26.823%2C0%2C0%2C1%2C1.762-10.144%2C14.274%2C14.274%2C0%2C0%2C1%2C5.285-6.7%2C15.1%2C15.1%2C0%2C0%2C1%2C8.828-2.285%2C15.949%2C15.949%2C0%2C0%2C1%2C8.827%2C2.44%2C14.32%2C14.32%2C0%2C0%2C1%2C5.285%2C6.621%2C26.225%2C26.225%2C0%2C0%2C1%2C1.762%2C10.066A26.831%2C26.831%2C0%2C0%2C1%2C1215.061%2C551.921Z%22%20fill%3D%22%23011e34%22%2F%3E%3C%2Fg%3E%3Cg%20id%3D%22Grupo_227%22%3E%3Cg%20id%3D%22Grupo_172%22%3E%3Cg%20id%3D%22Grupo_171%22%3E%3Cpath%20id%3D%22Caminho_484%22%20d%3D%22M673.564%2C427.534c10.925-7.522%2C44.163-30.409%2C64.909-24.832%2C6.281%2C1.688%2C11.05%2C5.887%2C14.175%2C12.476%2C5.115%2C10.844%2C4.524%2C22.491-1.714%2C33.684-9.135%2C16.4-29.07%2C29.461-48.761%2C32.064l3.989-21.583c.958-5.159-2.432-8.178-6.214-8.881-4.349-.8-9.558%2C1.369-10.606%2C6.994q-5.463%2C29.478-10.893%2C58.954-5.173%2C28.038-10.361%2C56.069c-.825%2C4.448.137%2C8.225%2C2.637%2C10.36a7.2%2C7.2%2C0%2C0%2C0%2C7.171%2C1.229c3.554-1.261%2C6.1-4.764%2C6.994-9.616q7.087-38.249%2C14.135-76.509a175.551%2C175.551%2C0%2C0%2C0%2C21.062-3.684l.3-.067c5.129-.928%2C8.944-.125%2C11.352%2C2.385%2C6.513%2C6.812%2C2.421%2C24.793-.567%2C37.924-.9%2C3.98-1.688%2C7.415-2.072%2C10.066-2.2%2C15.2-.458%2C26.633%2C5.186%2C33.977%2C4.1%2C5.337%2C10.291%2C8.526%2C18.4%2C9.477a9.638%2C9.638%2C0%2C0%2C0%2C1.073.059%2C7.967%2C7.967%2C0%2C0%2C0%2C6.607-3.343%2C9.506%2C9.506%2C0%2C0%2C0%2C1.147-9.146%2C7.284%2C7.284%2C0%2C0%2C0-6.172-4.314%2C10.858%2C10.858%2C0%2C0%2C1-7.9-4.226c-5.269-7.152-2.569-22.094.29-37.912%2C3.586-19.847%2C7.293-40.351-4.281-48.563%2C19.836-15.062%2C36.85-41.369%2C26.051-70.884-4.25-11.5-11.511-18.979-21.582-22.23C720.5%2C378.62%2C679.887%2C403%2C663.688%2C413.9a7.594%2C7.594%2C0%2C0%2C0-3.521%2C7.059%2C9.354%2C9.354%2C0%2C0%2C0%2C5.253%2C7.453A7.886%2C7.886%2C0%2C0%2C0%2C673.564%2C427.534Z%22%20fill%3D%22%23011e34%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E" alt="RG Gastrô" class="brand-logo">
+    <div class="brand-text"><div class="t2">Painel de gestão</div></div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="view-login">
+    <h1>Bem-vindo <em>de volta</em></h1>
+    <div class="sub">Entre para acessar o painel da RG Gastrô.</div>
+    <form id="form-login" novalidate>
+      <div class="msg" id="msg-login" style="margin-top:28px"></div>
+      <div style="margin-top:28px">
+        <button type="button" class="btn btn-google" id="btn-google">
+          <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.3 6 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.3 6 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.7-.4-3.9z"/></svg>
+          Continuar com Google
+        </button>
+      </div>
+      <div class="divider"><span>ou</span></div>
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="login-pass">Senha</label>
+        <div class="input-wrap">
+          <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="eye" aria-label="Mostrar ou ocultar senha" data-eye="login-pass">&#128065;</button>
+        </div>
+      </div>
+      <div class="row-links">
+        <a href="#" id="link-forgot">Esqueci minha senha</a>
+        <a href="mailto:contato@rogonzaga.com.br">Falar com o suporte</a>
+      </div>
+      <button type="submit" class="btn btn-gold" id="btn-login">Entrar &nbsp;&rarr;</button>
+      <button type="button" class="btn btn-ghost" id="link-signup">Criar conta</button>
+    </form>
+  </div>
+
+  <!-- CADASTRO -->
+  <div id="view-signup" class="hidden">
+    <h1>Criar sua <em>conta</em></h1>
+    <div class="sub">Novos acessos precisam ser aprovados por um administrador.</div>
+    <form id="form-signup" novalidate>
+      <div class="msg" id="msg-signup" style="margin-top:28px"></div>
+      <div class="field" style="margin-top:28px">
+        <label for="su-name">Seu nome</label>
+        <input type="text" id="su-name" placeholder="Como quer ser chamado" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="su-email">Email</label>
+        <input type="email" id="su-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="su-pass">Senha</label>
+        <div class="input-wrap">
+          <input type="password" id="su-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          <button type="button" class="eye" aria-label="Mostrar ou ocultar senha" data-eye="su-pass">&#128065;</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-gold" id="btn-signup" style="margin-top:8px">Criar conta</button>
+      <button type="button" class="btn btn-ghost" id="link-back-1">Já tenho conta</button>
+    </form>
+  </div>
+
+  <!-- RECUPERAR SENHA -->
+  <div id="view-forgot" class="hidden">
+    <h1>Recuperar <em>senha</em></h1>
+    <div class="sub">Enviaremos um link de redefinição para o seu email.</div>
+    <form id="form-forgot" novalidate>
+      <div class="msg" id="msg-forgot" style="margin-top:28px"></div>
+      <div class="field" style="margin-top:28px">
+        <label for="fg-email">Email</label>
+        <input type="email" id="fg-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <button type="submit" class="btn btn-gold">Enviar link</button>
+      <button type="button" class="btn btn-ghost" id="link-back-2">Voltar</button>
+    </form>
+  </div>
+
+  <!-- NOVA SENHA (apos link de recuperacao) -->
+  <div id="view-reset" class="hidden">
+    <h1>Definir <em>nova senha</em></h1>
+    <div class="sub">Escolha uma nova senha para a sua conta.</div>
+    <form id="form-reset" novalidate>
+      <div class="msg" id="msg-reset" style="margin-top:28px"></div>
+      <div class="field" style="margin-top:28px">
+        <label for="rs-pass">Nova senha</label>
+        <div class="input-wrap">
+          <input type="password" id="rs-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          <button type="button" class="eye" aria-label="Mostrar ou ocultar senha" data-eye="rs-pass">&#128065;</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-gold">Salvar e entrar</button>
+    </form>
+  </div>
+
+  <div class="foot">
+    <div class="secure">&#128274; Ambiente seguro</div>
+    <div class="copy">&copy; 2026 RG Gastrô Educação. Todos os direitos reservados.</div>
+  </div>
+</div>
+
+<div class="pane-visual">
+  <div class="quote">
+    <div class="eyebrow">RG Gastrô · Treinamentos e Consultoria Gastronômica</div>
+    <h2>Sua consultoria inteira <em>em um só painel.</em></h2>
+    <p>Financeiro, CRM, projetos, agenda, equipe, clientes de consultoria, cursos e mentorados com plano de ação e sessões.</p>
+    <div class="steps">
+      <div class="step"><b>&#10041;</b><i>Gestão</i></div>
+      <div class="step"><b>&#10041;</b><i>Clientes</i></div>
+      <div class="step"><b>&#10041;</b><i>Mentoria</i></div>
+      <div class="step"><b>&#10041;</b><i>Cursos</i></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var cfg = window.RG_CONFIG || {};
+  var configured = cfg.SUPABASE_URL && cfg.SUPABASE_URL.indexOf('http') === 0;
+  var sb = configured ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
+  var DEMO = !configured;
+
+  function show(viewId){
+    ['view-login','view-signup','view-forgot','view-reset'].forEach(function(v){
+      document.getElementById(v).classList.toggle('hidden', v !== viewId);
+    });
+  }
+  function msg(id, text, type){
+    var el = document.getElementById(id);
+    el.className = 'msg ' + type;
+    el.textContent = text;
+  }
+  function needConfig(id){
+    msg(id, 'O sistema ainda não foi conectado ao Supabase. Abra o arquivo config.js e preencha a URL e a chave do projeto.', 'error');
+  }
+
+  // mostrar/ocultar senha
+  document.querySelectorAll('.eye').forEach(function(b){
+    b.addEventListener('click', function(){
+      var inp = document.getElementById(b.getAttribute('data-eye'));
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    });
+  });
+
+  // navegacao entre telas
+  document.getElementById('link-signup').addEventListener('click', function(){ show('view-signup'); });
+  document.getElementById('link-back-1').addEventListener('click', function(){ show('view-login'); });
+  document.getElementById('link-forgot').addEventListener('click', function(e){ e.preventDefault(); show('view-forgot'); });
+  document.getElementById('link-back-2').addEventListener('click', function(){ show('view-login'); });
+
+  // se ja esta logado, vai direto pro app
+  if (sb) {
+    var recovering = /type=recovery/.test(window.location.hash) || /type=recovery/.test(window.location.search);
+    sb.auth.onAuthStateChange(function(event, session){
+      if (event === 'PASSWORD_RECOVERY') { recovering = true; show('view-reset'); return; }
+      if (recovering) { show('view-reset'); return; }
+      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        window.location.replace('app.html');
+      }
+    });
+  }
+
+  if (DEMO) {
+    document.querySelector('#view-login .sub').textContent = 'Modo demonstração ativo: clique em Entrar e explore o painel com dados de exemplo.';
+  }
+
+  // LOGIN
+  document.getElementById('form-login').addEventListener('submit', async function(e){
+    e.preventDefault();
+    if (DEMO) { window.location.href = 'app.html'; return; }
+    if (!sb) return needConfig('msg-login');
+    var btn = document.getElementById('btn-login');
+    btn.disabled = true;
+    var r = await sb.auth.signInWithPassword({
+      email: document.getElementById('login-email').value.trim(),
+      password: document.getElementById('login-pass').value
+    });
+    btn.disabled = false;
+    if (r.error) {
+      var t = /Invalid login credentials/i.test(r.error.message) ? 'Email ou senha incorretos.' :
+              /Email not confirmed/i.test(r.error.message) ? 'Confirme seu email antes de entrar. Verifique sua caixa de entrada.' :
+              r.error.message;
+      msg('msg-login', t, 'error');
+    } else {
+      window.location.replace('app.html');
+    }
+  });
+
+  // GOOGLE
+  document.getElementById('btn-google').addEventListener('click', async function(){
+    if (DEMO) { window.location.href = 'app.html'; return; }
+    if (!sb) return needConfig('msg-login');
+    await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname.replace(/index\.html$/, '') + 'app.html' }
+    });
+  });
+
+  // CADASTRO
+  document.getElementById('form-signup').addEventListener('submit', async function(e){
+    e.preventDefault();
+    if (DEMO) { window.location.href = 'app.html'; return; }
+    if (!sb) return needConfig('msg-signup');
+    var btn = document.getElementById('btn-signup');
+    btn.disabled = true;
+    var r = await sb.auth.signUp({
+      email: document.getElementById('su-email').value.trim(),
+      password: document.getElementById('su-pass').value,
+      options: { data: { full_name: document.getElementById('su-name').value.trim() } }
+    });
+    btn.disabled = false;
+    if (r.error) {
+      msg('msg-signup', r.error.message, 'error');
+    } else if (r.data.session) {
+      window.location.replace('app.html');
+    } else {
+      msg('msg-signup', 'Conta criada. Confirme seu email e aguarde a aprovação de um administrador para entrar.', 'ok');
+    }
+  });
+
+  // ESQUECI SENHA
+  document.getElementById('form-forgot').addEventListener('submit', async function(e){
+    e.preventDefault();
+    if (DEMO) return msg('msg-forgot', 'No modo demonstração não existe senha. Volte e clique em Entrar.', 'ok');
+    if (!sb) return needConfig('msg-forgot');
+    var r = await sb.auth.resetPasswordForEmail(document.getElementById('fg-email').value.trim(), {
+      redirectTo: window.location.href.split('#')[0].split('?')[0]
+    });
+    if (r.error) msg('msg-forgot', r.error.message, 'error');
+    else msg('msg-forgot', 'Link enviado. Verifique seu email (inclusive o spam).', 'ok');
+  });
+
+  // NOVA SENHA
+  document.getElementById('form-reset').addEventListener('submit', async function(e){
+    e.preventDefault();
+    if (DEMO) { window.location.href = 'app.html'; return; }
+    if (!sb) return needConfig('msg-reset');
+    var r = await sb.auth.updateUser({ password: document.getElementById('rs-pass').value });
+    if (r.error) msg('msg-reset', r.error.message, 'error');
+    else window.location.replace('app.html');
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Relatório de Encerramento — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#011E34;--navy2:#062d4e;--gold:#F7B700;--gold2:#FCC740;--coral:#F25C54;--cream:#FFFEE8;--cream2:#F0EECC;--white:#ffffff;--gray:#6b7280;--gray-l:#e5e7eb;--ok:#22c55e;--ok-l:#dcfce7;--warn:#f59e0b;--warn-l:#fef3c7;--nao:#ef4444;--nao-l:#fee2e2;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;}
+  .header{background:var(--navy);padding:20px 32px 16px;border-bottom:3px solid var(--gold);}
+  .header-eyebrow{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+  .header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);}
+  .header-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;}
+  .id-bar{background:var(--navy2);padding:14px 32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px 24px;}
+  .id-field{display:flex;flex-direction:column;gap:3px;}
+  .id-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .id-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.2);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:3px 0;outline:none;width:100%;}
+  .id-input::placeholder{color:rgba(255,255,255,.3);}
+  .id-input:focus{border-bottom-color:var(--gold);}
+  .main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+  .section{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);overflow:hidden;}
+  .assinaturas{display:grid;grid-template-columns:1fr 1fr;gap:32px;padding:28px 24px;}
+  .assinatura-bloco{display:flex;flex-direction:column;gap:8px;}
+  .assinatura-nome{border:none;border-bottom:1px solid var(--gray-l);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--navy);padding:4px 0;outline:none;}
+  .assinatura-nome:focus{border-bottom-color:var(--gold)}
+  .assinatura-linha{border-top:1px solid var(--navy);margin-top:36px;padding-top:6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);text-align:center;}
+  .sec-header{background:var(--navy);padding:12px 20px;}
+  .sec-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--white);}
+  .sec-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px;}
+  .resumo-grid{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:600px){.resumo-grid{grid-template-columns:1fr;}}
+  .resumo-bloco{display:flex;flex-direction:column;gap:6px;}
+  .resumo-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .resumo-textarea{width:100%;min-height:90px;border:1px solid var(--gray-l);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);resize:vertical;outline:none;background:var(--cream);}
+  .resumo-textarea:focus{border-color:var(--gold);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--cream2);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray);padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-l);}
+  thead th.c{text-align:center;}
+  tbody tr:nth-child(even){background:var(--cream);}
+  tbody tr:hover{background:#fafaf2;}
+  td{padding:8px 12px;border-bottom:1px solid var(--gray-l);vertical-align:middle;font-size:12px;}
+  tbody tr:last-child td{border-bottom:none;}
+  .td-num{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;color:var(--gold);text-align:center;width:40px;}
+  .cell-in{border:none;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:transparent;outline:none;width:100%;}
+  .cell-in:focus{border-bottom:1px solid var(--gold);}
+  .status-badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap;}
+  .s-implantado{background:var(--ok-l);color:var(--ok);}
+  .s-parcial{background:var(--warn-l);color:var(--warn);}
+  .s-pendente{background:var(--nao-l);color:var(--nao);}
+  .adocao-badge{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;cursor:pointer;}
+  .a-alto{background:#dcfce7;color:#166534;}
+  .a-medio{background:#fef9c3;color:#854d0e;}
+  .a-baixo{background:#fee2e2;color:#7f1d1d;}
+  .a-dev{background:#dbeafe;color:#1e3a8a;}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn-acao{padding:10px 24px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+  .btn-acao.primario{background:var(--gold);color:var(--navy);}
+  .btn-acao.primario:hover{background:var(--gold2);}
+  .btn-acao.secundario{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-acao.secundario:hover{background:var(--navy);color:white;}
+  @media print{.acoes{display:none;}body{background:white;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-eyebrow">RG Gastrô Educação</div>
+  <div class="header-title">Relatório de Encerramento de Projeto</div>
+  <div class="header-sub">Consultoria de Gestão para Restaurantes na Prática</div>
+</div>
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" id="estab" type="text" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Período do projeto</span><input class="id-input" id="periodo" type="text" placeholder="Ex: Jan a Mar 2026" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Data de encerramento</span><input class="id-input" id="dataEnc" type="date" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" id="consultor" type="text" placeholder="Seu nome" onchange="salvar()"></div>
+</div>
+<div class="main">
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Resumo Executivo</div></div>
+    <div class="resumo-grid">
+      <div class="resumo-bloco"><span class="resumo-label">Situação inicial</span><textarea class="resumo-textarea" id="situacaoInicial" placeholder="Como estava o restaurante ao início do projeto..." onchange="salvar()"></textarea></div>
+      <div class="resumo-bloco"><span class="resumo-label">Principais resultados observados</span><textarea class="resumo-textarea" id="resultados" placeholder="O que mudou de forma visível e mensurável..." onchange="salvar()"></textarea></div>
+      <div class="resumo-bloco"><span class="resumo-label">Destaques do projeto</span><textarea class="resumo-textarea" id="destaques" placeholder="Momentos ou entregas que geraram maior impacto..." onchange="salvar()"></textarea></div>
+      <div class="resumo-bloco"><span class="resumo-label">Recomendações para continuidade</span><textarea class="resumo-textarea" id="recomendacoes" placeholder="O que o cliente deve priorizar após o encerramento..." onchange="salvar()"></textarea></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Status dos Processos Implantados</div><div class="sec-sub">Clique nos badges para alterar status e nível de adoção</div></div>
+    <table>
+      <thead><tr>
+        <th style="width:40px" class="c">#</th>
+        <th>Processo</th>
+        <th style="width:130px" class="c">Status</th>
+        <th style="width:130px" class="c">Nível de adoção</th>
+        <th style="width:120px">Responsável interno</th>
+        <th>Observação</th>
+      </tr></thead>
+      <tbody id="processosTbody"></tbody>
+    </table>
+  </div>
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Diagnóstico Inicial vs. Estado Final</div></div>
+    <table>
+      <thead><tr>
+        <th style="width:40px" class="c">#</th>
+        <th>Área</th>
+        <th>Estado inicial</th>
+        <th>Estado final</th>
+      </tr></thead>
+      <tbody id="diagTbody"></tbody>
+    </table>
+  </div>
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Assinaturas</div><div class="sec-sub">Confirmação de encerramento pelas duas partes</div></div>
+    <div class="assinaturas">
+      <div class="assinatura-bloco">
+        <input class="assinatura-nome" type="text" id="nomeConsultor" placeholder="Nome do(a) consultor(a)" onchange="salvar()">
+        <div class="assinatura-linha">Assinatura do(a) Consultor(a)</div>
+      </div>
+      <div class="assinatura-bloco">
+        <input class="assinatura-nome" type="text" id="nomeCliente" placeholder="Nome do responsável pelo estabelecimento" onchange="salvar()">
+        <div class="assinatura-linha">Assinatura do Cliente</div>
+      </div>
+    </div>
+  </div>
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="salvar()">Salvar</button>
+  </div>
+</div>
+<script>
+const KEY='rgGastro_relatorio';
+const PROCESSOS=["Setorização e praças","Controle de produção diária","Checklist de abertura",
+  "Registro de troca de turno","Inventário de insumos","Processo de compras",
+  "Requisição de mercadoria","Controle de desperdício","Controle de quebra de utensílios",
+  "Análise de vendas operacional","Manual de processos operacionais"];
+
+let dados={processos:PROCESSOS.map(n=>({nome:n,status:'parcial',adocao:'dev',resp:'',obs:''})),
+  diag:PROCESSOS.map(n=>({area:n,inicial:'',final:''}))};
+
+try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);
+  if(d.processos)dados.processos=d.processos;if(d.diag)dados.diag=d.diag;
+  document.getElementById('estab').value=d.estab||'';
+  document.getElementById('periodo').value=d.periodo||'';
+  document.getElementById('dataEnc').value=d.dataEnc||'';
+  document.getElementById('consultor').value=d.consultor||'';
+  document.getElementById('situacaoInicial').value=d.situacaoInicial||'';
+  document.getElementById('resultados').value=d.resultados||'';
+  document.getElementById('destaques').value=d.destaques||'';
+  document.getElementById('recomendacoes').value=d.recomendacoes||'';
+  document.getElementById('nomeConsultor').value=d.nomeConsultor||'';
+  document.getElementById('nomeCliente').value=d.nomeCliente||'';
+}}catch(e){}
+
+const STATUS_CICLO=['implantado','parcial','pendente'];
+const ADOCAO_CICLO=['alto','medio','baixo','dev'];
+const STATUS_LABEL={implantado:'Implantado',parcial:'Parcial',pendente:'Pendente'};
+const ADOCAO_LABEL={alto:'Alto',medio:'Médio',baixo:'Baixo',dev:'Em desenvolvimento'};
+
+function ciclarStatus(i){const idx=STATUS_CICLO.indexOf(dados.processos[i].status);dados.processos[i].status=STATUS_CICLO[(idx+1)%STATUS_CICLO.length];render();salvar();}
+function ciclarAdocao(i){const idx=ADOCAO_CICLO.indexOf(dados.processos[i].adocao);dados.processos[i].adocao=ADOCAO_CICLO[(idx+1)%ADOCAO_CICLO.length];render();salvar();}
+
+function render(){
+  const tbody=document.getElementById('processosTbody');tbody.innerHTML='';
+  dados.processos.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-num">${String(i+1).padStart(2,'0')}</td>
+      <td style="font-weight:500">${p.nome}</td>
+      <td style="text-align:center"><span class="status-badge s-${p.status}" onclick="ciclarStatus(${i})">${STATUS_LABEL[p.status]}</span></td>
+      <td style="text-align:center"><span class="adocao-badge a-${p.adocao}" onclick="ciclarAdocao(${i})">${ADOCAO_LABEL[p.adocao]}</span></td>
+      <td><input class="cell-in" type="text" value="${p.resp}" placeholder="Cargo ou nome..." onchange="dados.processos[${i}].resp=this.value;salvar()"></td>
+      <td><input class="cell-in" type="text" value="${p.obs}" placeholder="Observação..." onchange="dados.processos[${i}].obs=this.value;salvar()"></td>`;
+    tbody.appendChild(tr);
+  });
+  const dtbody=document.getElementById('diagTbody');dtbody.innerHTML='';
+  dados.diag.forEach((d,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-num">${String(i+1).padStart(2,'0')}</td>
+      <td style="font-weight:500">${d.area}</td>
+      <td><input class="cell-in" type="text" value="${d.inicial}" placeholder="Como era antes..." onchange="dados.diag[${i}].inicial=this.value;salvar()"></td>
+      <td><input class="cell-in" type="text" value="${d.final}" placeholder="Como ficou..." onchange="dados.diag[${i}].final=this.value;salvar()"></td>`;
+    dtbody.appendChild(tr);
+  });
+}
+function salvar(){try{localStorage.setItem(KEY,JSON.stringify({
+  estab:document.getElementById('estab').value,
+  periodo:document.getElementById('periodo').value,
+  dataEnc:document.getElementById('dataEnc').value,
+  consultor:document.getElementById('consultor').value,
+  situacaoInicial:document.getElementById('situacaoInicial').value,
+  resultados:document.getElementById('resultados').value,
+  destaques:document.getElementById('destaques').value,
+  recomendacoes:document.getElementById('recomendacoes').value,
+  nomeConsultor:document.getElementById('nomeConsultor').value,
+  nomeCliente:document.getElementById('nomeCliente').value,
+  processos:dados.processos,diag:dados.diag
+}));}catch(e){}}
+render();
+</script>
+</body>
+</html>

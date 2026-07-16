@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist dos 5 Vazamentos | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream: #011e34;
+  --warm-white: #12314e;
+  --charcoal: #fff6ec;
+  --charcoal-soft: #f9e8d7;
+  --gold: #025291;
+  --gold-light: #013a68;
+  --gold-pale: #5b91bc;
+  --muted: #33475c;
+  --muted-light: #4e6172;
+  --border: rgba(2,82,145,0.2);
+  --border-strong: rgba(2,82,145,0.45);
+  --green: #1a5e2a;
+  --green-bg: rgba(26,94,42,0.08);
+  --amber: #7a4008;
+  --amber-bg: rgba(122,64,8,0.08);
+  --red: #7a2020;
+  --red-bg: rgba(122,32,32,0.08);
+  --none-bg: rgba(1,30,52,0.05);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Manrope', sans-serif;
+  background: var(--charcoal);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── GRAIN ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1000; opacity: 0.2;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 40px 48px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.header-left {}
+
+.brand {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.header-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+}
+
+.header-title em {
+  font-style: italic;
+  color: var(--gold-light);
+}
+
+.header-subtitle {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 12px;
+  letter-spacing: 1px;
+  line-height: 1.7;
+  max-width: 360px;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.module-badge {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(91,145,188,0.1);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 2px;
+}
+
+.use-badge {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+
+/* ── SESSION CONTROLS ── */
+.session-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.session-info {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.session-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.session-type {
+  display: flex;
+  gap: 4px;
+}
+
+.type-btn {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.type-btn.active {
+  background: var(--gold);
+  color: var(--charcoal);
+  border-color: var(--gold);
+}
+
+.type-btn:hover:not(.active) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+input[type="date"] {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--cream);
+  padding: 7px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  outline: none;
+  color-scheme: light;
+}
+
+input[type="date"]:focus {
+  border-color: var(--gold);
+}
+
+.restaurant-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+input[type="text"].restaurant-input {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--cream);
+  padding: 4px 0;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.25s;
+}
+
+input[type="text"].restaurant-input::placeholder {
+  color: rgba(1,30,52,0.4);
+}
+
+input[type="text"].restaurant-input:focus {
+  border-bottom-color: var(--gold);
+}
+
+/* ── MAIN CONTENT ── */
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 48px 80px;
+}
+
+/* ── INTRO ── */
+.intro {
+  margin-bottom: 48px;
+  padding: 28px 32px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  background: rgba(91,145,188,0.04);
+}
+
+.intro p {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.intro strong {
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* ── VAZAMENTO CARD ── */
+.vazamento {
+  margin-bottom: 32px;
+  border: 1px solid var(--border);
+  background: rgba(1,30,52,0.03);
+  transition: border-color 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.vazamento::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+
+.vazamento.severity-leve::before { background: var(--green); }
+.vazamento.severity-moderado::before { background: var(--amber); }
+.vazamento.severity-critico::before { background: var(--red); }
+
+.vazamento-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px 28px 20px;
+}
+
+.vazamento-number {
+  font-family: 'Manrope', sans-serif;
+  font-size: 48px;
+  font-weight: 300;
+  color: rgba(2,82,145,0.15);
+  line-height: 1;
+  flex-shrink: 0;
+  width: 40px;
+  margin-top: -4px;
+}
+
+.vazamento-info {
+  flex: 1;
+}
+
+.vazamento-name {
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+.vazamento-desc {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ── SEVERITY SELECTOR ── */
+.severity-section {
+  padding: 0 28px 0 88px;
+  margin-bottom: 20px;
+}
+
+.severity-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--cream);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.severity-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sev-btn {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 7px 18px;
+  border: 1px solid;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sev-btn-none {
+  border-color: rgba(1,30,52,0.25);
+  color: var(--muted);
+}
+.sev-btn-none.selected, .sev-btn-none:hover {
+  background: var(--none-bg);
+  border-color: var(--muted);
+  color: var(--cream);
+}
+
+.sev-btn-leve {
+  border-color: rgba(26,94,42,0.3);
+  color: rgba(26,94,42,0.8);
+}
+.sev-btn-leve.selected, .sev-btn-leve:hover {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.sev-btn-moderado {
+  border-color: rgba(122,64,8,0.3);
+  color: rgba(122,64,8,0.8);
+}
+.sev-btn-moderado.selected, .sev-btn-moderado:hover {
+  background: var(--amber-bg);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.sev-btn-critico {
+  border-color: rgba(122,32,32,0.3);
+  color: rgba(122,32,32,0.8);
+}
+.sev-btn-critico.selected, .sev-btn-critico:hover {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.sev-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sev-btn-none .sev-dot { background: var(--muted); }
+.sev-btn-leve .sev-dot { background: var(--green); }
+.sev-btn-moderado .sev-dot { background: var(--amber); }
+.sev-btn-critico .sev-dot { background: var(--red); }
+
+/* ── OBSERVATION ── */
+.obs-section {
+  padding: 0 28px 24px 88px;
+}
+
+.obs-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--cream);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.obs-textarea {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  background: rgba(1,30,52,0.04);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  width: 100%;
+  padding: 12px 16px;
+  resize: vertical;
+  min-height: 72px;
+  outline: none;
+  line-height: 1.7;
+  transition: border-color 0.25s;
+  border-radius: 1px;
+}
+
+.obs-textarea::placeholder {
+  color: rgba(1,30,52,0.45);
+  font-style: italic;
+}
+
+.obs-textarea:focus {
+  border-color: var(--gold);
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 48px 0;
+  position: relative;
+}
+
+.section-divider::after {
+  content: 'resultado';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--charcoal);
+  padding: 0 16px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── SCORE ── */
+.score-section {
+  margin-bottom: 48px;
+}
+
+.score-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 28px;
+  font-weight: 300;
+  margin-bottom: 8px;
+}
+
+.score-subtitle {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+}
+
+.score-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.score-row-name {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(1,30,52,0.7);
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.score-bar-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(1,30,52,0.04);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+  width: 0%;
+}
+
+.score-bar-fill.none { background: rgba(1,30,52,0.2); }
+.score-bar-fill.leve { background: var(--green); }
+.score-bar-fill.moderado { background: var(--amber); }
+.score-bar-fill.critico { background: var(--red); }
+
+.score-row-val {
+  font-size: 11px;
+  letter-spacing: 1px;
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.score-row-val.none { color: var(--muted); }
+.score-row-val.leve { color: #6aad7a; }
+.score-row-val.moderado { color: #fcc740; }
+.score-row-val.critico { color: #c05555; }
+
+/* ── SUMMARY ── */
+.summary-box {
+  border: 1px solid var(--border);
+  padding: 28px 32px;
+  display: none;
+}
+
+.summary-box.visible { display: block; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  margin-bottom: 24px;
+}
+
+.summary-cell {
+  background: var(--charcoal);
+  padding: 20px 20px;
+  text-align: center;
+}
+
+.summary-count {
+  font-family: 'Manrope', sans-serif;
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.summary-count.none { color: var(--muted); }
+.summary-count.leve { color: #6aad7a; }
+.summary-count.moderado { color: #fcc740; }
+.summary-count.critico { color: #c05555; }
+
+.summary-cell-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.summary-message {
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.8;
+  color: rgba(1,30,52,0.7);
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.summary-message strong {
+  font-weight: 500;
+  color: var(--cream);
+}
+
+/* ── HISTORY ── */
+.history-section {
+  margin-top: 48px;
+  display: none;
+}
+
+.history-section.visible { display: block; }
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.history-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 24px;
+  font-weight: 300;
+}
+
+.history-subtitle {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.history-table th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+
+.history-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(91,145,188,0.08);
+  color: rgba(1,30,52,0.7);
+  vertical-align: top;
+}
+
+.history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.hist-sev {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 3px 8px;
+}
+
+.hist-sev.none { color: var(--muted); }
+.hist-sev.leve { color: #6aad7a; }
+.hist-sev.moderado { color: #fcc740; }
+.hist-sev.critico { color: #c05555; }
+
+.hist-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hist-sev.none .hist-dot { background: var(--muted); }
+.hist-sev.leve .hist-dot { background: var(--green); }
+.hist-sev.moderado .hist-dot { background: var(--amber); }
+.hist-sev.critico .hist-dot { background: var(--red); }
+
+/* ── ACTIONS ── */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  background: var(--gold);
+  color: var(--charcoal);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--charcoal);
+  transform: translateX(-100%);
+  transition: transform 0.25s;
+}
+
+.btn-primary:hover::after { transform: translateX(0); }
+
+.btn-primary span { position: relative; z-index: 1; }
+.btn-primary:hover span { color: var(--gold); }
+
+.btn-secondary {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 24px 48px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-brand {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+.footer-tool {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── PAINEL DE EVOLUÇÃO (modo revisão) ── */
+.evolucao-box {
+  display: none;
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  background: rgba(2,82,145,0.04);
+}
+.evolucao-box.visible { display: block; }
+
+.evolucao-header {
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.evolucao-titulo {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.evolucao-subtitulo {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+}
+
+.evolucao-comparativo {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.evolucao-col {
+  padding: 16px 20px;
+  border-right: 1px solid var(--border);
+}
+.evolucao-col:last-child { border-right: none; }
+.evolucao-col-titulo {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.evolucao-col.melhorou .evolucao-col-titulo { color: var(--green); }
+.evolucao-col.igual .evolucao-col-titulo { color: var(--muted); }
+.evolucao-col.piorou .evolucao-col-titulo { color: var(--red); }
+
+.evolucao-item {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(1,30,52,0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.evolucao-item:last-child { border-bottom: none; }
+.evolucao-item-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.evolucao-col.melhorou .evolucao-item-dot { background: var(--green); }
+.evolucao-col.igual .evolucao-item-dot { background: var(--muted); opacity: 0.4; }
+.evolucao-col.piorou .evolucao-item-dot { background: var(--red); }
+.evolucao-col-vazio {
+  font-size: 12px;
+  color: rgba(1,30,52,0.35);
+  font-style: italic;
+}
+
+.evolucao-direcao {
+  padding: 18px 24px;
+}
+.evolucao-direcao-titulo {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--cream);
+  margin-bottom: 12px;
+}
+.evolucao-direcao-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.evolucao-direcao-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  background: rgba(1,30,52,0.03);
+}
+.evolucao-direcao-prioridade {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 1px;
+}
+.prioridade-urgente { background: rgba(122,32,32,0.12); color: var(--red); }
+.prioridade-importante { background: rgba(122,64,8,0.1); color: var(--amber); }
+.prioridade-manter { background: rgba(26,94,42,0.1); color: var(--green); }
+.evolucao-direcao-texto {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* ── PDF OVERLAY ── */
+.pdf-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(1,30,52,0.85);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.pdf-overlay.visible { display: flex; }
+.pdf-spinner {
+  text-align: center;
+}
+.pdf-spinner-text {
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 16px;
+}
+.pdf-dots {
+  display: inline-flex; gap: 6px; margin-top: 12px;
+}
+.pdf-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); opacity: 0.3;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+/* ── PDF DOCUMENT (hidden, used only for capture) ── */
+#pdfDoc {
+  display: none;
+  position: fixed;
+  top: -9999px; left: 0;
+  width: 794px;
+  background: #fff6ec;
+  color: #011e34;
+  font-family: 'Manrope', sans-serif;
+  padding: 0;
+}
+
+/* ── PRINT ── */
+@media print {
+  body::before { display: none; }
+  .session-bar, .actions, .type-btn, .btn-secondary, .btn-primary { display: none !important; }
+  header { padding: 24px 32px 20px; }
+  main { padding: 24px 32px 40px; }
+  footer { padding: 16px 32px; }
+  .obs-textarea { border: 1px solid rgba(91,145,188,0.3); background: transparent; }
+  .history-section { display: block !important; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  header, .session-bar, main, footer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .vazamento-header { padding: 20px 20px 16px; }
+  .severity-section, .obs-section { padding-left: 20px; }
+  .score-row-name { width: 140px; font-size: 11px; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  header { flex-direction: column; }
+  .header-right { align-items: flex-start; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<!-- PDF LOADING OVERLAY -->
+<div class="pdf-overlay" id="pdfOverlay">
+  <div class="pdf-spinner">
+    <div class="pdf-dots">
+      <div class="pdf-dot"></div>
+      <div class="pdf-dot"></div>
+      <div class="pdf-dot"></div>
+    </div>
+    <p class="pdf-spinner-text">Gerando PDF</p>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="header-title">Checklist dos<br><em>5 Vazamentos</em></h1>
+    <p class="header-subtitle">Identifique onde o dinheiro do seu restaurante está sumindo. Observe cada área antes de mudar qualquer coisa.</p>
+  </div>
+  <div class="header-right">
+    <span class="module-badge">Módulo D · D2</span>
+    <span class="use-badge">Diagnóstico inicial + revisão mensal</span>
+  </div>
+</header>
+
+<!-- SESSION BAR -->
+<div class="session-bar">
+  <div class="restaurant-field">
+    <span class="date-label">Restaurante</span>
+    <input type="text" class="restaurant-input" id="restaurantName" placeholder="Nome do seu restaurante">
+  </div>
+  <div class="date-field">
+    <span class="date-label">Data</span>
+    <input type="date" id="sessionDate">
+  </div>
+  <div class="session-info">
+    <span class="session-label">Tipo</span>
+    <div class="session-type">
+      <button class="type-btn active" onclick="setType('diagnostico', this)">Diagnóstico inicial</button>
+      <button class="type-btn" onclick="setType('revisao', this)">Revisão mensal</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <div class="intro">
+    <p>Percorra cada vazamento com atenção. Para cada um, <strong>escolha a gravidade</strong> que você observa hoje no seu negócio e <strong>anote o que viu</strong>. Quanto mais específico, mais útil será esse diagnóstico. Não é hora de resolver, é hora de enxergar.</p>
+  </div>
+
+  <!-- VAZAMENTO 1 -->
+  <div class="vazamento" id="v1">
+    <div class="vazamento-header">
+      <span class="vazamento-number">01</span>
+      <div class="vazamento-info">
+        <h2 class="vazamento-name">Desperdício de insumos na produção</h2>
+        <p class="vazamento-desc">Alimentos sendo descartados, porções inconsistentes, sobras excessivas no final do turno, aproveitamento zero de aparas. O que entra não se converte totalmente em produto vendido.</p>
+      </div>
+    </div>
+    <div class="severity-section">
+      <p class="severity-label">Gravidade observada</p>
+      <div class="severity-options">
+        <button class="sev-btn sev-btn-none selected" onclick="setSeverity(1, 'none', this)"><span class="sev-dot"></span> Não identificado</button>
+        <button class="sev-btn sev-btn-leve" onclick="setSeverity(1, 'leve', this)"><span class="sev-dot"></span> Leve</button>
+        <button class="sev-btn sev-btn-moderado" onclick="setSeverity(1, 'moderado', this)"><span class="sev-dot"></span> Moderado</button>
+        <button class="sev-btn sev-btn-critico" onclick="setSeverity(1, 'critico', this)"><span class="sev-dot"></span> Crítico</button>
+      </div>
+    </div>
+    <div class="obs-section">
+      <p class="obs-label">O que você observou</p>
+      <textarea class="obs-textarea" id="obs1" placeholder="Ex: no final de cada turno, sobram em média 2kg de legumes cortados que são descartados. A porção do prato X varia muito entre os cozinheiros..."></textarea>
+    </div>
+  </div>
+
+  <!-- VAZAMENTO 2 -->
+  <div class="vazamento" id="v2">
+    <div class="vazamento-header">
+      <span class="vazamento-number">02</span>
+      <div class="vazamento-info">
+        <h2 class="vazamento-name">Compras sem planejamento</h2>
+        <p class="vazamento-desc">Compras reativas (faltou, comprou correndo), pedidos excessivos que geram estoque parado, fornecedores sem negociação, compras feitas sem lista ou critério definido.</p>
+      </div>
+    </div>
+    <div class="severity-section">
+      <p class="severity-label">Gravidade observada</p>
+      <div class="severity-options">
+        <button class="sev-btn sev-btn-none selected" onclick="setSeverity(2, 'none', this)"><span class="sev-dot"></span> Não identificado</button>
+        <button class="sev-btn sev-btn-leve" onclick="setSeverity(2, 'leve', this)"><span class="sev-dot"></span> Leve</button>
+        <button class="sev-btn sev-btn-moderado" onclick="setSeverity(2, 'moderado', this)"><span class="sev-dot"></span> Moderado</button>
+        <button class="sev-btn sev-btn-critico" onclick="setSeverity(2, 'critico', this)"><span class="sev-dot"></span> Crítico</button>
+      </div>
+    </div>
+    <div class="obs-section">
+      <p class="obs-label">O que você observou</p>
+      <textarea class="obs-textarea" id="obs2" placeholder="Ex: as compras são feitas sem lista. Quando falta alguma coisa, alguém vai ao mercado pagar preço de varejo. Nunca sei exatamente o quanto gasto por semana..."></textarea>
+    </div>
+  </div>
+
+  <!-- VAZAMENTO 3 -->
+  <div class="vazamento" id="v3">
+    <div class="vazamento-header">
+      <span class="vazamento-number">03</span>
+      <div class="vazamento-info">
+        <h2 class="vazamento-name">Precificação abaixo do custo real</h2>
+        <p class="vazamento-desc">Preços definidos por intuição, concorrência ou "multiplicar por três", sem saber o custo real de cada prato. Alguns itens podem estar sendo vendidos no prejuízo sem que o dono saiba.</p>
+      </div>
+    </div>
+    <div class="severity-section">
+      <p class="severity-label">Gravidade observada</p>
+      <div class="severity-options">
+        <button class="sev-btn sev-btn-none selected" onclick="setSeverity(3, 'none', this)"><span class="sev-dot"></span> Não identificado</button>
+        <button class="sev-btn sev-btn-leve" onclick="setSeverity(3, 'leve', this)"><span class="sev-dot"></span> Leve</button>
+        <button class="sev-btn sev-btn-moderado" onclick="setSeverity(3, 'moderado', this)"><span class="sev-dot"></span> Moderado</button>
+        <button class="sev-btn sev-btn-critico" onclick="setSeverity(3, 'critico', this)"><span class="sev-dot"></span> Crítico</button>
+      </div>
+    </div>
+    <div class="obs-section">
+      <p class="obs-label">O que você observou</p>
+      <textarea class="obs-textarea" id="obs3" placeholder="Ex: o preço do prato X foi definido há 2 anos e nunca foi reajustado. Quando coloco os ingredientes na ponta do lápis, não tenho certeza se estou lucrando..."></textarea>
+    </div>
+  </div>
+
+  <!-- VAZAMENTO 4 -->
+  <div class="vazamento" id="v4">
+    <div class="vazamento-header">
+      <span class="vazamento-number">04</span>
+      <div class="vazamento-info">
+        <h2 class="vazamento-name">Produção despadronizada</h2>
+        <p class="vazamento-desc">Cada funcionário faz o prato de um jeito. Sem fichas técnicas ou receitas documentadas, o custo varia a cada preparo, a qualidade oscila e o treinamento de novos funcionários fica impossível de escalar.</p>
+      </div>
+    </div>
+    <div class="severity-section">
+      <p class="severity-label">Gravidade observada</p>
+      <div class="severity-options">
+        <button class="sev-btn sev-btn-none selected" onclick="setSeverity(4, 'none', this)"><span class="sev-dot"></span> Não identificado</button>
+        <button class="sev-btn sev-btn-leve" onclick="setSeverity(4, 'leve', this)"><span class="sev-dot"></span> Leve</button>
+        <button class="sev-btn sev-btn-moderado" onclick="setSeverity(4, 'moderado', this)"><span class="sev-dot"></span> Moderado</button>
+        <button class="sev-btn sev-btn-critico" onclick="setSeverity(4, 'critico', this)"><span class="sev-dot"></span> Crítico</button>
+      </div>
+    </div>
+    <div class="obs-section">
+      <p class="obs-label">O que você observou</p>
+      <textarea class="obs-textarea" id="obs4" placeholder="Ex: o prato Y fica diferente dependendo de quem cozinha. Não tenho fichas técnicas para nenhum prato. Quando entra um funcionário novo, a qualidade cai..."></textarea>
+    </div>
+  </div>
+
+  <!-- VAZAMENTO 5 -->
+  <div class="vazamento" id="v5">
+    <div class="vazamento-header">
+      <span class="vazamento-number">05</span>
+      <div class="vazamento-info">
+        <h2 class="vazamento-name">Estoque sem controle</h2>
+        <p class="vazamento-desc">Itens vencendo na prateleira, falta de produto em horário de pico, excesso de capital parado em estoque, produtos recebidos com problema sem registro. Não saber o que tem, quanto tem ou o que saiu.</p>
+      </div>
+    </div>
+    <div class="severity-section">
+      <p class="severity-label">Gravidade observada</p>
+      <div class="severity-options">
+        <button class="sev-btn sev-btn-none selected" onclick="setSeverity(5, 'none', this)"><span class="sev-dot"></span> Não identificado</button>
+        <button class="sev-btn sev-btn-leve" onclick="setSeverity(5, 'leve', this)"><span class="sev-dot"></span> Leve</button>
+        <button class="sev-btn sev-btn-moderado" onclick="setSeverity(5, 'moderado', this)"><span class="sev-dot"></span> Moderado</button>
+        <button class="sev-btn sev-btn-critico" onclick="setSeverity(5, 'critico', this)"><span class="sev-dot"></span> Crítico</button>
+      </div>
+    </div>
+    <div class="obs-section">
+      <p class="obs-label">O que você observou</p>
+      <textarea class="obs-textarea" id="obs5" placeholder="Ex: já encontrei produtos vencidos no fundo da câmara. Não faço inventário com frequência. Às vezes falta produto no meio do serviço sem aviso..."></textarea>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- SCORE -->
+  <div class="score-section">
+    <h2 class="score-title">Panorama do diagnóstico</h2>
+    <p class="score-subtitle">Gravidade identificada por área. Atualizado em tempo real</p>
+
+    <div class="score-bars">
+      <div class="score-row">
+        <span class="score-row-name">Desperdício na produção</span>
+        <div class="score-bar-track"><div class="score-bar-fill none" id="bar1"></div></div>
+        <span class="score-row-val none" id="val1"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-row-name">Compras sem planejamento</span>
+        <div class="score-bar-track"><div class="score-bar-fill none" id="bar2"></div></div>
+        <span class="score-row-val none" id="val2"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-row-name">Precificação incorreta</span>
+        <div class="score-bar-track"><div class="score-bar-fill none" id="bar3"></div></div>
+        <span class="score-row-val none" id="val3"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-row-name">Produção despadronizada</span>
+        <div class="score-bar-track"><div class="score-bar-fill none" id="bar4"></div></div>
+        <span class="score-row-val none" id="val4"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-row-name">Estoque sem controle</span>
+        <div class="score-bar-track"><div class="score-bar-fill none" id="bar5"></div></div>
+        <span class="score-row-val none" id="val5"></span>
+      </div>
+    </div>
+
+    <div class="summary-box" id="summaryBox">
+      <div class="summary-grid">
+        <div class="summary-cell">
+          <div class="summary-count none" id="countNone">0</div>
+          <div class="summary-cell-label">Não identificado</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-count leve" id="countLeve">0</div>
+          <div class="summary-cell-label">Leve</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-count moderado" id="countModerado">0</div>
+          <div class="summary-cell-label">Moderado</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-count critico" id="countCritico">0</div>
+          <div class="summary-cell-label">Crítico</div>
+        </div>
+      </div>
+      <p class="summary-message" id="summaryMessage"></p>
+    </div>
+
+    <!-- PAINEL DE EVOLUCAO - aparece so no modo revisao -->
+    <div class="evolucao-box" id="evolucaoBox">
+      <div class="evolucao-header">
+        <p class="evolucao-titulo">Análise de evolução</p>
+        <p class="evolucao-subtitulo" id="evolucaoSubtitulo">Comparativo com o diagnóstico inicial</p>
+      </div>
+      <div class="evolucao-comparativo">
+        <div class="evolucao-col melhorou">
+          <p class="evolucao-col-titulo">Melhorou</p>
+          <div id="evolucao-melhorou"></div>
+        </div>
+        <div class="evolucao-col igual">
+          <p class="evolucao-col-titulo">Ficou igual</p>
+          <div id="evolucao-igual"></div>
+        </div>
+        <div class="evolucao-col piorou">
+          <p class="evolucao-col-titulo">Piorou</p>
+          <div id="evolucao-piorou"></div>
+        </div>
+      </div>
+      <div class="evolucao-direcao">
+        <p class="evolucao-direcao-titulo">O que fazer agora</p>
+        <div class="evolucao-direcao-itens" id="evolucao-direcao"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" onclick="saveSession()"><span>Salvar diagnóstico</span></button>
+      <button class="btn-secondary" onclick="gerarPDF()">Gerar PDF</button>
+      <button class="btn-secondary" onclick="clearForm()">Limpar</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-section" id="historySection">
+    <div class="history-header">
+      <div>
+        <h3 class="history-title">Histórico de revisões</h3>
+        <p class="history-subtitle">Acompanhe a evolução dos vazamentos ao longo do tempo</p>
+      </div>
+    </div>
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Desperdício</th>
+          <th>Compras</th>
+          <th>Precificação</th>
+          <th>Produção</th>
+          <th>Estoque</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody">
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta D2 · Checklist dos 5 Vazamentos</span>
+</footer>
+
+<script>
+// ── STATE ──
+const severities = { 1: 'none', 2: 'none', 3: 'none', 4: 'none', 5: 'none' };
+const severityWeights = { none: 0, leve: 33, moderado: 66, critico: 100 };
+const severityLabels = { none: 'Não identificado', leve: 'Leve', moderado: 'Moderado', critico: 'Crítico' };
+let sessionType = 'diagnostico';
+let sessionHistory = JSON.parse(localStorage.getItem('dose-checklist-history') || '[]');
+
+// ── INIT ──
+document.getElementById('sessionDate').valueAsDate = new Date();
+renderHistory();
+
+// ── DADOS POR MODO ──
+const modeData = {
+  diagnostico: { severities: { 1:'none',2:'none',3:'none',4:'none',5:'none' }, obs: {1:'',2:'',3:'',4:'',5:''} },
+  revisao:     { severities: { 1:'none',2:'none',3:'none',4:'none',5:'none' }, obs: {1:'',2:'',3:'',4:'',5:''} }
+};
+
+// ── SET TYPE ──
+function setType(type, btn) {
+  // Salvar estado atual antes de trocar
+  const current = sessionType;
+  for (let i = 1; i <= 5; i++) {
+    modeData[current].severities[i] = severities[i];
+    modeData[current].obs[i] = document.getElementById('obs' + i).value;
+  }
+
+  // Trocar modo
+  sessionType = type;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Restaurar dados do novo modo
+  for (let i = 1; i <= 5; i++) {
+    const lvl = modeData[type].severities[i];
+    severities[i] = lvl;
+
+    // Atualizar card
+    const card = document.getElementById('v' + i);
+    card.className = 'vazamento' + (lvl !== 'none' ? ' severity-' + lvl : '');
+
+    // Atualizar botões de severidade
+    const btns = card.querySelectorAll('.sev-btn');
+    btns.forEach(b => {
+      b.classList.remove('selected');
+      const onclickVal = b.getAttribute('onclick') || '';
+      const match = onclickVal.match(/'(none|leve|moderado|critico)'/);
+      if (match && match[1] === lvl) b.classList.add('selected');
+    });
+
+    // Atualizar barras de progresso
+    const bar = document.getElementById('bar' + i);
+    const val = document.getElementById('val' + i);
+    if (bar) {
+      bar.className = 'score-bar-fill ' + lvl;
+      bar.style.width = severityWeights[lvl] + '%';
+    }
+    if (val) {
+      val.className = 'score-row-val ' + lvl;
+      val.textContent = lvl === 'none' ? '' : severityLabels[lvl];
+    }
+
+    // Restaurar textarea
+    document.getElementById('obs' + i).value = modeData[type].obs[i];
+  }
+
+  updateSummary();
+}
+
+// ── SET SEVERITY ──
+function setSeverity(num, level, btn) {
+  severities[num] = level;
+
+  // Update card border
+  const card = document.getElementById('v' + num);
+  card.className = 'vazamento' + (level !== 'none' ? ' severity-' + level : '');
+
+  // Update buttons
+  const btns = btn.parentElement.querySelectorAll('.sev-btn');
+  btns.forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // Update bars
+  const bar = document.getElementById('bar' + num);
+  const val = document.getElementById('val' + num);
+  bar.className = 'score-bar-fill ' + level;
+  bar.style.width = severityWeights[level] + '%';
+  val.className = 'score-row-val ' + level;
+  val.textContent = level === 'none' ? '' : severityLabels[level];
+
+  updateSummary();
+}
+
+// ── UPDATE SUMMARY ──
+function updateSummary() {
+  const counts = { none: 0, leve: 0, moderado: 0, critico: 0 };
+  Object.values(severities).forEach(s => counts[s]++);
+
+  const hasAny = counts.leve + counts.moderado + counts.critico > 0;
+  document.getElementById('summaryBox').className = 'summary-box' + (hasAny ? ' visible' : '');
+
+  document.getElementById('countNone').textContent = counts.none;
+  document.getElementById('countLeve').textContent = counts.leve;
+  document.getElementById('countModerado').textContent = counts.moderado;
+  document.getElementById('countCritico').textContent = counts.critico;
+
+  let msg = '';
+  if (counts.critico >= 3) {
+    msg = '<strong>Atenção prioritária:</strong> Você identificou múltiplos vazamentos críticos. Isso explica por que o dinheiro não chega no seu bolso mesmo com o restaurante cheio. O ponto de partida é o Módulo O. Comece pela ficha técnica e CMV.';
+  } else if (counts.critico >= 1) {
+    msg = '<strong>Foco no crítico primeiro:</strong> Concentre sua energia nos vazamentos marcados como crítico. Cada um deles representa perda de dinheiro acontecendo agora, todo dia. Os moderados podem vir depois, um passo de cada vez.';
+  } else if (counts.moderado >= 3) {
+    msg = '<strong>Diagnóstico saudável:</strong> Nenhum vazamento crítico, mas vários moderados somam prejuízo significativo ao longo do mês. A boa notícia: moderado é o mais fácil de resolver com processo e padronização.';
+  } else if (counts.leve >= 1 || counts.moderado >= 1) {
+    msg = '<strong>Boa base para começar:</strong> Os vazamentos identificados são gerenciáveis. Com as ferramentas dos próximos módulos, você vai conseguir estancá-los rapidamente. Continue o diagnóstico com atenção.';
+  }
+
+  document.getElementById('summaryMessage').innerHTML = msg;
+
+  // Mostrar análise de evolução só no modo revisão
+  if (sessionType === 'revisao') {
+    atualizarEvolucao();
+  } else {
+    document.getElementById('evolucaoBox').classList.remove('visible');
+  }
+}
+
+// ── ANÁLISE DE EVOLUÇÃO ──
+const nomeVazamentos = {
+  1: 'Desperdício na produção',
+  2: 'Compras sem planejamento',
+  3: 'Precificação incorreta',
+  4: 'Produção despadronizada',
+  5: 'Estoque sem controle'
+};
+
+const pesoSeveridade = { none: 0, leve: 1, moderado: 2, critico: 3 };
+
+function atualizarEvolucao() {
+  const diag = modeData.diagnostico.severities;
+  const rev = modeData.revisao.severities;
+
+  // Verificar se diagnóstico foi preenchido
+  const diagPreenchido = Object.values(diag).some(v => v !== 'none');
+  const revPreenchido = Object.values(rev).some(v => v !== 'none');
+
+  const box = document.getElementById('evolucaoBox');
+
+  if (!diagPreenchido || !revPreenchido) {
+    box.classList.remove('visible');
+    return;
+  }
+
+  box.classList.add('visible');
+
+  const melhorou = [], igual = [], piorou = [];
+
+  for (let i = 1; i <= 5; i++) {
+    const antes = pesoSeveridade[diag[i]];
+    const depois = pesoSeveridade[rev[i]];
+    const nome = nomeVazamentos[i];
+    const labelAntes = diag[i] === 'none' ? 'não identificado' : diag[i];
+    const labelDepois = rev[i] === 'none' ? 'não identificado' : rev[i];
+
+    if (depois < antes) {
+      melhorou.push({ nome, de: labelAntes, para: labelDepois });
+    } else if (depois === antes) {
+      igual.push({ nome, nivel: labelAntes });
+    } else {
+      piorou.push({ nome, de: labelAntes, para: labelDepois });
+    }
+  }
+
+  // Renderizar colunas
+  function renderColuna(id, itens, tipo) {
+    const el = document.getElementById('evolucao-' + id);
+    if (itens.length === 0) {
+      el.innerHTML = '<p class="evolucao-col-vazio">Nenhum</p>';
+      return;
+    }
+    el.innerHTML = itens.map(item => {
+      const detalhe = tipo === 'igual'
+        ? (item.nivel === 'none' ? 'sem alteração' : item.nivel)
+        : `${item.de} → ${item.para}`;
+      return `<div class="evolucao-item">
+        <span class="evolucao-item-dot"></span>
+        <span><strong>${item.nome}</strong><br><span style="font-size:11px;opacity:0.7">${detalhe}</span></span>
+      </div>`;
+    }).join('');
+  }
+
+  renderColuna('melhorou', melhorou, 'melhorou');
+  renderColuna('igual', igual, 'igual');
+  renderColuna('piorou', piorou, 'piorou');
+
+  // Gerar direcionamentos
+  const direcoes = [];
+
+  // Pioramentos são urgentes
+  piorou.forEach(item => {
+    direcoes.push({
+      prioridade: 'urgente',
+      texto: `<strong>${item.nome}</strong> piorou de ${item.de} para ${item.para}. Esse vazamento precisa de atenção imediata. Revise o que mudou na operação desde o diagnóstico inicial.`
+    });
+  });
+
+  // Iguais críticos ou moderados precisam de ação
+  igual.filter(i => i.nivel === 'critico').forEach(item => {
+    direcoes.push({
+      prioridade: 'urgente',
+      texto: `<strong>${item.nome}</strong> permanece crítico. Sem evolução após a revisão indica que a ação ainda não foi implementada ou não está funcionando. Revise a abordagem.`
+    });
+  });
+
+  igual.filter(i => i.nivel === 'moderado').forEach(item => {
+    direcoes.push({
+      prioridade: 'importante',
+      texto: `<strong>${item.nome}</strong> continua moderado. É possível avançar aqui com ajuste de processo ou padronização. Defina uma ação específica para o próximo ciclo.`
+    });
+  });
+
+  // Melhorias precisam ser mantidas
+  melhorou.forEach(item => {
+    direcoes.push({
+      prioridade: 'manter',
+      texto: `<strong>${item.nome}</strong> evoluiu de ${item.de} para ${item.para}. Bom resultado. Documente o que mudou para garantir que o ganho se mantenha nos próximos ciclos.`
+    });
+  });
+
+  // Se tudo melhorou ou ficou leve/não identificado
+  if (direcoes.length === 0) {
+    direcoes.push({
+      prioridade: 'manter',
+      texto: 'Todos os vazamentos estão sob controle. Continue a rotina de revisão mensal para garantir que o resultado se mantenha. Foque agora no Módulo E para consolidar a gestão em 20 minutos por dia.'
+    });
+  }
+
+  const labelPrioridade = { urgente: 'Urgente', importante: 'Importante', manter: 'Manter' };
+  document.getElementById('evolucao-direcao').innerHTML = direcoes.map(d => `
+    <div class="evolucao-direcao-item">
+      <span class="evolucao-direcao-prioridade prioridade-${d.prioridade}">${labelPrioridade[d.prioridade]}</span>
+      <span class="evolucao-direcao-texto">${d.texto}</span>
+    </div>
+  `).join('');
+}
+
+// ── SAVE SESSION ──
+function saveSession() {
+  const date = document.getElementById('sessionDate').value;
+  const restaurant = document.getElementById('restaurantName').value || 'Meu restaurante';
+
+  const entry = {
+    date,
+    restaurant,
+    type: sessionType,
+    severities: { ...severities },
+    obs: {
+      1: document.getElementById('obs1').value,
+      2: document.getElementById('obs2').value,
+      3: document.getElementById('obs3').value,
+      4: document.getElementById('obs4').value,
+      5: document.getElementById('obs5').value,
+    }
+  };
+
+  sessionHistory.unshift(entry);
+  localStorage.setItem('dose-checklist-history', JSON.stringify(sessionHistory));
+  renderHistory();
+
+  // Feedback
+  const btn = document.querySelector('.btn-primary');
+  const span = btn.querySelector('span');
+  const orig = span.textContent;
+  span.textContent = 'Salvo ✓';
+  setTimeout(() => span.textContent = orig, 2000);
+}
+
+// ── RENDER HISTORY ──
+function renderHistory() {
+  const tbody = document.getElementById('historyBody');
+  const section = document.getElementById('historySection');
+
+  if (sessionHistory.length === 0) {
+    section.className = 'history-section';
+    return;
+  }
+
+  section.className = 'history-section visible';
+
+  const names = ['Desperdício', 'Compras', 'Precificação', 'Produção', 'Estoque'];
+  tbody.innerHTML = sessionHistory.map(entry => {
+    const dateFormatted = entry.date
+      ? new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+      : 'sem data';
+    const typeLabel = entry.type === 'diagnostico' ? 'Diagnóstico' : 'Revisão';
+    const cells = [1,2,3,4,5].map(i => {
+      const s = entry.severities[i] || 'none';
+      return `<td><span class="hist-sev ${s}"><span class="hist-dot"></span>${severityLabels[s]}</span></td>`;
+    }).join('');
+    return `<tr>
+      <td>${dateFormatted}</td>
+      <td>${typeLabel}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+}
+
+// ── CLEAR ──
+function clearForm() {
+  [1,2,3,4,5].forEach(i => {
+    setSeverity(i, 'none', document.querySelector(`#v${i} .sev-btn-none`));
+    document.getElementById('obs' + i).value = '';
+  });
+  document.getElementById('summaryBox').className = 'summary-box';
+}
+
+// ── GERAR PDF ──
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  const overlay = document.getElementById('pdfOverlay');
+  overlay.classList.add('visible');
+
+  try {
+    const restaurant = document.getElementById('restaurantName').value || 'Meu Restaurante';
+    const date = document.getElementById('sessionDate').value;
+    const dateFormatted = date
+      ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+      : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const typeLabel = sessionType === 'diagnostico' ? 'Diagnóstico Inicial' : 'Revisão Mensal';
+
+    const sevColors = { none: [122,115,105], leve: [74,124,89], moderado: [193,127,42], critico: [139,58,58] };
+    const sevLabels2 = { none: 'Não identificado', leve: 'Leve', moderado: 'Moderado', crítico: 'Crítico' };
+    const vazNames = [
+      'Desperdício de insumos na produção',
+      'Compras sem planejamento',
+      'Precificação abaixo do custo real',
+      'Produção despadronizada',
+      'Estoque sem controle'
+    ];
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, H = 297;
+    const mg = 18; // margin
+    const cw = W - mg * 2; // content width
+
+    // ── PAGE 1: CAPA / RESUMO ──
+    // Background
+    pdf.setFillColor(26, 24, 20);
+    pdf.rect(0, 0, W, H, 'F');
+
+    // Gold top line
+    pdf.setDrawColor(184, 150, 90);
+    pdf.setLineWidth(0.5);
+    pdf.line(mg, 14, W - mg, 14);
+
+    // Brand
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(184, 150, 90);
+    pdf.setCharSpace(2);
+    pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.', mg, 11);
+    pdf.setCharSpace(0);
+
+    // Module badge
+    pdf.setFontSize(8);
+    pdf.setTextColor(184, 150, 90);
+    pdf.text('MÓDULO D  ·  D2', W - mg, 11, { align: 'right' });
+
+    // Main title
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(28);
+    pdf.setTextColor(245, 240, 232);
+    pdf.text('Checklist dos', mg, 42);
+    pdf.setFont('helvetica', 'bolditalic');
+    pdf.setTextColor(212, 175, 122);
+    pdf.text('5 Vazamentos', mg, 56);
+
+    // Subtitle
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(122, 115, 105);
+    pdf.text('Identifique onde o dinheiro do seu restaurante está sumindo', mg, 66);
+
+    // Meta line
+    pdf.setLineWidth(0.3);
+    pdf.setDrawColor(184, 150, 90, 0.3);
+    pdf.line(mg, 74, W - mg, 74);
+
+    pdf.setFontSize(9);
+    pdf.setTextColor(184, 150, 90);
+    pdf.text(restaurant.toUpperCase(), mg, 81);
+    pdf.setTextColor(122, 115, 105);
+    pdf.text(`${typeLabel}  ·  ${dateFormatted}`, W - mg, 81, { align: 'right' });
+
+    pdf.line(mg, 85, W - mg, 85);
+
+    // ── SUMMARY COUNTS ──
+    const counts = { none: 0, leve: 0, moderado: 0, critico: 0 };
+    Object.values(severities).forEach(s => counts[s]++);
+
+    const cells = [
+      { label: 'Não identificado', key: 'none', color: [122,115,105] },
+      { label: 'Leve', key: 'leve', color: [74,124,89] },
+      { label: 'Moderado', key: 'moderado', color: [193,127,42] },
+      { label: 'Crítico', key: 'critico', color: [139,58,58] },
+    ];
+
+    const cellW = cw / 4;
+    cells.forEach((c, i) => {
+      const x = mg + i * cellW;
+      // border
+      pdf.setDrawColor(...c.color, 0.4);
+      pdf.setLineWidth(0.3);
+      pdf.rect(x, 92, cellW - 2, 28, 'S');
+      // count
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(26);
+      pdf.setTextColor(...c.color);
+      pdf.text(String(counts[c.key]), x + (cellW - 2) / 2, 110, { align: 'center' });
+      // label
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(122, 115, 105);
+      pdf.text(c.label.toUpperCase(), x + (cellW - 2) / 2, 116, { align: 'center' });
+    });
+
+    // ── MESSAGE ──
+    let msg = '';
+    if (counts.critico >= 3) {
+      msg = 'Múltiplos vazamentos críticos identificados. O ponto de partida é o Módulo O. Comece pela ficha técnica e CMV.';
+    } else if (counts.critico >= 1) {
+      msg = 'Concentre energia nos vazamentos críticos primeiro. Cada um representa perda acontecendo agora, todo dia.';
+    } else if (counts.moderado >= 3) {
+      msg = 'Nenhum vazamento crítico, mas vários moderados somam prejuízo significativo ao longo do mês.';
+    } else if (counts.leve + counts.moderado >= 1) {
+      msg = 'Vazamentos identificados são gerenciáveis. Com as ferramentas dos próximos módulos, você resolve rapidamente.';
+    } else {
+      msg = 'Nenhum vazamento identificado neste diagnóstico.';
+    }
+
+    if (msg) {
+      pdf.setFillColor(184, 150, 90, 0.06);
+      pdf.setDrawColor(184, 150, 90);
+      pdf.setLineWidth(0.4);
+      pdf.line(mg, 126, mg, 140);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9.5);
+      pdf.setTextColor(200, 185, 155);
+      const msgLines = pdf.splitTextToSize(msg, cw - 6);
+      pdf.text(msgLines, mg + 5, 131);
+    }
+
+    // ── PAGE 2+: VAZAMENTOS ──
+    pdf.addPage();
+    pdf.setFillColor(26, 24, 20);
+    pdf.rect(0, 0, W, H, 'F');
+
+    let y = 20;
+
+    // Section header
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(184, 150, 90);
+    pdf.setCharSpace(2);
+    pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.', mg, 11);
+    pdf.setCharSpace(0);
+    pdf.setDrawColor(184, 150, 90);
+    pdf.setLineWidth(0.5);
+    pdf.line(mg, 14, W - mg, 14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(14);
+    pdf.setTextColor(245, 240, 232);
+    pdf.text('Detalhamento por vazamento', mg, y);
+    y += 10;
+
+    for (let i = 1; i <= 5; i++) {
+      const sev = severities[i];
+      const obs = document.getElementById('obs' + i).value;
+      const sc = sevColors[sev];
+
+      // Check page space
+      const blockH = obs ? 44 : 28;
+      if (y + blockH > H - 20) {
+        pdf.addPage();
+        pdf.setFillColor(26, 24, 20);
+        pdf.rect(0, 0, W, H, 'F');
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(184, 150, 90);
+        pdf.setCharSpace(2);
+        pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.', mg, 11);
+        pdf.setCharSpace(0);
+        pdf.setDrawColor(184, 150, 90);
+        pdf.setLineWidth(0.5);
+        pdf.line(mg, 14, W - mg, 14);
+        y = 24;
+      }
+
+      // Left accent bar
+      pdf.setFillColor(...sc);
+      pdf.rect(mg, y, 2, blockH - 2, 'F');
+
+      // Number
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(22);
+      pdf.setTextColor(...sc, 0.25);
+      pdf.text(String(i).padStart(2, '0'), mg + 6, y + 10);
+
+      // Name
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(245, 240, 232);
+      pdf.text(vazNames[i - 1], mg + 22, y + 7);
+
+      // Severity pill
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...sc);
+      const sevText = severityLabels[sev].toUpperCase();
+      pdf.text('● ' + sevText, mg + 22, y + 14);
+
+      // Observation
+      if (obs) {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(160, 152, 140);
+        const obsLines = pdf.splitTextToSize(obs, cw - 26);
+        const obsShort = obsLines.slice(0, 3);
+        pdf.text(obsShort, mg + 22, y + 22);
+        if (obsLines.length > 3) {
+          pdf.setTextColor(122, 115, 105);
+          pdf.text('...', mg + 22, y + 30);
+        }
+      }
+
+      // Bottom border
+      pdf.setDrawColor(184, 150, 90, 0.12);
+      pdf.setLineWidth(0.2);
+      pdf.line(mg, y + blockH - 2, W - mg, y + blockH - 2);
+
+      y += blockH + 4;
+    }
+
+    // ── FOOTER on all pages ──
+    const pageCount = pdf.internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      pdf.setPage(p);
+      pdf.setDrawColor(184, 150, 90);
+      pdf.setLineWidth(0.3);
+      pdf.line(mg, H - 14, W - mg, H - 14);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(122, 115, 105);
+      pdf.setCharSpace(1);
+      pdf.text('GASTTRO DESIGN', mg, H - 10);
+      pdf.setCharSpace(0);
+      pdf.text(`${p} / ${pageCount}`, W - mg, H - 10, { align: 'right' });
+    }
+
+    // Save
+    const filename = `DOSE-Checklist-Vazamentos-${restaurant.replace(/\s+/g, '-')}-${date || 'sem-data'}.pdf`;
+    pdf.save(filename);
+
+  } catch (err) {
+    console.error('Erro ao gerar PDF:', err);
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    overlay.classList.remove('visible');
+  }
+}
+
+// ── PRINT ──
+function printPage() { window.print(); }
+</script>
+</body>
+</html>

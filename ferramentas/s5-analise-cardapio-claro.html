@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de Cardápio | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --estrela: #7a4008; --vaca: #1a5e2a; --interrogacao: #2a4a7a; --abacaxi: #7a2020;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+.tabs-bar { display: flex; padding: 0 48px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 13px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn:hover:not(.active) { color: var(--cream); }
+
+main { max-width: 1040px; margin: 0 auto; padding: 32px 48px 80px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.stat-card { padding: 16px; border: 1px solid; }
+.stat-card.estrela { border-color: rgba(122,64,8,0.4); background: rgba(122,64,8,0.07); }
+.stat-card.vaca { border-color: rgba(26,94,42,0.4); background: rgba(26,94,42,0.07); }
+.stat-card.interrogacao { border-color: rgba(42,74,122,0.4); background: rgba(42,74,122,0.07); }
+.stat-card.abacaxi { border-color: rgba(122,32,32,0.4); background: rgba(122,32,32,0.07); }
+.stat-emoji { font-size: 22px; margin-bottom: 6px; }
+.stat-nome { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+.stat-nome.estrela { color: #7a4008; }
+.stat-nome.vaca { color: #1a5e2a; }
+.stat-nome.interrogacao { color: #7aaad4; }
+.stat-nome.abacaxi { color: #c07070; }
+.stat-qtd { font-family: 'Manrope', sans-serif; font-size: 36px; font-weight: 300; line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* FORM */
+.form-card { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 22px 26px; margin-bottom: 24px; display: none; }
+.form-card.open { display: block; }
+.form-title { font-family: 'Manrope', sans-serif; font-size: 19px; font-weight: 300; color: var(--gold-light); margin-bottom: 14px; }
+.fg4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.fb { display: flex; flex-direction: column; gap: 6px; }
+.fb-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+.fb-hint { font-size: 11px; color: rgba(1,30,52,0.4); margin-top: -3px; }
+input[type="number"].f, input[type="text"].f, select.f {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 9px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="number"].f::placeholder, input[type="text"].f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="number"].f:focus, input[type="text"].f:focus, select.f:focus { border-color: var(--gold); }
+select.f { cursor: pointer; color-scheme: light; }
+select.f option { background: #f9e8d7; color: #011e34; }
+.sw { position: relative; }
+.sa { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+
+/* PREVIEW MC */
+.mc-preview { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(2,82,145,0.06); border: 1px solid var(--border); margin-bottom: 12px; }
+.mc-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.mc-val { font-family: 'Manrope', sans-serif; font-size: 26px; font-weight: 300; color: var(--gold); }
+.mc-pct { font-size: 18px; color: var(--muted); margin-left: 8px; }
+
+.form-actions { display: flex; gap: 10px; }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 18px; cursor: pointer; transition: all 0.2s; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-green { background: rgba(26,94,42,0.15); color: #1a5e2a; border: 1px solid rgba(26,94,42,0.35); }
+.btn-green:hover { background: rgba(26,94,42,0.25); }
+.btn-red-sm { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); font-size: 10px; padding: 5px 10px; }
+.btn-red-sm:hover { background: rgba(122,32,32,0.25); }
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+
+.toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.search-wrap { flex: 1; min-width: 160px; position: relative; }
+.search-input { font-family: 'Manrope', sans-serif; font-size: 12px; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); width: 100%; padding: 9px 34px 9px 13px; outline: none; border-radius: 1px; }
+.search-input::placeholder { color: rgba(1,30,52,0.4); }
+.search-input:focus { border-color: var(--gold); }
+.si { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+
+/* TABELA */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 400; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid rgba(91,145,188,0.06); transition: background 0.15s; }
+tbody tr:hover { background: rgba(1,30,52,0.04); }
+td { padding: 11px 12px; vertical-align: middle; }
+.td-nome { font-weight: 500; color: var(--cream); }
+.td-muted { color: var(--muted); font-size: 11px; }
+.td-num { font-family: 'Manrope', sans-serif; font-size: 16px; color: var(--gold-light); }
+
+/* BADGES DE CLASSIFICAÇÃO */
+.badge-class { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 20px; }
+.badge-estrela { background: rgba(122,64,8,0.15); color: #7a4008; border: 1px solid rgba(122,64,8,0.3); }
+.badge-vaca { background: rgba(26,94,42,0.15); color: #1a5e2a; border: 1px solid rgba(26,94,42,0.3); }
+.badge-interrogacao { background: rgba(42,74,122,0.15); color: #7aaad4; border: 1px solid rgba(42,74,122,0.3); }
+.badge-abacaxi { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); }
+
+/* CLASSIFICAÇÃO MANUAL */
+.class-sel { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--muted); padding: 4px 20px 4px 8px; outline: none; cursor: pointer; appearance: none; color-scheme: light; border-radius: 20px; transition: all 0.2s; }
+.class-sel:focus { border-color: var(--gold); }
+.class-sel option { background: #f9e8d7; color: #011e34; }
+
+/* MATRIZ VISUAL */
+.matriz-wrap { margin-bottom: 32px; }
+.matriz-title { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 300; margin-bottom: 6px; }
+.matriz-sub { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+.matriz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.quadrante { border: 1px solid; padding: 20px; min-height: 160px; }
+.quadrante.estrela { border-color: rgba(122,64,8,0.35); background: rgba(122,64,8,0.05); }
+.quadrante.vaca { border-color: rgba(26,94,42,0.35); background: rgba(26,94,42,0.05); }
+.quadrante.interrogacao { border-color: rgba(42,74,122,0.35); background: rgba(42,74,122,0.05); }
+.quadrante.abacaxi { border-color: rgba(122,32,32,0.35); background: rgba(122,32,32,0.05); }
+.q-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.q-emoji { font-size: 20px; }
+.q-nome { font-size: 14px; font-weight: 500; }
+.q-nome.estrela { color: #7a4008; }
+.q-nome.vaca { color: #1a5e2a; }
+.q-nome.interrogacao { color: #7aaad4; }
+.q-nome.abacaxi { color: #c07070; }
+.q-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+.q-pratos { display: flex; flex-direction: column; gap: 6px; }
+.q-prato-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: rgba(1,30,52,0.04); border: 1px solid rgba(91,145,188,0.08); gap: 10px; }
+.q-prato-nome { font-size: 12px; font-weight: 500; color: var(--cream); flex: 1; }
+.q-prato-mc { font-family: 'Manrope', sans-serif; font-size: 14px; color: var(--gold); flex-shrink: 0; }
+.q-vazio { font-size: 11px; color: var(--muted); font-style: italic; }
+
+/* AÇÕES RECOMENDADAS */
+.acoes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+.acao-card { border: 1px solid; padding: 20px; }
+.acao-card.estrela { border-color: rgba(122,64,8,0.35); }
+.acao-card.vaca { border-color: rgba(26,94,42,0.35); }
+.acao-card.interrogacao { border-color: rgba(42,74,122,0.35); }
+.acao-card.abacaxi { border-color: rgba(122,32,32,0.35); }
+.acao-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.acao-emoji { font-size: 18px; }
+.acao-title { font-size: 13px; font-weight: 500; }
+.acao-title.estrela { color: #7a4008; }
+.acao-title.vaca { color: #1a5e2a; }
+.acao-title.interrogacao { color: #7aaad4; }
+.acao-title.abacaxi { color: #c07070; }
+.acao-desc { font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.7; margin-bottom: 10px; }
+.acao-itens { display: flex; flex-direction: column; gap: 5px; }
+.acao-item { display: flex; gap: 8px; font-size: 11px; color: rgba(1,30,52,0.7); line-height: 1.5; }
+.acao-item-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.acao-item-dot.estrela { background: #7a4008; }
+.acao-item-dot.vaca { background: #1a5e2a; }
+.acao-item-dot.interrogacao { background: #7aaad4; }
+.acao-item-dot.abacaxi { background: #c07070; }
+
+/* ANÁLISE INDIVIDUAL */
+.prato-detalhe { border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
+.pd-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; background: rgba(1,30,52,0.04); transition: background 0.2s; }
+.pd-header:hover { background: rgba(1,30,52,0.04); }
+.pd-nome { font-size: 13px; font-weight: 500; color: var(--cream); flex: 1; }
+.pd-chev { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+.pd-chev.open { transform: rotate(180deg); }
+.pd-body { display: none; padding: 14px 18px 18px; border-top: 1px solid var(--border); }
+.pd-body.open { display: block; }
+.pd-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.pd-item-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.pd-item-val { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold); }
+.pd-recomendacao { font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.7; padding: 12px 14px; border: 1px solid var(--border); border-left: 3px solid var(--gold); }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 44px 20px; color: var(--muted); }
+.empty-icon { font-size: 34px; margin-bottom: 12px; opacity: 0.35; }
+.empty-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; line-height: 1.7; }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 768px) {
+  header, .session-bar, .tabs-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .stats-row, .matriz-grid, .acoes-grid { grid-template-columns: 1fr 1fr; }
+  .fg4, .fg3 { grid-template-columns: 1fr 1fr; }
+  .pd-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Análise de<br><em>Cardápio</em></h1>
+    <p class="hsub">Descubra quais pratos trabalham a seu favor. A matriz estrela, vaca, interrogação e abacaxi classifica cada prato pelo que ele gera e pelo que ele vende.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo S · S5</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="ativarTab('matriz',this)">Matriz</button>
+  <button class="tab-btn" onclick="ativarTab('pratos',this)">Pratos</button>
+  <button class="tab-btn" onclick="ativarTab('acoes',this)">Ações recomendadas</button>
+  <button class="tab-btn" onclick="ativarTab('analise',this)">Análise individual</button>
+</div>
+
+<main>
+
+  <!-- MATRIZ -->
+  <div class="tab-panel active" id="tab-matriz">
+    <div id="statsCards" style="margin-bottom:24px"></div>
+    <div class="matriz-wrap">
+      <p class="matriz-title">Matriz de engenharia de cardápio</p>
+      <p class="matriz-sub">Classificação automática baseada na margem de contribuição e no volume de vendas de cada prato. Médias do cardápio são usadas como linha divisória.</p>
+      <div class="matriz-grid" id="matrizGrid"></div>
+    </div>
+    <div class="empty-state" id="emptyMatriz" style="display:none">
+      <div class="empty-icon">📋</div>
+      <p class="empty-title">Nenhum prato cadastrado</p>
+      <p class="empty-sub">Vá para a aba "Pratos" e adicione os pratos do seu cardápio com preço, custo e volume de vendas.</p>
+    </div>
+  </div>
+
+  <!-- PRATOS -->
+  <div class="tab-panel" id="tab-pratos">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="searchPrato" placeholder="Buscar prato..." oninput="renderPratos()">
+        <span class="si">⌕</span>
+      </div>
+      <div style="position:relative">
+        <select style="font-family:'Manrope',sans-serif;font-size:11px;background:rgba(1,30,52,0.04);border:1px solid var(--border);color:var(--muted);padding:9px 24px 9px 12px;outline:none;cursor:pointer;appearance:none;color-scheme:dark" id="filterClass" onchange="renderPratos()">
+          <option value="">Todas as classificações</option>
+          <option value="estrela">Estrela</option>
+          <option value="vaca">Vaca leiteira</option>
+          <option value="interrogacao">Interrogação</option>
+          <option value="abacaxi">Abacaxi</option>
+        </select>
+        <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▾</span>
+      </div>
+      <button class="btn btn-gold" onclick="toggleForm('formPrato')">+ Adicionar prato</button>
+      <button class="btn btn-green" onclick="exportarExcel()">Exportar Excel</button>
+    </div>
+
+    <div class="form-card" id="formPrato">
+      <p class="form-title" id="formPratoTitle">Novo prato</p>
+      <div class="fg4">
+        <div class="fb">
+          <label class="fb-label">Prato</label>
+          <p class="fb-hint">Selecione da Ficha Técnica (O2) ou digite manualmente.</p>
+          <div class="sw" style="position:relative">
+            <select class="f" id="pr_nome_select" onchange="onS5PratoSelect(this.value)">
+              <option value="">Selecione da Ficha Técnica (O2)...</option>
+            </select><span class="sa">&#9662;</span>
+          </div>
+          <input type="text" class="f" id="pr_nome" placeholder="Ou digite o nome manualmente..." style="margin-top:6px" oninput="onS5NomeManual()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Categoria</label>
+          <div class="sw">
+            <select class="f" id="pr_cat" onchange="onS5CatChange(this.value)">
+              <option value="">Selecione</option>
+              <option>Entrada</option><option>Prato principal</option>
+              <option>Sobremesa</option><option>Bebida</option>
+              <option>Acompanhamento</option><option>Lanche</option><option>Outro</option>
+            </select><span class="sa">&#9662;</span>
+          </div>
+          <input type="text" class="f" id="pr_cat_outro" placeholder="Especifique a categoria..." style="margin-top:6px;display:none">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Preço de venda (R$)</label>
+          <input type="number" class="f" id="pr_preco" placeholder="0,00" min="0" step="0.01" oninput="prevMC()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Custo de insumos (R$)</label>
+          <p class="fb-hint">Preenchido automaticamente pela O2 ou informe manualmente.</p>
+          <input type="number" class="f" id="pr_custo" placeholder="0,00" min="0" step="0.01" oninput="prevMC()">
+        </div>
+      </div>
+      <div class="fg3">
+        <div class="fb">
+          <label class="fb-label">Vendas mensais (unid.)</label>
+          <input type="number" class="f" id="pr_vendas" placeholder="Ex: 80" min="0" step="1">
+        </div>
+        <div class="mc-preview" id="mcPreview">
+          <span class="mc-label">MC por prato</span>
+          <span class="mc-val" id="mcVal">--</span>
+          <span class="mc-pct" id="mcPct"></span>
+        </div>
+        <div class="fb" style="justify-content:flex-end">
+          <label class="fb-label">Classificação manual (opcional)</label>
+          <div class="sw">
+            <select class="f" id="pr_class_manual">
+              <option value="">Automática</option>
+              <option value="estrela">Estrela</option>
+              <option value="vaca">Vaca leiteira</option>
+              <option value="interrogacao">Interrogação</option>
+              <option value="abacaxi">Abacaxi</option>
+            </select><span class="sa">▾</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="salvarPrato()">Salvar prato</button>
+        <button class="btn btn-outline" onclick="fecharForm()">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Prato</th>
+            <th>Categoria</th>
+            <th>Preço</th>
+            <th>Custo</th>
+            <th>MC (R$)</th>
+            <th>MC (%)</th>
+            <th>Vendas/mês</th>
+            <th>MC total/mês</th>
+            <th>Classificação</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyPratos"></tbody>
+      </table>
+      <div class="empty-state" id="emptyPratos" style="display:none">
+        <div class="empty-icon">🍽️</div>
+        <p class="empty-title">Nenhum prato cadastrado</p>
+        <p class="empty-sub">Adicione os pratos com preço, custo de insumos e volume de vendas mensais.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- AÇÕES -->
+  <div class="tab-panel" id="tab-acoes">
+    <div id="acoesContent"></div>
+  </div>
+
+  <!-- ANÁLISE INDIVIDUAL -->
+  <div class="tab-panel" id="tab-analise">
+    <div id="analiseContent"></div>
+    <div class="empty-state" id="emptyAnalise" style="display:none">
+      <div class="empty-icon">🔍</div>
+      <p class="empty-title">Nenhum prato para analisar</p>
+      <p class="empty-sub">Cadastre pratos na aba "Pratos" para ver a análise individual.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta S5 · Análise de Cardápio</span>
+</footer>
+
+<script>
+
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatBRLNum(valor, casas) {
+  if (valor === null || valor === undefined || isNaN(valor)) return '--';
+  casas = casas !== undefined ? casas : 2;
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+}
+
+let pratos = JSON.parse(localStorage.getItem('dose-cardapio-pratos') || '[]');
+let editandoId = null;
+
+const CLASS_INFO = {
+  estrela:       { emoji: '⭐', nome: 'Estrela',        cor: '#7a4008', sub: 'Alta margem · Alto volume',    badge: 'badge-estrela',       q: 'quadrante estrela', stat: 'stat-card estrela' },
+  vaca:          { emoji: '🐄', nome: 'Vaca leiteira',  cor: '#1a5e2a', sub: 'Baixa margem · Alto volume',   badge: 'badge-vaca',          q: 'quadrante vaca',    stat: 'stat-card vaca' },
+  interrogacao:  { emoji: '❓', nome: 'Interrogação',   cor: '#7aaad4', sub: 'Alta margem · Baixo volume',   badge: 'badge-interrogacao',  q: 'quadrante interrogacao', stat: 'stat-card interrogacao' },
+  abacaxi:       { emoji: '🍍', nome: 'Abacaxi',        cor: '#c07070', sub: 'Baixa margem · Baixo volume',  badge: 'badge-abacaxi',       q: 'quadrante abacaxi', stat: 'stat-card abacaxi' },
+};
+
+const RECOMENDACOES = {
+  estrela: {
+    titulo: 'Manter e proteger',
+    desc: 'São os pratos que sustentam o cardápio. Alta margem e alto volume. O objetivo é garantir consistência e qualidade para não perder esse desempenho.',
+    itens: [
+      'Manter o padrão de preparo rigoroso com ficha técnica atualizada',
+      'Posicionar de forma destacada no cardápio (primeira página, foto em destaque)',
+      'Treinar a equipe para sugerir ativamente esses pratos',
+      'Monitorar custo de insumos de perto para preservar a margem',
+      'Não mudar receita sem medir o impacto na margem antes',
+    ]
+  },
+  vaca: {
+    titulo: 'Otimizar a margem',
+    desc: 'Vendem bem mas contribuem pouco por unidade. A alavanca é aumentar a margem, seja pelo preço ou pelo controle de custo, sem perder o volume.',
+    itens: [
+      'Revisar o custo de insumos e verificar se há margem para reduzir',
+      'Avaliar um reajuste gradual de preço de 5% a 10% e monitorar impacto no volume',
+      'Substituir insumos de alto custo por equivalentes de qualidade similar',
+      'Usar como entrada ou acompanhamento para puxar vendas de pratos com maior margem',
+      'Verificar se o porcionamento está sendo respeitado em todos os turnos',
+    ]
+  },
+  interrogacao: {
+    titulo: 'Aumentar o volume',
+    desc: 'Têm boa margem mas não saem o suficiente. O desafio é torná-los mais visíveis e desejados sem comprometer o que os torna lucrativos.',
+    itens: [
+      'Reposicionar no cardápio: primeira página, destaque visual, sugestão do dia',
+      'Treinar a equipe para sugerir ativamente esses pratos durante o atendimento',
+      'Criar combos ou experiências que incluam esses pratos',
+      'Avaliar se o preço está comunicando bem o valor do prato',
+      'Testar promoção pontual para gerar experimentação sem comprometer a margem permanentemente',
+    ]
+  },
+  abacaxi: {
+    titulo: 'Revisar ou eliminar',
+    desc: 'Baixa margem e baixo volume. Custam mais do que rendem. A decisão é entre reposicionar, reformular ou retirar do cardápio.',
+    itens: [
+      'Calcular o custo operacional real desse prato (tempo de preparo, complexidade)',
+      'Avaliar se uma reformulação da receita melhoraria a margem sem perder a identidade',
+      'Considerar retirar do cardápio regular e manter como prato especial ou sazonal',
+      'Verificar se o prato tem valor estratégico (âncora de preço, diferencial de marca)',
+      'Se mantiver, aumentar o preço até a margem justificar a permanência',
+    ]
+  }
+};
+
+// INIT
+document.getElementById('rname').value = localStorage.getItem('dose-cardapio-rname') || '';
+popularPiclistS5();
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-cardapio-rname', e.target.value));
+renderTudo();
+
+function salvar() { localStorage.setItem('dose-cardapio-pratos', JSON.stringify(pratos)); }
+
+function ativarTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'acoes') renderAcoes();
+  if (id === 'analise') renderAnalise();
+}
+
+function toggleForm(id) {
+  const form = document.getElementById(id);
+  if (form.classList.contains('open')) { fecharForm(); return; }
+  editandoId = null;
+  document.getElementById('formPratoTitle').textContent = 'Novo prato';
+  limparForm();
+  form.classList.add('open');
+}
+
+function fecharForm() {
+  document.getElementById('formPrato').classList.remove('open');
+  editandoId = null;
+  limparForm();
+}
+
+function limparForm() {
+  document.getElementById('pr_nome_select').value = '';
+  const catOutro = document.getElementById('pr_cat_outro'); if (catOutro) { catOutro.style.display = 'none'; catOutro.value = ''; }
+  ['pr_nome','pr_cat','pr_preco','pr_custo','pr_vendas','pr_class_manual'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('mcVal').textContent = '--';
+  document.getElementById('mcPct').textContent = '';
+}
+
+// CÁLCULOS
+function calcMC(preco, custo) { return preco > 0 ? preco - custo : 0; }
+function calcMCPct(preco, custo) { return preco > 0 ? ((preco - custo) / preco) * 100 : 0; }
+
+function medias() {
+  const comDados = pratos.filter(p => p.preco > 0 && p.vendas > 0);
+  if (comDados.length === 0) return { mc: 0, vol: 0 };
+  const mc = comDados.reduce((a, p) => a + calcMC(p.preco, p.custo), 0) / comDados.length;
+  const vol = comDados.reduce((a, p) => a + p.vendas, 0) / comDados.length;
+  return { mc, vol };
+}
+
+function classificar(p) {
+  if (p.classManual) return p.classManual;
+  const { mc, vol } = medias();
+  const mcP = calcMC(p.preco, p.custo);
+  const acimaMC = mcP >= mc;
+  const acimaVol = p.vendas >= vol;
+  if (acimaMC && acimaVol) return 'estrela';
+  if (!acimaMC && acimaVol) return 'vaca';
+  if (acimaMC && !acimaVol) return 'interrogacao';
+  return 'abacaxi';
+}
+
+function prevMC() {
+  const preco = parseFloat(document.getElementById('pr_preco').value) || 0;
+  const custo = parseFloat(document.getElementById('pr_custo').value) || 0;
+  const mc = calcMC(preco, custo);
+  const pct = calcMCPct(preco, custo);
+  document.getElementById('mcVal').textContent = preco > 0 ? fmt(mc) : '--';
+  document.getElementById('mcPct').textContent = preco > 0 ? fmtPct(pct) : '';
+  document.getElementById('mcVal').style.color = preco > 0 ? (mc > 0 ? 'var(--gold)' : '#7a2020') : 'var(--gold)';
+}
+
+
+// ── PICKLIST DA S5 (linka com dose-fichas do O2) ──
+function popularPiclistS5() {
+  const fichas = JSON.parse(localStorage.getItem('dose-fichas') || '[]');
+  const sel = document.getElementById('pr_nome_select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione da Ficha Técnica (O2)...</option>';
+  if (fichas.length === 0) {
+    const opt = document.createElement('option');
+    opt.disabled = true;
+    opt.textContent = 'Nenhuma ficha encontrada no O2';
+    sel.appendChild(opt);
+    return;
+  }
+  fichas.filter(f => f.nome).forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.nome;
+    opt.dataset.custo = f.custoTotal || '';
+    opt.dataset.cat = f.categoriaBase || f.categoria || '';
+    opt.textContent = f.nome + (f.custoTotal ? ' - R$ ' + formatBRL(f.custoTotal) : '');
+    sel.appendChild(opt);
+  });
+}
+function onS5PratoSelect(val) {
+  const sel = document.getElementById('pr_nome_select');
+  const manual = document.getElementById('pr_nome');
+  if (!val) { if (manual) manual.value = ''; return; }
+  const opt = sel.options[sel.selectedIndex];
+  if (manual) manual.value = '';
+  if (opt.dataset.custo) {
+    document.getElementById('pr_custo').value = parseFloat(opt.dataset.custo).toFixed(2);
+    prevMC();
+  }
+  if (opt.dataset.cat) {
+    const catSel = document.getElementById('pr_cat');
+    const cats = Array.from(catSel.options).map(o => o.value);
+    if (cats.includes(opt.dataset.cat)) {
+      catSel.value = opt.dataset.cat;
+    } else {
+      catSel.value = 'Outro';
+      const outro = document.getElementById('pr_cat_outro');
+      if (outro) { outro.style.display = 'block'; outro.value = opt.dataset.cat; }
+    }
+    onS5CatChange(catSel.value);
+  }
+}
+function onS5NomeManual() {
+  const sel = document.getElementById('pr_nome_select');
+  if (sel) sel.value = '';
+}
+function onS5CatChange(val) {
+  const outro = document.getElementById('pr_cat_outro');
+  if (!outro) return;
+  outro.style.display = val === 'Outro' ? 'block' : 'none';
+  if (val !== 'Outro') outro.value = '';
+}
+function getS5NomePrato() {
+  const sel = document.getElementById('pr_nome_select');
+  const manual = document.getElementById('pr_nome');
+  if (sel && sel.value) return sel.value;
+  if (manual && manual.value.trim()) return manual.value.trim();
+  return '';
+}
+function getS5Categoria() {
+  const sel = document.getElementById('pr_cat');
+  if (!sel) return '';
+  if (sel.value === 'Outro') {
+    const outro = document.getElementById('pr_cat_outro');
+    const texto = outro && outro.value.trim() ? outro.value.trim() : '';
+    return texto ? 'Outro: ' + texto : 'Outro';
+  }
+  return sel.value;
+}
+
+function salvarPrato() {
+  const nome = getS5NomePrato();
+  if (!nome) { document.getElementById('pr_nome').focus(); return; }
+  const prato = {
+    id: editandoId || Date.now(),
+    nome,
+    cat: getS5Categoria(),
+    preco: parseFloat(document.getElementById('pr_preco').value) || 0,
+    custo: parseFloat(document.getElementById('pr_custo').value) || 0,
+    vendas: parseFloat(document.getElementById('pr_vendas').value) || 0,
+    classManual: document.getElementById('pr_class_manual').value || '',
+  };
+  if (editandoId) {
+    const idx = pratos.findIndex(p => p.id === editandoId);
+    if (idx !== -1) pratos[idx] = prato;
+  } else {
+    pratos.push(prato);
+  }
+  salvar(); fecharForm(); renderTudo();
+}
+
+function editarPrato(id) {
+  const p = pratos.find(p => p.id === id);
+  if (!p) return;
+  editandoId = id;
+  document.getElementById('formPratoTitle').textContent = 'Editar prato';
+  document.getElementById('pr_nome').value = p.nome;
+  const catVal = p.cat || '';
+  if (catVal.startsWith('Outro: ')) {
+    document.getElementById('pr_cat').value = 'Outro';
+    const outro = document.getElementById('pr_cat_outro');
+    if (outro) { outro.style.display = 'block'; outro.value = catVal.replace('Outro: ', ''); }
+  } else {
+    document.getElementById('pr_cat').value = catVal;
+  }
+  document.getElementById('pr_preco').value = p.preco || '';
+  document.getElementById('pr_custo').value = p.custo || '';
+  document.getElementById('pr_vendas').value = p.vendas || '';
+  document.getElementById('pr_class_manual').value = p.classManual || '';
+  prevMC();
+  document.getElementById('formPrato').classList.add('open');
+  document.getElementById('formPrato').scrollIntoView({ behavior: 'smooth' });
+}
+
+function removerPrato(id) {
+  const p = pratos.find(p => p.id === id);
+  if (!confirm(`Remover "${p?.nome}"?`)) return;
+  pratos = pratos.filter(p => p.id !== id);
+  salvar(); renderTudo();
+}
+
+function renderTudo() {
+  renderStats();
+  renderMatriz();
+  renderPratos();
+}
+
+// STATS
+function renderStats() {
+  const el = document.getElementById('statsCards');
+  if (pratos.length === 0) { el.innerHTML = ''; return; }
+  const conts = { estrela: 0, vaca: 0, interrogacao: 0, abacaxi: 0 };
+  pratos.forEach(p => { const c = classificar(p); conts[c]++; });
+  el.innerHTML = `<div class="stats-row">
+    ${Object.entries(CLASS_INFO).map(([key, info]) => `
+      <div class="${info.stat}">
+        <div class="stat-emoji">${info.emoji}</div>
+        <p class="stat-nome ${key}">${info.nome}</p>
+        <p class="stat-qtd">${conts[key]}</p>
+        <p class="stat-sub">${info.sub}</p>
+      </div>`).join('')}
+  </div>`;
+}
+
+// MATRIZ
+function renderMatriz() {
+  const grid = document.getElementById('matrizGrid');
+  const empty = document.getElementById('emptyMatriz');
+  if (pratos.length === 0) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  const porClass = { estrela: [], vaca: [], interrogacao: [], abacaxi: [] };
+  pratos.forEach(p => porClass[classificar(p)].push(p));
+
+  const order = ['estrela', 'interrogacao', 'vaca', 'abacaxi'];
+  const axis = [
+    'Alta margem · Alto volume',
+    'Alta margem · Baixo volume',
+    'Baixa margem · Alto volume',
+    'Baixa margem · Baixo volume',
+  ];
+
+  grid.innerHTML = order.map((key, i) => {
+    const info = CLASS_INFO[key];
+    const lista = porClass[key];
+    return `<div class="${info.q}">
+      <div class="q-header">
+        <span class="q-emoji">${info.emoji}</span>
+        <div>
+          <p class="q-nome ${key}">${info.nome}</p>
+          <p class="q-sub">${axis[i]}</p>
+        </div>
+      </div>
+      <div class="q-pratos">
+        ${lista.length === 0
+          ? `<p class="q-vazio">Nenhum prato nesta categoria</p>`
+          : lista.map(p => `<div class="q-prato-item">
+              <span class="q-prato-nome">${p.nome}</span>
+              <span class="q-prato-mc">${p.preco > 0 ? fmt(calcMC(p.preco, p.custo)) : 'N/C'}</span>
+            </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// PRATOS
+function renderPratos() {
+  const busca = (document.getElementById('searchPrato').value || '').toLowerCase();
+  const filtClass = document.getElementById('filterClass').value;
+  let lista = pratos.filter(p => {
+    const mb = !busca || p.nome.toLowerCase().includes(busca);
+    const mc = !filtClass || classificar(p) === filtClass;
+    return mb && mc;
+  });
+
+  const tbody = document.getElementById('tbodyPratos');
+  const empty = document.getElementById('emptyPratos');
+  if (lista.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = lista.map(p => {
+    const mc = calcMC(p.preco, p.custo);
+    const mcPct = calcMCPct(p.preco, p.custo);
+    const mcTotal = mc * (p.vendas || 0);
+    const cls = classificar(p);
+    const info = CLASS_INFO[cls];
+    return `<tr>
+      <td class="td-nome">${p.nome}${p.classManual ? ' <span style="font-size:10px;color:var(--muted)">(manual)</span>' : ''}</td>
+      <td class="td-muted">${p.cat || ''}</td>
+      <td class="td-num">${p.preco > 0 ? fmt(p.preco) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td class="td-num">${p.custo > 0 ? fmt(p.custo) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td class="td-num" style="color:${mc > 0 ? 'var(--gold)' : '#7a2020'}">${p.preco > 0 ? fmt(mc) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td style="color:${mcPct >= 60 ? '#1a5e2a' : mcPct >= 40 ? '#7a4008' : '#7a2020'};font-family:'Manrope',serif;font-size:16px">${p.preco > 0 ? fmtPct(mcPct) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td class="td-num">${p.vendas > 0 ? p.vendas : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td class="td-num">${mcTotal > 0 ? fmt(mcTotal) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="badge-class ${info.badge}">${info.emoji} ${info.nome}</span>
+          <div style="position:relative">
+            <select class="class-sel" onchange="ajustarClasse(${p.id},this.value)">
+              <option value="">Auto</option>
+              <option value="estrela" ${p.classManual==='estrela'?'selected':''}>Estrela</option>
+              <option value="vaca" ${p.classManual==='vaca'?'selected':''}>Vaca</option>
+              <option value="interrogacao" ${p.classManual==='interrogacao'?'selected':''}>Interrogação</option>
+              <option value="abacaxi" ${p.classManual==='abacaxi'?'selected':''}>Abacaxi</option>
+            </select>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div style="display:flex;gap:5px;justify-content:flex-end">
+          <button class="btn btn-outline btn-sm" onclick="editarPrato(${p.id})">Editar</button>
+          <button class="btn-red-sm" onclick="removerPrato(${p.id})">Remover</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function ajustarClasse(id, val) {
+  const p = pratos.find(p => p.id === id);
+  if (!p) return;
+  p.classManual = val;
+  salvar(); renderTudo();
+}
+
+// AÇÕES
+function renderAcoes() {
+  const el = document.getElementById('acoesContent');
+  if (pratos.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><p class="empty-title">Sem pratos cadastrados</p><p class="empty-sub">Cadastre os pratos para ver as ações recomendadas por categoria.</p></div>`;
+    return;
+  }
+  const porClass = { estrela: [], vaca: [], interrogacao: [], abacaxi: [] };
+  pratos.forEach(p => porClass[classificar(p)].push(p));
+
+  el.innerHTML = `
+    <div class="acoes-grid">
+      ${Object.entries(RECOMENDACOES).map(([key, rec]) => {
+        const info = CLASS_INFO[key];
+        const lista = porClass[key];
+        return `<div class="acao-card ${key}">
+          <div class="acao-header">
+            <span class="acao-emoji">${info.emoji}</span>
+            <div>
+              <p class="acao-title ${key}">${info.nome}</p>
+              <p style="font-size:10px;color:var(--muted)">${rec.titulo}</p>
+            </div>
+          </div>
+          ${lista.length > 0 ? `
+            <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Seus pratos nesta categoria: <strong style="color:var(--cream)">${lista.map(p => p.nome).join(', ')}</strong></p>` : `
+            <p style="font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic">Nenhum prato nesta categoria.</p>`}
+          <p class="acao-desc">${rec.desc}</p>
+          <div class="acao-itens">
+            ${rec.itens.map(item => `<div class="acao-item">
+              <div class="acao-item-dot ${key}"></div>
+              <span>${item}</span>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ANÁLISE INDIVIDUAL
+function renderAnalise() {
+  const el = document.getElementById('analiseContent');
+  const empty = document.getElementById('emptyAnalise');
+  if (pratos.length === 0) { el.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  const { mc: mediaMC, vol: mediaVol } = medias();
+
+  el.innerHTML = pratos.map(p => {
+    const cls = classificar(p);
+    const info = CLASS_INFO[cls];
+    const mc = calcMC(p.preco, p.custo);
+    const mcPct = calcMCPct(p.preco, p.custo);
+    const mcTotal = mc * (p.vendas || 0);
+    const rec = RECOMENDACOES[cls];
+
+    const recTexto = gerarRecomendacaoIndividual(p, cls, mc, mcPct, mediaMC, mediaVol);
+
+    return `<div class="prato-detalhe">
+      <div class="pd-header" onclick="toggleAnalise(this)">
+        <span class="badge-class ${info.badge}">${info.emoji} ${info.nome}</span>
+        <span class="pd-nome">${p.nome}</span>
+        <span class="pd-chev">▼</span>
+      </div>
+      <div class="pd-body">
+        <div class="pd-grid">
+          <div>
+            <p class="pd-item-label">Preço de venda</p>
+            <p class="pd-item-val">${p.preco > 0 ? fmt(p.preco) : 'N/C'}</p>
+          </div>
+          <div>
+            <p class="pd-item-label">MC por prato</p>
+            <p class="pd-item-val" style="color:${mc > 0 ? 'var(--gold)' : '#7a2020'}">${p.preco > 0 ? fmt(mc) : 'N/C'}</p>
+          </div>
+          <div>
+            <p class="pd-item-label">MC percentual</p>
+            <p class="pd-item-val" style="color:${mcPct>=60?'#1a5e2a':mcPct>=40?'#7a4008':'#7a2020'}">${p.preco > 0 ? fmtPct(mcPct) : 'N/C'}</p>
+          </div>
+          <div>
+            <p class="pd-item-label">Vendas mensais</p>
+            <p class="pd-item-val">${p.vendas > 0 ? p.vendas + ' un.' : 'N/C'}</p>
+          </div>
+          <div>
+            <p class="pd-item-label">MC total mensal</p>
+            <p class="pd-item-val">${mcTotal > 0 ? fmt(mcTotal) : 'N/C'}</p>
+          </div>
+          <div>
+            <p class="pd-item-label">vs. média do cardápio</p>
+            <p class="pd-item-val" style="font-size:14px;color:var(--muted)">${mediaMC > 0 ? (mc >= mediaMC ? 'MC acima da média' : 'MC abaixo da média') : 'N/C'}</p>
+          </div>
+        </div>
+        <p class="pd-recomendacao">${recTexto}</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAnalise(header) {
+  const body = header.nextElementSibling;
+  const chev = header.querySelector('.pd-chev');
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  chev.classList.toggle('open', !open);
+}
+
+function gerarRecomendacaoIndividual(p, cls, mc, mcPct, mediaMC, mediaVol) {
+  const nome = p.nome;
+  if (cls === 'estrela') {
+    return `<strong>${nome}</strong> é um prato estrela: vende bem e contribui acima da média por unidade. Proteja a margem mantendo a ficha técnica atualizada e o porcionamento correto. Use-o como referência de precificação para novos pratos.`;
+  }
+  if (cls === 'vaca') {
+    const ganho = p.preco > 0 ? fmt(p.preco * 0.08 - mc * 0.0) : '';
+    return `<strong>${nome}</strong> vende bem mas a margem está abaixo da média do cardápio. Um reajuste de 8% no preço representaria ${fmt(p.preco * 0.08)} a mais por unidade. Considere também revisar o custo de insumos ou o porcionamento para ampliar a margem sem alterar o preço.`;
+  }
+  if (cls === 'interrogacao') {
+    return `<strong>${nome}</strong> tem boa margem mas saída abaixo da média (${p.vendas > 0 ? p.vendas + ' unidades/mês' : 'volume não informado'}). Se vendesse na média do cardápio, geraria ${mediaVol > 0 && mc > 0 ? fmt((mediaVol - p.vendas) * mc) + ' a mais por mês' : 'receita adicional significativa'}. Prioridade: aumentar visibilidade no cardápio e treinar a equipe para sugerir ativamente.`;
+  }
+  return `<strong>${nome}</strong> tem margem abaixo da média e baixo volume. Antes de decidir, calcule se o custo operacional (tempo de preparo, complexidade) justifica a permanência. Se sim, reformule para elevar a margem. Se não, considere transformá-lo em especial sazonal ou removê-lo do cardápio regular.`;
+}
+
+// EXPORTAR EXCEL
+function exportarExcel() {
+  if (pratos.length === 0) { alert('Nenhum prato para exportar.'); return; }
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const wb = XLSX.utils.book_new();
+  const C = { ouro:'B8965A', ouroClr:'D4AF7A', escuro:'1A1814', meiTom:'2A2620', creme:'F5F0E8', muteado:'7A7369', faixaA:'222018', faixaB:'1E1C18' };
+  const CORES_CLASS = { estrela:'C17F2A', vaca:'4A7C59', interrogacao:'4A6A8A', abacaxi:'8B3A3A' };
+  const cel = (v,bold=false,sz=10,color=C.creme,bg=C.escuro,align='left') => ({
+    v:v===null||v===undefined?'':v, t:typeof v==='number'?'n':'s',
+    s:{font:{bold,sz,color:{rgb:color},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:align,vertical:'center',wrapText:true}}
+  });
+
+  const rows = [
+    [cel('ANÁLISE DE CARDÁPIO',true,13,C.ouro,C.meiTom),...Array(7).fill(cel('',false,10,C.creme,C.meiTom))],
+    [cel(nome,false,9,C.muteado,C.meiTom),...Array(6).fill(cel('',false,9,C.muteado,C.meiTom)),cel(hoje,false,9,C.muteado,C.meiTom,'right')],
+    Array(8).fill(cel('',false,10,C.creme,C.escuro)),
+    ['PRATO','CATEGORIA','PREÇO','CUSTO','MC (R$)','MC (%)','VENDAS/MÊS','CLASSIFICAÇÃO'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+    ...pratos.map((p,i) => {
+      const cls = classificar(p);
+      const mc = calcMC(p.preco, p.custo);
+      const mcPct = calcMCPct(p.preco, p.custo);
+      const bg = i%2===0?C.faixaA:C.faixaB;
+      const clsCor = CORES_CLASS[cls];
+      const info = CLASS_INFO[cls];
+      const mk = (v,c=C.creme,b=false,a='left') => ({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:a,vertical:'center'}}});
+      return [
+        mk(p.nome,C.creme,true),
+        mk(p.cat),
+        {v:p.preco||'',t:p.preco?'n':'s',s:{font:{bold:false,sz:10,color:{rgb:C.ouroClr},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+        {v:p.custo||'',t:p.custo?'n':'s',s:{font:{bold:false,sz:10,color:{rgb:C.muteado},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+        {v:p.preco>0?parseFloat(mc.toFixed(2)):'',t:p.preco>0?'n':'s',s:{font:{bold:true,sz:11,color:{rgb:C.ouro},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+        {v:p.preco>0?parseFloat(mcPct.toFixed(1)):'',t:p.preco>0?'n':'s',s:{font:{bold:false,sz:10,color:{rgb:mcPct>=60?'4A7C59':mcPct>=40?'C17F2A':'8B3A3A'},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+        {v:p.vendas||'',t:p.vendas?'n':'s',s:{font:{bold:false,sz:10,color:{rgb:C.muteado},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+        {v:info.emoji+' '+info.nome,t:'s',s:{font:{bold:true,sz:10,color:{rgb:clsCor},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}},
+      ];
+    }),
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:28},{wch:16},{wch:12},{wch:12},{wch:12},{wch:10},{wch:12},{wch:18}];
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:6}},{s:{r:1,c:0},e:{r:1,c:6}}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Análise de Cardápio');
+
+  // Aba por classificação
+  const porClass = { estrela: [], vaca: [], interrogacao: [], abacaxi: [] };
+  pratos.forEach(p => porClass[classificar(p)].push(p));
+  const resRows = [
+    [cel('RESUMO POR CLASSIFICAÇÃO',true,12,C.ouro,C.meiTom),...Array(2).fill(cel('',false,10,C.creme,C.meiTom))],
+    Array(3).fill(cel('',false,10,C.creme,C.escuro)),
+    ...Object.entries(CLASS_INFO).map(([key, info]) => {
+      const lista = porClass[key];
+      return [
+        {v:info.emoji+' '+info.nome,t:'s',s:{font:{bold:true,sz:11,color:{rgb:CORES_CLASS[key]},name:'Calibri'},fill:{fgColor:{rgb:C.escuro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}},
+        cel(`${lista.length} prato(s)`,false,10,C.muteado,C.escuro),
+        cel(lista.map(p=>p.nome).join(', '),false,10,C.creme,C.escuro),
+      ];
+    }),
+  ];
+  const wsRes = XLSX.utils.aoa_to_sheet(resRows);
+  wsRes['!cols'] = [{wch:18},{wch:12},{wch:50}];
+  wsRes['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}}];
+  XLSX.utils.book_append_sheet(wb, wsRes, 'Por Classificação');
+
+  XLSX.writeFile(wb, `AnaliseCardapio-${nome.replace(/\s+/g,'-')}-${hoje.replace(/\//g,'-')}.xlsx`);
+}
+
+function fmt(v) { return 'R$ ' + formatBRL(v||0); }
+function fmtPct(v) { return formatBRLNum(v||0, 1) + '%'; }
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Manual de Processos Operacionais — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#011E34;--navy2:#062d4e;--gold:#F7B700;--gold2:#FCC740;--coral:#F25C54;--cream:#FFFEE8;--cream2:#F0EECC;--white:#ffffff;--gray:#6b7280;--gray-l:#e5e7eb;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;}
+  .header{background:var(--navy);padding:20px 32px 16px;border-bottom:3px solid var(--gold);}
+  .header-eyebrow{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+  .header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);}
+  .id-bar{background:var(--navy2);padding:14px 32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px 24px;}
+  .id-field{display:flex;flex-direction:column;gap:3px;}
+  .id-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .id-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.2);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:3px 0;outline:none;width:100%;}
+  .id-input::placeholder{color:rgba(255,255,255,.3);}
+  .id-input:focus{border-bottom-color:var(--gold);}
+  .main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+  .section{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);overflow:hidden;}
+  .sec-header{background:var(--navy);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .sec-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--white);}
+  .processos-lista{padding:0;}
+  .processo-item{border-bottom:1px solid var(--gray-l);display:flex;align-items:stretch;}
+  .processo-item:last-child{border-bottom:none;}
+  .processo-num{background:var(--navy2);width:48px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--gold);}
+  .processo-body{flex:1;padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
+  .processo-nome-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .processo-nome{font-size:14px;font-weight:600;color:var(--navy);flex:1;min-width:160px;}
+  .processo-modulo{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:10px;background:var(--cream2);color:var(--navy);}
+  .processo-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px 14px;}
+  .meta-field{display:flex;flex-direction:column;gap:2px;}
+  .meta-label{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gray);}
+  .meta-input{border:none;border-bottom:1px solid var(--gray-l);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:transparent;outline:none;padding:2px 0;width:100%;}
+  .meta-input:focus{border-bottom-color:var(--gold);}
+  .processo-actions{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 14px;}
+  .btn-expand{padding:5px 14px;border:1.5px solid var(--gold);border-radius:4px;background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;transition:all .15s;}
+  .btn-expand:hover,.btn-expand.aberto{background:var(--gold);color:var(--navy);}
+  .processo-detalhes{display:none;padding:0 18px 18px;border-top:1px solid var(--gray-l);margin-top:2px;}
+  .processo-detalhes.aberto{display:block;}
+  .detalhe-secao{margin-top:14px;}
+  .detalhe-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+  .detalhe-textarea{width:100%;min-height:80px;border:1px solid var(--gray-l);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);resize:vertical;outline:none;background:var(--cream);}
+  .detalhe-textarea:focus{border-color:var(--gold);}
+  .passos-lista{display:flex;flex-direction:column;gap:6px;}
+  .passo-row{display:flex;gap:8px;align-items:flex-start;}
+  .passo-num{background:var(--navy2);color:var(--gold);font-weight:700;font-size:11px;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .passo-input{flex:1;border:1px solid var(--gray-l);border-radius:4px;padding:5px 8px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:var(--cream);outline:none;}
+  .passo-input:focus{border-color:var(--gold);}
+  .btn-passo{padding:4px 10px;border:1.5px dashed var(--gold);border-radius:4px;background:transparent;color:var(--gold);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:4px;}
+  .btn-passo:hover{background:var(--gold);color:var(--navy);}
+  .btn-rem-passo{background:transparent;border:none;color:var(--gray-l);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;margin-top:2px;}
+  .btn-rem-passo:hover{color:var(--coral);}
+  .btn-add-proc{width:100%;padding:12px;border:1.5px dashed var(--gold);background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;}
+  .btn-add-proc:hover{background:var(--gold);color:var(--navy);}
+  .versao-bar{background:var(--cream2);padding:10px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .versao-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--gray);}
+  .versao-input{border:none;border-bottom:1px solid var(--navy);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:transparent;outline:none;padding:2px 0;width:80px;}
+  .historico-table{width:100%;border-collapse:collapse;}
+  .historico-table thead th{background:var(--cream2);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray);padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-l);}
+  .historico-table tbody td{padding:8px 12px;border-bottom:1px solid var(--gray-l);vertical-align:middle;}
+  .historico-table tbody tr:last-child td{border-bottom:none;}
+  .hist-input{border:none;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:transparent;outline:none;width:100%;}
+  .hist-input:focus{border-bottom:1px solid var(--gold);}
+  .btn-rem-hist{background:transparent;border:none;color:var(--gray-l);font-size:14px;cursor:pointer;padding:0;}
+  .btn-rem-hist:hover{color:var(--coral);}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn-acao{padding:10px 24px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+  .btn-acao.primario{background:var(--gold);color:var(--navy);}
+  .btn-acao.primario:hover{background:var(--gold2);}
+  .btn-acao.secundario{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-acao.secundario:hover{background:var(--navy);color:white;}
+  @media print{.acoes,.btn-expand,.btn-add-proc,.btn-passo,.btn-rem-passo,.btn-rem-hist{display:none;}.processo-detalhes{display:block !important;}body{background:white;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-eyebrow">RG Gastrô Educação</div>
+  <div class="header-title">Manual de Processos Operacionais</div>
+</div>
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" id="estab" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Responsável</span><input class="id-input" type="text" id="resp" placeholder="Nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" id="consultor" placeholder="Seu nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Data de elaboração</span><input class="id-input" type="date" id="data" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Versão</span><input class="id-input" type="text" id="versao" placeholder="1.0" onchange="salvar()"></div>
+</div>
+<div class="main">
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-title">Processos Documentados</span>
+    </div>
+    <div class="processos-lista" id="processosLista"></div>
+    <button class="btn-add-proc" onclick="addProcesso()">+ Adicionar processo</button>
+  </div>
+  <div class="section">
+    <div class="sec-header"><span class="sec-title">Histórico de Atualizações</span></div>
+    <table class="historico-table">
+      <thead><tr>
+        <th style="width:70px">Versão</th>
+        <th style="width:100px">Data</th>
+        <th style="width:200px">Processo alterado</th>
+        <th>Descrição da alteração</th>
+        <th style="width:140px">Responsável</th>
+        <th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="histTbody"></tbody>
+    </table>
+    <button class="btn-add-proc" onclick="addHistorico()" style="border-top:1px solid var(--gray-l)">+ Registrar atualização</button>
+  </div>
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="salvar()">Salvar</button>
+  </div>
+</div>
+<script>
+const KEY='rgGastro_manual';
+const MODULOS=['M1 — Diagnóstico','M2 — Cozinha','M3 — Compras','M4 — Controle','M5 — Pessoas','Outro'];
+
+let processos=[], historico=[];
+try{
+  const r=localStorage.getItem(KEY);
+  if(r){
+    const d=JSON.parse(r);
+    processos=d.processos||[];historico=d.historico||[];
+    document.getElementById('estab').value=d.estab||'';
+    document.getElementById('resp').value=d.resp||'';
+    document.getElementById('consultor').value=d.consultor||'';
+    document.getElementById('data').value=d.data||'';
+    document.getElementById('versao').value=d.versao||'';
+  }
+}catch(e){}
+
+if(processos.length===0){
+  processos=[
+    {nome:'Checklist de abertura por setor',modulo:'M2 — Cozinha',responsavel:'',frequencia:'Diária',objetivo:'',materiais:'',passos:[''],criterio:'',seDerrErrado:'',notas:''},
+    {nome:'Registro de troca de turno',modulo:'M2 — Cozinha',responsavel:'',frequencia:'Por turno',objetivo:'',materiais:'',passos:[''],criterio:'',seDerrErrado:'',notas:''},
+    {nome:'Inventário de insumos',modulo:'M3 — Compras',responsavel:'',frequencia:'Semanal',objetivo:'',materiais:'',passos:[''],criterio:'',seDerrErrado:'',notas:''},
+  ];
+}
+
+function addProcesso(){
+  processos.push({nome:'',modulo:'M2 — Cozinha',responsavel:'',frequencia:'',objetivo:'',materiais:'',passos:[''],criterio:'',seDerrErrado:'',notas:''});
+  render();
+}
+
+function removeProcesso(i){processos.splice(i,1);render();}
+
+function toggleDetalhe(i){
+  const el=document.getElementById('detalhe-'+i);
+  const btn=document.getElementById('btn-detalhe-'+i);
+  el.classList.toggle('aberto');
+  btn.classList.toggle('aberto');
+  btn.textContent=el.classList.contains('aberto')?'Fechar detalhes':'Ver / editar detalhes';
+}
+
+function addPasso(pi){
+  processos[pi].passos.push('');
+  renderPassos(pi);
+  salvar();
+}
+
+function remPasso(pi,si){
+  if(processos[pi].passos.length>1)processos[pi].passos.splice(si,1);
+  renderPassos(pi);
+  salvar();
+}
+
+function renderPassos(pi){
+  const container=document.getElementById('passos-'+pi);
+  if(!container)return;
+  container.innerHTML='';
+  processos[pi].passos.forEach((p,si)=>{
+    const row=document.createElement('div');row.className='passo-row';
+    row.innerHTML=`<span class="passo-num">${si+1}</span>
+      <input class="passo-input" type="text" value="${p}" placeholder="Descreva esta etapa..." onchange="processos[${pi}].passos[${si}]=this.value;salvar()">
+      <button class="btn-rem-passo" onclick="remPasso(${pi},${si})">×</button>`;
+    container.appendChild(row);
+  });
+}
+
+function render(){
+  const lista=document.getElementById('processosLista');
+  lista.innerHTML='';
+  processos.forEach((proc,i)=>{
+    const div=document.createElement('div');div.className='processo-item';
+    div.innerHTML=`
+      <div class="processo-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="processo-body" style="flex:1">
+        <div class="processo-nome-row">
+          <input style="font-size:14px;font-weight:600;border:none;border-bottom:1px solid var(--gray-l);background:transparent;outline:none;flex:1;min-width:160px;padding:2px 0;font-family:'DM Sans',sans-serif;color:var(--navy)" type="text" value="${proc.nome}" placeholder="Nome do processo..." onchange="processos[${i}].nome=this.value;salvar()">
+          <select style="border:1px solid var(--gray-l);border-radius:10px;padding:2px 8px;font-size:9px;font-weight:700;background:var(--cream2);color:var(--navy);cursor:pointer;outline:none" onchange="processos[${i}].modulo=this.value;salvar()">
+            ${MODULOS.map(m=>`<option${m===proc.modulo?' selected':''}>${m}</option>`).join('')}
+          </select>
+        </div>
+        <div class="processo-meta">
+          <div class="meta-field"><span class="meta-label">Responsável</span><input class="meta-input" type="text" value="${proc.responsavel}" placeholder="Cargo ou nome" onchange="processos[${i}].responsavel=this.value;salvar()"></div>
+          <div class="meta-field"><span class="meta-label">Frequência</span><input class="meta-input" type="text" value="${proc.frequencia}" placeholder="Ex: Diária" onchange="processos[${i}].frequencia=this.value;salvar()"></div>
+        </div>
+        <div>
+          <button class="btn-expand" id="btn-detalhe-${i}" onclick="toggleDetalhe(${i})">Ver / editar detalhes</button>
+        </div>
+        <div class="processo-detalhes" id="detalhe-${i}">
+          <div class="detalhe-secao"><div class="detalhe-label">Objetivo do processo</div><textarea class="detalhe-textarea" placeholder="Por que esse processo existe e o que ele garante..." onchange="processos[${i}].objetivo=this.value;salvar()">${proc.objetivo}</textarea></div>
+          <div class="detalhe-secao"><div class="detalhe-label">Materiais necessários</div><textarea class="detalhe-textarea" placeholder="Liste materiais, ferramentas e equipamentos necessários..." onchange="processos[${i}].materiais=this.value;salvar()">${proc.materiais}</textarea></div>
+          <div class="detalhe-secao">
+            <div class="detalhe-label">Passo a passo</div>
+            <div class="passos-lista" id="passos-${i}"></div>
+            <button class="btn-passo" onclick="addPasso(${i})">+ Adicionar etapa</button>
+          </div>
+          <div class="detalhe-secao"><div class="detalhe-label">Critério de qualidade</div><textarea class="detalhe-textarea" placeholder="Como saber se o processo foi executado corretamente..." onchange="processos[${i}].criterio=this.value;salvar()">${proc.criterio}</textarea></div>
+          <div class="detalhe-secao"><div class="detalhe-label">O que fazer se der errado</div><textarea class="detalhe-textarea" placeholder="Ações corretivas, quem acionar, o que registrar..." onchange="processos[${i}].seDerrErrado=this.value;salvar()">${proc.seDerrErrado}</textarea></div>
+          <div class="detalhe-secao"><div class="detalhe-label">Notas do(a) consultor(a)</div><textarea class="detalhe-textarea" placeholder="Observações específicas para este cliente / operação..." onchange="processos[${i}].notas=this.value;salvar()">${proc.notas}</textarea></div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button style="padding:5px 14px;border:1.5px solid var(--coral);border-radius:4px;background:transparent;color:var(--coral);font-size:10px;font-weight:600;cursor:pointer" onclick="removeProcesso(${i})">Remover processo</button>
+          </div>
+        </div>
+      </div>`;
+    lista.appendChild(div);
+    renderPassos(i);
+  });
+  renderHistorico();
+}
+
+function addHistorico(){
+  historico.push({versao:'',data:'',processo:'',descricao:'',responsavel:''});
+  renderHistorico();
+}
+
+function remHistorico(i){historico.splice(i,1);renderHistorico();}
+
+function renderHistorico(){
+  const tbody=document.getElementById('histTbody');tbody.innerHTML='';
+  historico.forEach((h,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input class="hist-input" type="text" value="${h.versao}" placeholder="1.1" onchange="historico[${i}].versao=this.value;salvar()"></td>
+      <td><input class="hist-input" type="date" value="${h.data}" onchange="historico[${i}].data=this.value;salvar()"></td>
+      <td><input class="hist-input" type="text" value="${h.processo}" placeholder="Nome do processo" onchange="historico[${i}].processo=this.value;salvar()"></td>
+      <td><input class="hist-input" type="text" value="${h.descricao}" placeholder="Descreva o que mudou..." onchange="historico[${i}].descricao=this.value;salvar()"></td>
+      <td><input class="hist-input" type="text" value="${h.responsavel}" placeholder="Nome" onchange="historico[${i}].responsavel=this.value;salvar()"></td>
+      <td><button class="btn-rem-hist" onclick="remHistorico(${i})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function salvar(){
+  try{localStorage.setItem(KEY,JSON.stringify({
+    estab:document.getElementById('estab').value,
+    resp:document.getElementById('resp').value,
+    consultor:document.getElementById('consultor').value,
+    data:document.getElementById('data').value,
+    versao:document.getElementById('versao').value,
+    processos,historico
+  }));}catch(e){}
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico de Compras | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --charcoal-soft: #f9e8d7;
+  --gold: #025291; --gold-light: #013a68; --muted: #33475c;
+  --border: rgba(2,82,145,0.2); --border-hover: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --amber: #7a4008; --red: #7a2020;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+/* HEADER */
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 420px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.08); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+/* SESSION BAR */
+.session-bar { display: flex; align-items: center; gap: 24px; padding: 20px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi, input[type="date"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; outline: none; transition: border-color 0.25s; color-scheme: light; }
+input[type="text"].fi { width: 200px; }
+input[type="date"].fi { width: 140px; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.45); }
+input[type="text"].fi:focus, input[type="date"].fi:focus { border-bottom-color: var(--gold); }
+
+/* MAIN */
+main { max-width: 900px; margin: 0 auto; padding: 48px 48px 80px; }
+
+/* INSTRUCTION */
+.instruction { background: rgba(2,82,145,0.04); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 16px 20px; margin-bottom: 40px; font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.8; }
+
+/* SECTION */
+.section { margin-bottom: 44px; }
+.section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.section-num { font-family: 'Manrope', sans-serif; font-size: 36px; font-weight: 300; color: rgba(91,145,188,0.2); line-height: 1; flex-shrink: 0; width: 32px; }
+.section-title { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 600; }
+.section-sub { font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 2px; }
+
+/* FIELDS */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.fb { display: flex; flex-direction: column; gap: 7px; }
+.fb-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+.fb-hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: -3px; }
+
+input[type="text"].f, select.f, textarea.f {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 10px 13px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="text"].f::placeholder { color: rgba(1,30,52,0.45); font-style: italic; }
+textarea.f { resize: vertical; min-height: 80px; line-height: 1.7; }
+textarea.f::placeholder { color: rgba(1,30,52,0.45); font-style: italic; }
+input[type="text"].f:focus, select.f:focus, textarea.f:focus { border-color: var(--gold); }
+select.f { cursor: pointer; color-scheme: light; }
+select.f option { background: #f9e8d7; color: #011e34; }
+.sw { position: relative; }
+.sa { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+
+/* TOGGLE */
+.toggle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--border); background: rgba(1,30,52,0.03); margin-bottom: 12px; }
+.toggle-label { font-size: 12px; font-weight: 400; color: rgba(1,30,52,0.85); flex: 1; }
+.toggle-label small { display: block; font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 2px; }
+.tg { display: flex; gap: 4px; flex-shrink: 0; }
+.tg-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.tg-btn.yes.active { background: rgba(26,94,42,0.1); border-color: var(--green); color: var(--green); }
+.tg-btn.no.active { background: rgba(122,32,32,0.1); border-color: var(--red); color: var(--red); }
+.tg-btn:hover:not(.active) { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+
+/* CATEGORIAS */
+.cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.cat-item { border: 1px solid var(--border); padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; background: rgba(1,30,52,0.03); transition: border-color 0.2s; }
+.cat-item-name { font-size: 11px; font-weight: 500; color: rgba(1,30,52,0.8); letter-spacing: 0.3px; }
+.cat-scale { display: flex; gap: 4px; }
+.cat-scale-btn {
+  flex: 1; font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500;
+  letter-spacing: 0.5px; text-transform: uppercase; padding: 6px 2px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.cat-scale-btn:hover { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+.cat-scale-btn.active-pouco { background: rgba(42,74,122,0.1); border-color: #3a5a8a; color: #3a5a8a; }
+.cat-scale-btn.active-medio { background: rgba(122,64,8,0.1); border-color: var(--amber); color: var(--amber); }
+.cat-scale-btn.active-alto { background: rgba(122,32,32,0.1); border-color: var(--red); color: var(--red); }
+
+/* FORNECEDORES */
+.fornecedores-list { display: flex; flex-direction: column; gap: 12px; }
+
+.fornecedor-card {
+  border: 1px solid var(--border);
+  background: rgba(1,30,52,0.03);
+  position: relative;
+  transition: border-color 0.2s;
+}
+.fornecedor-card:hover { border-color: rgba(91,145,188,0.35); }
+
+.fc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(91,145,188,0.08);
+  cursor: pointer;
+  user-select: none;
+}
+
+.fc-title { font-size: 13px; font-weight: 500; color: var(--cream); }
+.fc-subtitle { font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 1px; }
+
+.fc-actions { display: flex; align-items: center; gap: 8px; }
+.fc-chev { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+.fc-chev.open { transform: rotate(180deg); }
+
+.fc-del {
+  font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500;
+  letter-spacing: 1px; padding: 4px 10px; border: 1px solid rgba(139,58,58,0.3);
+  background: transparent; color: rgba(193,112,112,0.6);
+  cursor: pointer; transition: all 0.2s;
+}
+.fc-del:hover { border-color: var(--red); color: #c05555; background: rgba(139,58,58,0.08); }
+
+.fc-body { display: none; padding: 16px; }
+.fc-body.open { display: block; }
+
+.fc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.fc-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+.fc-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+
+input[type="text"].fc-input, select.fc-sel, textarea.fc-ta {
+  font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 9px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="text"].fc-input::placeholder { color: rgba(1,30,52,0.45); font-style: italic; }
+textarea.fc-ta { resize: vertical; min-height: 56px; line-height: 1.6; }
+textarea.fc-ta::placeholder { color: rgba(1,30,52,0.45); font-style: italic; }
+input[type="text"].fc-input:focus, select.fc-sel:focus, textarea.fc-ta:focus { border-color: var(--gold); }
+select.fc-sel { cursor: pointer; color-scheme: light; }
+select.fc-sel option { background: #f9e8d7; color: #011e34; }
+
+.backup-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.backup-label { font-size: 11px; color: var(--muted); flex: 1; }
+.backup-toggle { display: flex; gap: 3px; }
+.bk-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 5px 10px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.bk-btn.yes.active { background: rgba(74,124,89,0.15); border-color: var(--green); color: #6aad7a; }
+.bk-btn.no.active { background: rgba(193,112,112,0.1); border-color: #c17070; color: #c07070; }
+.bk-btn:hover:not(.active) { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+
+.btn-add-forncedor {
+  font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 12px 24px; background: transparent;
+  color: var(--gold); border: 1px solid var(--border-hover);
+  cursor: pointer; transition: all 0.25s; width: 100%; margin-top: 4px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-add-forncedor:hover { background: rgba(91,145,188,0.06); border-color: var(--gold); }
+.btn-add-forncedor:hover .add-icon { transform: rotate(90deg); }
+.add-icon { font-size: 16px; line-height: 1; transition: transform 0.2s; }
+
+.btn-excel {
+  font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 12px 24px; background: rgba(74,124,89,0.1);
+  color: #6aad7a; border: 1px solid rgba(74,124,89,0.35);
+  cursor: pointer; transition: all 0.25s; margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+}
+.btn-excel:hover { background: rgba(74,124,89,0.18); border-color: var(--green); color: #8bc89a; }
+.excel-icon { font-size: 15px; line-height: 1; }
+
+/* NEGOCIACAO */
+.neg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+/* VISAO GERAL */
+.vg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+/* CMV INPUT especial */
+.cmv-wrap { display: flex; align-items: center; gap: 0; }
+.cmv-wrap input {
+  font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 500;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  border-right: none; color: var(--gold-light);
+  width: 100%; padding: 10px 14px; outline: none;
+  transition: border-color 0.25s; border-radius: 1px 0 0 1px; text-align: right;
+}
+.cmv-wrap input:focus { border-color: var(--gold); }
+.cmv-wrap input::placeholder { color: rgba(1,30,52,0.45); font-size: 14px; }
+.cmv-pct { font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 400; background: rgba(2,82,145,0.08); border: 1px solid var(--border); color: var(--gold); padding: 10px 14px; flex-shrink: 0; border-radius: 0 1px 1px 0; }
+
+/* ACTIONS */
+.actions { display: flex; gap: 12px; margin-top: 40px; flex-wrap: wrap; }
+.btn-primary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: var(--gold); color: var(--charcoal); border: none; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+.btn-primary::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-primary:hover::after { transform: translateX(0); }
+.btn-primary span { position: relative; z-index: 1; }
+.btn-primary:hover span { color: var(--gold); }
+.btn-secondary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: transparent; color: var(--muted); border: 1px solid var(--border); cursor: pointer; transition: all 0.25s; }
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+/* PDF OVERLAY */
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .g2, .g3, .cat-grid, .fc-grid, .fc-grid-3, .neg-row, .vg-row { grid-template-columns: 1fr; }
+  .cat-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando PDF</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Diagnóstico de<br><em>Compras</em></h1>
+    <p class="hsub">Mapeie como o seu restaurante abastece a operação. Quem compra, de quem compra, quanto gasta e onde estão as oportunidades de melhoria.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo D · D4</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+  <div class="fg"><span class="fl">Data</span><input type="date" class="fi" id="rdate"></div>
+</div>
+
+<main>
+
+  <div class="instruction">
+    Preencha cada seção com base na realidade atual das compras do seu negócio. Não precisa de números exatos: estimativas honestas já revelam o suficiente para o diagnóstico.
+  </div>
+
+  <!-- 1: VISÃO GERAL -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">1</span>
+      <div><h2 class="section-title">Visão geral das compras</h2><p class="section-sub">Contexto geral sobre como as compras funcionam hoje</p></div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-label">Existe uma lista de compras padronizada?
+        <small>Lista fixa de itens que são comprados regularmente, com quantidades de referência.</small>
+      </div>
+      <div class="tg" id="tg_lista">
+        <button class="tg-btn yes" onclick="setTg('lista','sim',this)">Sim</button>
+        <button class="tg-btn no active" onclick="setTg('lista','nao',this)">Não</button>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-label">Existe uma pessoa responsável exclusivamente pelas compras?
+        <small>Ou as compras são feitas por quem estiver disponível no momento.</small>
+      </div>
+      <div class="tg" id="tg_resp">
+        <button class="tg-btn yes" onclick="setTg('resp','sim',this)">Sim</button>
+        <button class="tg-btn no active" onclick="setTg('resp','nao',this)">Não</button>
+      </div>
+    </div>
+
+    <div class="vg-row" style="margin-top:16px">
+      <div class="fb">
+        <label class="fb-label">Como a quantidade a comprar é definida</label>
+        <div class="sw">
+          <select class="f" id="metodo_qtd">
+            <option value="">Selecione</option>
+            <option>Intuição e experiência do responsável</option>
+            <option>Contagem de estoque antes de comprar</option>
+            <option>Histórico de consumo registrado</option>
+            <option>Combinação de contagem e histórico</option>
+            <option>Não há critério definido</option>
+          </select>
+          <span class="sa">▾</span>
+        </div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Frequência geral de compras</label>
+        <div class="sw">
+          <select class="f" id="freq_compras">
+            <option value="">Selecione</option>
+            <option>Diária</option>
+            <option>2 a 3 vezes por semana</option>
+            <option>Semanal</option>
+            <option>Quinzenal</option>
+            <option>Mensal</option>
+            <option>Variável, sem frequência definida</option>
+          </select>
+          <span class="sa">▾</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fb" style="margin-top:4px">
+      <label class="fb-label">Percentual do faturamento gasto em compras (CMV de compras)</label>
+      <p class="fb-hint">Estimativa: se o restaurante fatura R$ 50.000 e gasta R$ 17.500 em insumos, o CMV de compras é 35%.</p>
+      <div style="max-width:200px">
+        <div class="cmv-wrap">
+          <input type="text" id="cmv_compras" placeholder="Ex: 35">
+          <span class="cmv-pct">%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: CATEGORIAS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">2</span>
+      <div><h2 class="section-title">Categorias de insumos</h2><p class="section-sub">Para cada categoria, indique o nível de gasto: Pouco, Médio ou Alto.</p></div>
+    </div>
+    <div class="cat-grid" id="catGrid"></div>
+    <div class="fb" style="margin-top:16px">
+      <label class="fb-label">Qual categoria representa o maior gasto e por quê</label>
+      <textarea class="f" id="cat_obs" placeholder="Ex: carnes são o maior gasto porque o cardápio é focado em proteínas. Não temos controle preciso do quanto cada categoria representa..."></textarea>
+    </div>
+  </div>
+
+  <!-- 3: FORNECEDORES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">3</span>
+      <div><h2 class="section-title">Mapeamento de fornecedores</h2><p class="section-sub">Cadastre cada fornecedor ativo. Clique em adicionar para incluir quantos precisar.</p></div>
+    </div>
+    <div class="fornecedores-list" id="fornList"></div>
+    <button class="btn-add-forncedor" onclick="addFornecedor()">
+      <span class="add-icon">+</span> Adicionar fornecedor
+    </button>
+    <button class="btn-excel" onclick="exportarExcel()">
+      <span class="excel-icon">⬇</span> Exportar tabela de fornecedores em Excel
+    </button>
+  </div>
+
+  <!-- 4: NEGOCIAÇÃO -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">4</span>
+      <div><h2 class="section-title">Práticas de negociação</h2><p class="section-sub">Como o restaurante negocia com os fornecedores hoje</p></div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-label">Os preços são negociados ativamente com os fornecedores?
+        <small>Ou os preços são aceitos como vêm na tabela do fornecedor.</small>
+      </div>
+      <div class="tg" id="tg_neg">
+        <button class="tg-btn yes" onclick="setTg('neg','sim',this)">Sim</button>
+        <button class="tg-btn no active" onclick="setTg('neg','nao',this)">Não</button>
+      </div>
+    </div>
+
+    <div class="neg-row">
+      <div class="fb">
+        <label class="fb-label">Com que frequência os preços são revisados</label>
+        <div class="sw">
+          <select class="f" id="freq_neg">
+            <option value="">Selecione</option>
+            <option>Nunca</option>
+            <option>Quando percebo que está caro demais</option>
+            <option>A cada 3 meses</option>
+            <option>Semestralmente</option>
+            <option>Anualmente</option>
+            <option>Regularmente, tenho processo para isso</option>
+          </select>
+          <span class="sa">▾</span>
+        </div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Cotação com outros fornecedores</label>
+        <div class="sw">
+          <select class="f" id="cotacao">
+            <option value="">Selecione</option>
+            <option>Nunca cotico</option>
+            <option>Cotico raramente, quando acho necessário</option>
+            <option>Cotico para compras maiores</option>
+            <option>Tenho processo regular de cotação</option>
+          </select>
+          <span class="sa">▾</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fb">
+      <label class="fb-label">Principais problemas com fornecedores hoje</label>
+      <textarea class="f" id="prob_fornecedores" placeholder="Ex: atraso nas entregas, reajuste de preço sem aviso, produto fora do padrão, falta de nota fiscal..."></textarea>
+    </div>
+  </div>
+
+  <!-- 5: OPORTUNIDADES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">5</span>
+      <div><h2 class="section-title">Oportunidades identificadas</h2><p class="section-sub">O que você percebe que poderia melhorar na área de compras do seu negócio</p></div>
+    </div>
+    <textarea class="f" style="min-height:110px" id="oportunidades" placeholder="Ex: nunca negociei prazo de pagamento com meu fornecedor de carnes, que é o maior gasto. Não tenho fornecedor de backup para hortifrutti. Compras de emergência acontecem toda semana..."></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" onclick="gerarPDF()"><span>Gerar PDF do diagnóstico</span></button>
+    <button class="btn-secondary" onclick="salvarLocal()">Salvar rascunho</button>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta D4 · Diagnóstico de Compras</span>
+</footer>
+
+<script>
+// DADOS
+const CATEGORIAS = ['Carnes e proteínas','Hortifrútti','Laticínios','Grãos e secos','Bebidas','Embalagens','Higiene e limpeza','Outros'];
+const toggleState = {};
+const catState = {};
+let fornCounter = 0;
+const fornData = {};
+
+// INIT
+document.getElementById('rdate').valueAsDate = new Date();
+renderCategorias();
+addFornecedor();
+carregarRascunho();
+function renderCategorias() {
+  const grid = document.getElementById('catGrid');
+  CATEGORIAS.forEach(cat => {
+    catState[cat] = null;
+    const d = document.createElement('div');
+    d.className = 'cat-item';
+    const sid = 'cat_' + cat.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase();
+    d.innerHTML = `
+      <p class="cat-item-name">${cat}</p>
+      <div class="cat-scale">
+        <button class="cat-scale-btn" onclick="setCat('${cat}','Pouco',this)">Pouco</button>
+        <button class="cat-scale-btn" onclick="setCat('${cat}','Médio',this)">Médio</button>
+        <button class="cat-scale-btn" onclick="setCat('${cat}','Alto',this)">Alto</button>
+      </div>`;
+    grid.appendChild(d);
+  });
+}
+
+function setCat(cat, val, btn) {
+  catState[cat] = val;
+  const group = btn.closest('.cat-scale');
+  group.querySelectorAll('.cat-scale-btn').forEach(b => {
+    b.classList.remove('active-pouco','active-medio','active-alto');
+  });
+  const cls = val === 'Pouco' ? 'active-pouco' : val === 'Médio' ? 'active-medio' : 'active-alto';
+  btn.classList.add(cls);
+  const card = btn.closest('.cat-item');
+  card.style.borderColor = val === 'Pouco' ? 'rgba(107,127,163,0.4)' : val === 'Médio' ? 'rgba(193,127,42,0.4)' : 'rgba(193,112,112,0.4)';
+}
+
+// TOGGLE
+function setTg(key, val, btn) {
+  toggleState[key] = val;
+  btn.closest('.tg, [id^="tg_"]').querySelectorAll('.tg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// FORNECEDORES
+function addFornecedor() {
+  fornCounter++;
+  const id = fornCounter;
+  fornData[id] = { backup: 'nao' };
+
+  const card = document.createElement('div');
+  card.className = 'fornecedor-card';
+  card.id = 'fc_' + id;
+  card.innerHTML = `
+    <div class="fc-header" onclick="toggleFc(${id})">
+      <div>
+        <p class="fc-title" id="fc-title-${id}">Fornecedor ${id}</p>
+        <p class="fc-subtitle" id="fc-sub-${id}">Clique para preencher os dados</p>
+      </div>
+      <div class="fc-actions">
+        <button class="fc-del" onclick="delForn(event,${id})">Remover</button>
+        <span class="fc-chev open" id="fc-chev-${id}">▼</span>
+      </div>
+    </div>
+    <div class="fc-body open" id="fc-body-${id}">
+      <div class="fc-grid">
+        <div>
+          <p class="fc-label">Nome do fornecedor</p>
+          <input type="text" class="fc-input" id="fc-nome-${id}" placeholder="Ex: Distribuidora São José" oninput="updateFcTitle(${id})">
+        </div>
+        <div>
+          <p class="fc-label">Categoria de insumos fornecidos</p>
+          <div class="sw">
+            <select class="fc-sel" id="fc-cat-${id}" onchange="updateFcSub(${id})">
+              <option value="">Selecione a categoria</option>
+              <option>Carnes e proteínas</option>
+              <option>Hortifrútti</option>
+              <option>Laticínios</option>
+              <option>Grãos e secos</option>
+              <option>Bebidas</option>
+              <option>Embalagens</option>
+              <option>Higiene e limpeza</option>
+              <option>Misto (várias categorias)</option>
+              <option>Outro</option>
+            </select>
+            <span class="sa">▾</span>
+          </div>
+        </div>
+      </div>
+      <div class="fc-grid">
+        <div>
+          <p class="fc-label">O que compra deste fornecedor</p>
+          <input type="text" class="fc-input" id="fc-oque-${id}" placeholder="Ex: filé mignon, contrafilé, frango resfriado">
+        </div>
+        <div>
+          <p class="fc-label">Frequência de compra</p>
+          <div class="sw">
+            <select class="fc-sel" id="fc-freq-${id}">
+              <option value="">Selecione</option>
+              <option>Diária</option>
+              <option>2 a 3 vezes por semana</option>
+              <option>Semanal</option>
+              <option>Quinzenal</option>
+              <option>Mensal</option>
+              <option>Sob demanda</option>
+            </select>
+            <span class="sa">▾</span>
+          </div>
+        </div>
+      </div>
+      <div class="fc-grid-3">
+        <div>
+          <p class="fc-label">Forma de pagamento</p>
+          <div class="sw">
+            <select class="fc-sel" id="fc-pgto-${id}">
+              <option value="">Selecione</option>
+              <option>À vista</option>
+              <option>7 dias</option>
+              <option>14 dias</option>
+              <option>21 dias</option>
+              <option>28 a 30 dias</option>
+              <option>Boleto parcelado</option>
+              <option>Cartão</option>
+            </select>
+            <span class="sa">▾</span>
+          </div>
+        </div>
+        <div>
+          <p class="fc-label">Gasto mensal estimado</p>
+          <input type="text" class="fc-input" id="fc-gasto-${id}" placeholder="Ex: R$ 3.000">
+        </div>
+        <div>
+          <p class="fc-label">Satisfação com o fornecedor</p>
+          <div class="sw">
+            <select class="fc-sel" id="fc-sat-${id}">
+              <option value="">Selecione</option>
+              <option>Muito satisfeito</option>
+              <option>Satisfeito</option>
+              <option>Regular</option>
+              <option>Insatisfeito</option>
+            </select>
+            <span class="sa">▾</span>
+          </div>
+        </div>
+      </div>
+      <div class="backup-row">
+        <p class="backup-label">Tem fornecedor de backup para este insumo em caso de falta ou problema?</p>
+        <div class="backup-toggle">
+          <button class="bk-btn yes" onclick="setBackup(event,${id},'sim',this)">Sim</button>
+          <button class="bk-btn no active" onclick="setBackup(event,${id},'nao',this)">Não</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('fornList').appendChild(card);
+}
+
+function updateFcTitle(id) {
+  const nome = document.getElementById('fc-nome-'+id).value;
+  document.getElementById('fc-title-'+id).textContent = nome || 'Fornecedor ' + id;
+}
+
+function updateFcSub(id) {
+  const cat = document.getElementById('fc-cat-'+id).value;
+  document.getElementById('fc-sub-'+id).textContent = cat || 'Clique para preencher os dados';
+}
+
+function toggleFc(id) {
+  const body = document.getElementById('fc-body-'+id);
+  const chev = document.getElementById('fc-chev-'+id);
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  chev.classList.toggle('open', !open);
+}
+
+function delForn(e, id) {
+  e.stopPropagation();
+  const card = document.getElementById('fc_' + id);
+  if (card) card.remove();
+  delete fornData[id];
+}
+
+function setBackup(e, id, val, btn) {
+  e.stopPropagation();
+  fornData[id] = fornData[id] || {};
+  fornData[id].backup = val;
+  btn.closest('.backup-toggle').querySelectorAll('.bk-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// COLETAR
+function coletar() {
+  const cats = {};
+  CATEGORIAS.forEach(cat => { cats[cat] = catState[cat] || ''; });
+
+  const forns = [];
+  document.querySelectorAll('.fornecedor-card').forEach(card => {
+    const id = card.id.replace('fc_','');
+    forns.push({
+      nome: document.getElementById('fc-nome-'+id)?.value || '',
+      categoria: document.getElementById('fc-cat-'+id)?.value || '',
+      oque: document.getElementById('fc-oque-'+id)?.value || '',
+      freq: document.getElementById('fc-freq-'+id)?.value || '',
+      pgto: document.getElementById('fc-pgto-'+id)?.value || '',
+      gasto: document.getElementById('fc-gasto-'+id)?.value || '',
+      sat: document.getElementById('fc-sat-'+id)?.value || '',
+      backup: (fornData[id] || {}).backup || 'nao',
+    });
+  });
+
+  return {
+    rname: document.getElementById('rname').value,
+    metodo_qtd: document.getElementById('metodo_qtd').value,
+    freq_compras: document.getElementById('freq_compras').value,
+    cmv_compras: document.getElementById('cmv_compras').value,
+    cat_obs: document.getElementById('cat_obs').value,
+    freq_neg: document.getElementById('freq_neg').value,
+    cotacao: document.getElementById('cotacao').value,
+    prob_fornecedores: document.getElementById('prob_fornecedores').value,
+    oportunidades: document.getElementById('oportunidades').value,
+    toggleState: {...toggleState},
+    categorias: cats,
+    fornecedores: forns,
+  };
+}
+
+// SALVAR
+function salvarLocal() {
+  localStorage.setItem('dose-compras-rascunho', JSON.stringify(coletar()));
+  const btn = document.querySelector('.btn-secondary');
+  const orig = btn.textContent;
+  btn.textContent = 'Rascunho salvo';
+  setTimeout(() => btn.textContent = orig, 2000);
+}
+
+// CARREGAR
+function carregarRascunho() {
+  try {
+    const d = JSON.parse(localStorage.getItem('dose-compras-rascunho') || 'null');
+    if (!d) return;
+    if (d.rname) document.getElementById('rname').value = d.rname;
+    ['metodo_qtd','freq_compras','cmv_compras','cat_obs','freq_neg','cotacao','prob_fornecedores','oportunidades'].forEach(id => {
+      const el = document.getElementById(id); if (el && d[id]) el.value = d[id];
+    });
+    if (d.categorias) Object.entries(d.categorias).forEach(([cat, val]) => {
+      const el = document.getElementById('cat_' + cat.replace(/\s+/g,'_').toLowerCase());
+      if (el) el.value = val;
+    });
+  } catch(e) {}
+}
+
+// EXPORTAR EXCEL
+function exportarExcel() {
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+
+  const forns = [];
+  document.querySelectorAll('.fornecedor-card').forEach(card => {
+    const id = card.id.replace('fc_','');
+    const fNome = document.getElementById('fc-nome-'+id)?.value || '';
+    if (!fNome) return;
+    forns.push({
+      nome: fNome,
+      categoria: document.getElementById('fc-cat-'+id)?.value || '',
+      oque: document.getElementById('fc-oque-'+id)?.value || '',
+      freq: document.getElementById('fc-freq-'+id)?.value || '',
+      pgto: document.getElementById('fc-pgto-'+id)?.value || '',
+      gasto: document.getElementById('fc-gasto-'+id)?.value || '',
+      sat: document.getElementById('fc-sat-'+id)?.value || '',
+      backup: (fornData[id] || {}).backup === 'sim' ? 'Sim' : 'Não',
+    });
+  });
+
+  if (forns.length === 0) {
+    alert('Preencha pelo menos um fornecedor antes de exportar.');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // ── COR PALETTE ──
+  const C = {
+    ouro:    'B8965A',
+    ouroClr: 'D4AF7A',
+    escuro:  '1A1814',
+    meiTom:  '2A2620',
+    creme:   'F5F0E8',
+    muteado: '7A7369',
+    verde:   '4A7C59',
+    vermelho:'8B3A3A',
+    branco:  'FFFFFF',
+    faixaA:  '222018',
+    faixaB:  '1E1C18',
+    sat: {
+      'Muito satisfeito': '4A7C59',
+      'Satisfeito':       '6B8F5A',
+      'Regular':          'B8965A',
+      'Insatisfeito':     '8B3A3A',
+    }
+  };
+
+  // ── HELPERS ──
+  const cel = (v, bold=false, sz=10, color=C.creme, bg=C.escuro, align='left', italic=false) => ({
+    v, t: typeof v === 'number' ? 'n' : 's',
+    s: {
+      font: { bold, sz, color: { rgb: color }, italic, name: 'Calibri' },
+      fill: { fgColor: { rgb: bg }, patternType: 'solid' },
+      alignment: { horizontal: align, vertical: 'center', wrapText: true },
+    }
+  });
+
+  const bordCell = (v, bold=false, sz=10, color=C.creme, bg=C.escuro, align='left', bColor=C.ouro) => ({
+    ...cel(v, bold, sz, color, bg, align),
+    s: {
+      ...cel(v, bold, sz, color, bg, align).s,
+      border: {
+        bottom: { style: 'thin', color: { rgb: bColor } },
+        top:    { style: 'thin', color: { rgb: bColor } },
+        left:   { style: 'thin', color: { rgb: bColor } },
+        right:  { style: 'thin', color: { rgb: bColor } },
+      }
+    }
+  });
+
+  // ── ABA 1: CAPA ──
+  const capaData = [
+    [cel('', false, 10, C.creme, C.escuro)],
+    [cel('', false, 10, C.creme, C.escuro)],
+    [cel('GASTTRO DESIGN', true, 11, C.ouro, C.escuro, 'center')],
+    [cel('Sistema D.O.S.E.', false, 10, C.muteado, C.escuro, 'center')],
+    [cel('', false, 10, C.creme, C.escuro)],
+    [cel('Tabela de Fornecedores', true, 22, C.ouroClr, C.escuro, 'center')],
+    [cel('', false, 10, C.creme, C.escuro)],
+    [cel(nome.toUpperCase(), true, 12, C.creme, C.escuro, 'center')],
+    [cel(hoje, false, 10, C.muteado, C.escuro, 'center')],
+    [cel('', false, 10, C.creme, C.escuro)],
+    [cel('', false, 10, C.creme, C.escuro)],
+    [cel(`${forns.length} fornecedores cadastrados`, true, 14, C.ouro, C.meiTom, 'center')],
+    [cel('', false, 10, C.creme, C.escuro)],
+    [cel(`${forns.filter(f=>f.backup==='Sim').length} com fornecedor de backup`, false, 10, '4A7C59', C.escuro, 'center')],
+    [cel(`${forns.filter(f=>f.backup==='Não').length} sem fornecedor de backup`, false, 10, '8B3A3A', C.escuro, 'center')],
+  ];
+
+  const wsCapa = XLSX.utils.aoa_to_sheet(capaData);
+  wsCapa['!cols'] = [{ wch: 40 }];
+  wsCapa['!rows'] = [
+    {hpt:10},{hpt:10},{hpt:20},{hpt:16},{hpt:10},
+    {hpt:36},{hpt:10},{hpt:22},{hpt:16},{hpt:10},
+    {hpt:10},{hpt:28},{hpt:10},{hpt:18},{hpt:18},
+  ];
+  wsCapa['!merges'] = [
+    {s:{r:2,c:0},e:{r:2,c:7}},{s:{r:3,c:0},e:{r:3,c:7}},
+    {s:{r:5,c:0},e:{r:5,c:7}},{s:{r:7,c:0},e:{r:7,c:7}},
+    {s:{r:8,c:0},e:{r:8,c:7}},{s:{r:11,c:0},e:{r:11,c:7}},
+    {s:{r:13,c:0},e:{r:13,c:7}},{s:{r:14,c:0},e:{r:14,c:7}},
+  ];
+  // Preencher colunas B-H com fundo escuro na capa
+  for (let r = 0; r < 15; r++) {
+    for (let c = 1; c <= 7; c++) {
+      const addr = XLSX.utils.encode_cell({r, c});
+      if (!wsCapa[addr]) wsCapa[addr] = cel('', false, 10, C.creme, C.escuro);
+    }
+  }
+  XLSX.utils.book_append_sheet(wb, wsCapa, 'Capa');
+
+  // ── ABA 2: FORNECEDORES ──
+  const COLS = ['Fornecedor','Categoria','O que fornece','Frequência','Pagamento','Gasto mensal','Satisfação','Backup?'];
+  const WIDTHS = [26, 20, 34, 20, 18, 18, 18, 12];
+
+  const rows = [];
+
+  // Linha de título
+  rows.push([
+    bordCell('TABELA DE FORNECEDORES', true, 13, C.ouro, C.meiTom, 'left', C.ouro),
+    ...Array(7).fill(bordCell('', false, 10, C.creme, C.meiTom, 'left', C.ouro))
+  ]);
+
+  // Linha restaurante + data
+  rows.push([
+    bordCell(nome, true, 10, C.creme, C.meiTom, 'left', C.muteado),
+    ...Array(6).fill(bordCell('', false, 10, C.creme, C.meiTom, 'left', C.muteado)),
+    bordCell(hoje, false, 10, C.muteado, C.meiTom, 'right', C.muteado),
+  ]);
+
+  // Linha vazia
+  rows.push(Array(8).fill(cel('', false, 10, C.creme, C.escuro)));
+
+  // Cabeçalhos
+  rows.push(COLS.map(h => ({
+    v: h.toUpperCase(), t: 's',
+    s: {
+      font: { bold: true, sz: 9, color: { rgb: C.escuro }, name: 'Calibri' },
+      fill: { fgColor: { rgb: C.ouro }, patternType: 'solid' },
+      alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+      border: { bottom: { style: 'medium', color: { rgb: C.escuro } } }
+    }
+  })));
+
+  // Dados
+  forns.forEach((f, i) => {
+    const bg = i % 2 === 0 ? C.faixaA : C.faixaB;
+    const satColor = C.sat[f.sat] || C.muteado;
+    const backupColor = f.backup === 'Sim' ? C.verde : C.vermelho;
+
+    const mkCell = (v, color=C.creme, bold=false) => ({
+      v: v || '', t: 's',
+      s: {
+        font: { bold, sz: 10, color: { rgb: color }, name: 'Calibri' },
+        fill: { fgColor: { rgb: bg }, patternType: 'solid' },
+        alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+        border: { bottom: { style: 'thin', color: { rgb: '333028' } } }
+      }
+    });
+
+    rows.push([
+      mkCell(f.nome, C.creme, true),
+      mkCell(f.categoria, C.ouroClr),
+      mkCell(f.oque),
+      mkCell(f.freq, C.muteado),
+      mkCell(f.pgto, C.muteado),
+      mkCell(f.gasto, C.ouroClr, true),
+      mkCell(f.sat, satColor, true),
+      {
+        v: f.backup, t: 's',
+        s: {
+          font: { bold: true, sz: 10, color: { rgb: backupColor }, name: 'Calibri' },
+          fill: { fgColor: { rgb: bg }, patternType: 'solid' },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: { bottom: { style: 'thin', color: { rgb: '333028' } } }
+        }
+      }
+    ]);
+  });
+
+  // Rodapé
+  rows.push(Array(8).fill(cel('', false, 10, C.creme, C.meiTom)));
+  rows.push([
+    cel('Gerado pelo Sistema D.O.S.E. · Gasttro Design', false, 8, C.muteado, C.meiTom),
+    ...Array(7).fill(cel('', false, 8, C.muteado, C.meiTom))
+  ]);
+
+  const wsForn = XLSX.utils.aoa_to_sheet(rows);
+  wsForn['!cols'] = WIDTHS.map(w => ({ wch: w }));
+  wsForn['!rows'] = [
+    {hpt: 28}, {hpt: 18}, {hpt: 6}, {hpt: 22},
+    ...forns.map(() => ({ hpt: 22 })),
+    {hpt: 6}, {hpt: 14}
+  ];
+
+  // Mesclar título e linha restaurante
+  wsForn['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:5}},
+    {s:{r:1,c:0},e:{r:1,c:6}},
+  ];
+
+  XLSX.utils.book_append_sheet(wb, wsForn, 'Fornecedores');
+
+  // ── ABA 3: ANÁLISE ──
+  const semBackup = forns.filter(f => f.backup === 'Não').map(f => f.nome);
+  const insatisfeitos = forns.filter(f => f.sat === 'Insatisfeito').map(f => f.nome);
+  const catCount = {};
+  forns.forEach(f => { const c = f.categoria || 'Não informado'; catCount[c] = (catCount[c]||0)+1; });
+
+  const analise = [
+    [cel('ANÁLISE RÁPIDA', true, 12, C.ouro, C.meiTom), ...Array(1).fill(cel('',false,10,C.creme,C.meiTom))],
+    [cel('', false, 10, C.creme, C.escuro), cel('', false, 10, C.creme, C.escuro)],
+    [cel('Total de fornecedores', true, 10, C.creme, C.escuro), cel(forns.length, true, 14, C.ouroClr, C.escuro, 'center')],
+    [cel('Com fornecedor de backup', false, 10, C.creme, C.escuro), cel(forns.filter(f=>f.backup==='Sim').length, true, 12, '4A7C59', C.escuro, 'center')],
+    [cel('Sem fornecedor de backup', false, 10, C.creme, C.escuro), cel(forns.filter(f=>f.backup==='Não').length, true, 12, '8B3A3A', C.escuro, 'center')],
+    [cel('', false, 10, C.creme, C.escuro), cel('', false, 10, C.creme, C.escuro)],
+    [cel('POR CATEGORIA', true, 10, C.ouro, C.meiTom), cel('QTD', true, 10, C.ouro, C.meiTom, 'center')],
+    ...Object.entries(catCount).sort((a,b)=>b[1]-a[1]).map(([cat,qtd]) => [
+      cel(cat, false, 10, C.creme, C.escuro),
+      cel(qtd, true, 11, C.ouroClr, C.escuro, 'center'),
+    ]),
+    [cel('', false, 10, C.creme, C.escuro), cel('', false, 10, C.creme, C.escuro)],
+  ];
+
+  if (semBackup.length > 0) {
+    analise.push([cel('SEM BACKUP (RISCO)', true, 10, '8B3A3A', C.meiTom), cel('', false, 10, C.creme, C.meiTom)]);
+    semBackup.forEach(n => analise.push([cel('  ' + n, false, 10, 'C07070', C.escuro), cel('', false, 10, C.creme, C.escuro)]));
+    analise.push([cel('', false, 10, C.creme, C.escuro), cel('', false, 10, C.creme, C.escuro)]);
+  }
+
+  if (insatisfeitos.length > 0) {
+    analise.push([cel('INSATISFAÇÃO REGISTRADA', true, 10, C.ouro, C.meiTom), cel('', false, 10, C.creme, C.meiTom)]);
+    insatisfeitos.forEach(n => analise.push([cel('  ' + n, false, 10, C.ouro, C.escuro), cel('', false, 10, C.creme, C.escuro)]));
+  }
+
+  const wsAnalise = XLSX.utils.aoa_to_sheet(analise);
+  wsAnalise['!cols'] = [{ wch: 32 }, { wch: 14 }];
+  wsAnalise['!merges'] = [{s:{r:0,c:0},e:{r:0,c:1}}];
+  XLSX.utils.book_append_sheet(wb, wsAnalise, 'Análise');
+
+  const filename = `Fornecedores-${nome.replace(/\s+/g,'-')}-${hoje.replace(/\//g,'-')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+function exportarExcel() {
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+
+  const forns = [];
+  document.querySelectorAll('.fornecedor-card').forEach(card => {
+    const id = card.id.replace('fc_','');
+    const fNome = document.getElementById('fc-nome-'+id)?.value || '';
+    if (!fNome) return;
+    forns.push({
+      'Fornecedor': fNome,
+      'Categoria': document.getElementById('fc-cat-'+id)?.value || '',
+      'O que fornece': document.getElementById('fc-oque-'+id)?.value || '',
+      'Frequência de compra': document.getElementById('fc-freq-'+id)?.value || '',
+      'Forma de pagamento': document.getElementById('fc-pgto-'+id)?.value || '',
+      'Gasto mensal estimado': document.getElementById('fc-gasto-'+id)?.value || '',
+      'Satisfação': document.getElementById('fc-sat-'+id)?.value || '',
+      'Tem backup?': (fornData[id] || {}).backup === 'sim' ? 'Sim' : 'Não',
+    });
+  });
+
+  if (forns.length === 0) {
+    alert('Preencha pelo menos um fornecedor antes de exportar.');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // ABA 1: TABELA DE FORNECEDORES
+  const wsData = [
+    // Linha de cabeçalho visual
+    [`Tabela de Fornecedores`, '', '', '', '', '', '', ''],
+    [`${nome}  ·  ${hoje}`, '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', ''],
+    // Cabeçalhos das colunas
+    ['Fornecedor','Categoria','O que fornece','Frequência de compra','Forma de pagamento','Gasto mensal estimado','Satisfação','Tem backup?'],
+  ];
+
+  forns.forEach(f => {
+    wsData.push([
+      f['Fornecedor'], f['Categoria'], f['O que fornece'],
+      f['Frequência de compra'], f['Forma de pagamento'],
+      f['Gasto mensal estimado'], f['Satisfação'], f['Tem backup?']
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Larguras das colunas
+  ws['!cols'] = [
+    { wch: 24 }, // Fornecedor
+    { wch: 20 }, // Categoria
+    { wch: 30 }, // O que fornece
+    { wch: 22 }, // Frequência
+    { wch: 20 }, // Pagamento
+    { wch: 22 }, // Gasto
+    { wch: 16 }, // Satisfação
+    { wch: 14 }, // Backup
+  ];
+
+  // Mesclar células do título
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+  ];
+
+  // Estilo do título (linha 1)
+  const titleCell = ws['A1'];
+  if (titleCell) {
+    titleCell.s = {
+      font: { bold: true, sz: 16, color: { rgb: 'B8965A' } },
+      alignment: { horizontal: 'left', vertical: 'center' },
+      fill: { fgColor: { rgb: '1A1814' } },
+    };
+  }
+
+  // Estilo do subtítulo (linha 2)
+  const subCell = ws['A2'];
+  if (subCell) {
+    subCell.s = {
+      font: { sz: 10, color: { rgb: '7A7369' } },
+      fill: { fgColor: { rgb: '1A1814' } },
+    };
+  }
+
+  // Estilo dos cabeçalhos (linha 4)
+  const headers = ['A','B','C','D','E','F','G','H'];
+  headers.forEach(col => {
+    const cell = ws[col + '4'];
+    if (cell) {
+      cell.s = {
+        font: { bold: true, sz: 10, color: { rgb: 'F5F0E8' } },
+        fill: { fgColor: { rgb: '2A2620' } },
+        alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+        border: {
+          bottom: { style: 'medium', color: { rgb: 'B8965A' } },
+        },
+      };
+    }
+  });
+
+  // Estilo das linhas de dados
+  forns.forEach((_, i) => {
+    const row = 5 + i;
+    const isEven = i % 2 === 1;
+    headers.forEach(col => {
+      const cell = ws[col + row];
+      if (cell) {
+        cell.s = {
+          font: { sz: 10, color: { rgb: isEven ? 'C8C0B0' : 'F5F0E8' } },
+          fill: { fgColor: { rgb: isEven ? '222018' : '1A1814' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+          border: {
+            bottom: { style: 'thin', color: { rgb: '2A2620' } },
+          },
+        };
+      }
+    });
+
+    // Coluna de backup com cor condicional
+    const backupCell = ws['H' + row];
+    if (backupCell) {
+      const temBackup = forns[i]['Tem backup?'] === 'Sim';
+      backupCell.s = {
+        ...backupCell.s,
+        font: { sz: 10, bold: true, color: { rgb: temBackup ? '4A7C59' : '8B3A3A' } },
+        fill: { fgColor: { rgb: isEven ? '222018' : '1A1814' } },
+      };
+    }
+  });
+
+  // Altura das linhas
+  ws['!rows'] = [
+    { hpt: 32 }, // Título
+    { hpt: 18 }, // Subtítulo
+    { hpt: 8  }, // Espaço
+    { hpt: 24 }, // Cabeçalho
+    ...forns.map(() => ({ hpt: 20 })),
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Fornecedores');
+
+  // ABA 2: RESUMO RÁPIDO
+  const resumo = [
+    ['Resumo de fornecedores', ''],
+    ['', ''],
+    ['Total de fornecedores', forns.length],
+    ['Com fornecedor de backup', forns.filter(f => f['Tem backup?'] === 'Sim').length],
+    ['Sem fornecedor de backup', forns.filter(f => f['Tem backup?'] === 'Não').length],
+    ['', ''],
+    ['Por categoria', 'Qtd'],
+  ];
+
+  const catCount = {};
+  forns.forEach(f => {
+    const cat = f['Categoria'] || 'Não informado';
+    catCount[cat] = (catCount[cat] || 0) + 1;
+  });
+  Object.entries(catCount).sort((a,b) => b[1]-a[1]).forEach(([cat, qtd]) => {
+    resumo.push([cat, qtd]);
+  });
+
+  const wsResumo = XLSX.utils.aoa_to_sheet(resumo);
+  wsResumo['!cols'] = [{ wch: 32 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+
+  // DOWNLOAD
+  const filename = `Fornecedores-${nome.replace(/\s+/g,'-')}-${hoje.replace(/\//g,'-')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    const d = coletar();
+    const nome = d.rname || 'Meu Restaurante';
+    const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210, H=297, mg=18, cw=W-mg*2;
+
+    const hdr = () => {
+      pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+      pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+      pdf.text('MÓDULO D  ·  D4',W-mg,11,{align:'right'});
+    };
+
+    const ftr = (p,t) => {
+      pdf.setPage(p);
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10);
+      pdf.text(`${p} / ${t}`,W-mg,H-10,{align:'right'});
+    };
+
+    const row = (label, val, y, yRef) => {
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105);
+      pdf.text(label.toUpperCase(), mg, yRef);
+      pdf.setFontSize(10); pdf.setTextColor(210,200,185);
+      pdf.text(val || 'Não informado', mg, yRef + 5);
+      return yRef + 12;
+    };
+
+    // CAPA
+    hdr();
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(28); pdf.setTextColor(245,240,232); pdf.text('Diagnóstico de',mg,42);
+    pdf.setFont('helvetica','bolditalic'); pdf.setTextColor(212,175,122); pdf.text('Compras',mg,56);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(122,115,105); pdf.text('Sistema D.O.S.E. · Módulo D',mg,66);
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3);
+    pdf.line(mg,74,W-mg,74);
+    pdf.setFontSize(9); pdf.setTextColor(184,150,90); pdf.text(nome.toUpperCase(),mg,81);
+    pdf.setTextColor(122,115,105); pdf.text(hoje,W-mg,81,{align:'right'});
+    pdf.line(mg,85,W-mg,85);
+
+    // VISÃO GERAL
+    let y = 98;
+    const tgs = d.toggleState || {};
+    y = row('Lista de compras padronizada', tgs.lista === 'sim' ? 'Sim' : 'Não', y, y);
+    y = row('Responsável exclusivo para compras', tgs.resp === 'sim' ? 'Sim' : 'Não', y, y);
+    y = row('Como a quantidade é definida', d.metodo_qtd, y, y);
+    y = row('Frequência de compras', d.freq_compras, y, y);
+    if (d.cmv_compras) y = row('CMV de compras (estimativa)', d.cmv_compras + '%', y, y);
+
+    // CATEGORIAS
+    pdf.addPage(); hdr();
+    y = 28;
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(245,240,232); pdf.text('Categorias de insumos',mg,y); y+=12;
+
+    const scaleColors = { 'Pouco': [107,127,163], 'Médio': [193,127,42], 'Alto': [193,112,112] };
+    const catEntries = Object.entries(d.categorias).filter(([,v]) => v);
+    if (catEntries.length > 0) {
+      const colW = cw / 2 - 4;
+      catEntries.forEach(([cat, val], idx) => {
+        const col = idx % 2;
+        const cx = mg + col * (colW + 8);
+        if (col === 0 && idx > 0) y += 14;
+        const cor = scaleColors[val] || [122,115,105];
+        pdf.setFillColor(...cor); pdf.rect(cx, y, 3, 10, 'F');
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(245,240,232);
+        pdf.text(cat, cx + 7, y + 6);
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(...cor);
+        pdf.text(val.toUpperCase(), cx + 7 + pdf.getTextWidth(cat) + 6, y + 6);
+      });
+      y += 20;
+    } else {
+      pdf.setFont('helvetica','italic'); pdf.setFontSize(10); pdf.setTextColor(122,115,105);
+      pdf.text('Nenhuma categoria preenchida.', mg, y); y += 14;
+    }
+    if (d.cat_obs) {
+      y += 4;
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105); pdf.text('OBSERVAÇÕES SOBRE CATEGORIAS',mg,y); y+=6;
+      pdf.setFontSize(9.5); pdf.setTextColor(160,152,140);
+      pdf.text(pdf.splitTextToSize(d.cat_obs,cw).slice(0,4),mg,y);
+    }
+
+    // FORNECEDORES
+    d.fornecedores.filter(f => f.nome).forEach((f, i) => {
+      pdf.addPage(); hdr();
+      y = 28;
+      pdf.setFillColor(184,150,90); pdf.rect(mg,y,3,20,'F');
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(245,240,232);
+      pdf.text(f.nome || 'Fornecedor sem nome', mg+8, y+8);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(122,115,105);
+      pdf.text(f.categoria || '', mg+8, y+16);
+      y += 28;
+      const campos = [
+        ['O que fornece', f.oque], ['Frequência', f.freq],
+        ['Pagamento', f.pgto], ['Gasto mensal estimado', f.gasto],
+        ['Satisfação', f.sat], ['Fornecedor de backup', f.backup === 'sim' ? 'Sim' : 'Não'],
+      ];
+      const col = Math.ceil(campos.length / 2);
+      campos.forEach(([label, val], idx) => {
+        const cx = idx < col ? mg : mg + cw/2 + 4;
+        const cy = y + (idx % col) * 14;
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105);
+        pdf.text(label.toUpperCase(), cx, cy);
+        pdf.setFontSize(10); pdf.setTextColor(210,200,185);
+        pdf.text(val || 'Não informado', cx, cy+5);
+      });
+    });
+
+    // NEGOCIAÇÃO + OPORTUNIDADES
+    pdf.addPage(); hdr();
+    y = 28;
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(245,240,232); pdf.text('Negociação e oportunidades',mg,y); y+=14;
+    y = row('Negociação ativa de preços', tgs.neg === 'sim' ? 'Sim' : 'Não', y, y);
+    y = row('Frequência de revisão de preços', d.freq_neg, y, y);
+    y = row('Prática de cotação', d.cotacao, y, y);
+    if (d.prob_fornecedores) {
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105); pdf.text('PROBLEMAS COM FORNECEDORES',mg,y); y+=6;
+      pdf.setFontSize(9.5); pdf.setTextColor(160,152,140);
+      const ls = pdf.splitTextToSize(d.prob_fornecedores,cw);
+      pdf.text(ls.slice(0,5),mg,y); y += ls.slice(0,5).length*5+10;
+    }
+    if (d.oportunidades) {
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90); pdf.text('OPORTUNIDADES IDENTIFICADAS',mg,y); y+=6;
+      pdf.setFontSize(9.5); pdf.setTextColor(210,200,185);
+      const ls = pdf.splitTextToSize(d.oportunidades,cw);
+      pdf.text(ls.slice(0,6),mg,y);
+    }
+
+    const total = pdf.internal.getNumberOfPages();
+    for (let p=1;p<=total;p++) ftr(p,total);
+    pdf.save(`DOSE-Diagnostico-Compras-${nome.replace(/\s+/g,'-')}.pdf`);
+  } catch(err) {
+    console.error(err);
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+</script>
+</body>
+</html>

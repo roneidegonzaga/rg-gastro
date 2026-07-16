@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mapa de Setorização — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #011E34;
+    --navy2: #062d4e;
+    --gold: #F7B700;
+    --gold2: #FCC740;
+    --coral: #F25C54;
+    --cream: #FFFEE8;
+    --cream2: #F0EECC;
+    --white: #ffffff;
+    --gray: #6b7280;
+    --gray-l: #e5e7eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--navy); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: var(--navy);
+    padding: 20px 32px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    border-bottom: 3px solid var(--gold);
+  }
+  .header-logo img { height: 44px; }
+  .header-center { text-align: center; flex: 1; }
+  .header-eyebrow { font-size: 9px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--white); }
+  .badge { background: var(--gold); color: var(--navy); font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; }
+
+  /* IDENTIFICAÇÃO */
+  .id-bar {
+    background: var(--navy2);
+    padding: 12px 32px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px 20px;
+  }
+  .id-field { display: flex; flex-direction: column; gap: 3px; }
+  .id-label { font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .id-input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.2); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 3px 0; outline: none; width: 100%; transition: border-color .2s; }
+  .id-input::placeholder { color: rgba(255,255,255,.3); }
+  .id-input:focus { border-bottom-color: var(--gold); }
+
+  /* LAYOUT PRINCIPAL */
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; display: flex; flex-direction: column; gap: 24px; }
+
+  /* CANVAS AREA */
+  .canvas-section {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(1,30,52,.1);
+    overflow: hidden;
+  }
+  .canvas-header {
+    background: var(--navy);
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .canvas-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600; color: var(--white); }
+
+  /* TOOLBAR */
+  .toolbar {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  }
+  .tool-group { display: flex; gap: 4px; align-items: center; }
+  .tool-sep { width: 1px; height: 24px; background: rgba(255,255,255,.2); margin: 0 4px; }
+
+  .tool-btn {
+    width: 34px; height: 34px;
+    border-radius: 4px;
+    border: 1.5px solid rgba(255,255,255,.2);
+    background: transparent;
+    color: rgba(255,255,255,.7);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+    position: relative;
+  }
+  .tool-btn:hover { background: rgba(255,255,255,.1); color: white; border-color: rgba(255,255,255,.4); }
+  .tool-btn.ativo { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+  .tool-btn.danger:hover { background: var(--coral); border-color: var(--coral); color: white; }
+
+  .tool-label { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.5); }
+
+  /* SIZE PICKER */
+  .size-picker {
+    display: flex; gap: 3px; align-items: center;
+  }
+  .size-btn {
+    border: 1.5px solid rgba(255,255,255,.2);
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .size-btn.ativo { border-color: var(--gold); background: var(--gold); }
+
+  /* COLOR PICKER */
+  .color-swatch {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform .15s;
+  }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.ativo { border-color: white; transform: scale(1.1); }
+
+  /* CANVAS WRAPPER */
+  .canvas-wrap {
+    position: relative;
+    background: #f8f8f0;
+    background-image:
+      linear-gradient(rgba(1,30,52,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(1,30,52,.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  .canvas-wrap.tem-fundo {
+    background-image: none;
+  }
+  #bgCanvas {
+    position: absolute; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #mainCanvas {
+    display: block;
+    width: 100%;
+    touch-action: none;
+    position: relative;
+    z-index: 1;
+    background: transparent;
+  }
+
+  /* PRAÇAS SECTION */
+  .pracas-section {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(1,30,52,.1);
+    overflow: hidden;
+  }
+  .sec-header {
+    background: var(--navy2);
+    padding: 10px 20px;
+  }
+  .sec-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+
+  .pracas-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+  .praca-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: start;
+    padding: 12px 14px;
+    background: var(--cream);
+    border-radius: 6px;
+    border-left: 3px solid var(--gold);
+  }
+  .praca-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--gold); line-height: 1;
+    padding-top: 4px;
+  }
+  .praca-field { display: flex; flex-direction: column; gap: 3px; }
+  .praca-field-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray); }
+  .praca-input {
+    border: 1px solid var(--gray-l);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    background: var(--white);
+    outline: none;
+    transition: border-color .2s;
+    width: 100%;
+  }
+  .praca-input:focus { border-color: var(--gold); }
+  .praca-remove {
+    background: transparent; border: 1px solid var(--gray-l);
+    border-radius: 4px; width: 30px; height: 30px;
+    cursor: pointer; color: var(--gray);
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; margin-top: 4px; flex-shrink: 0;
+  }
+  .praca-remove:hover { background: var(--coral); border-color: var(--coral); color: white; }
+
+  .btn-add-praca {
+    background: transparent;
+    border: 1.5px dashed var(--gold);
+    border-radius: 6px;
+    padding: 10px;
+    color: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    width: 100%;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .btn-add-praca:hover { background: var(--gold); color: var(--navy); }
+
+  /* OBS GERAL */
+  .obs-section { background: var(--white); border-radius: 8px; box-shadow: 0 1px 6px rgba(1,30,52,.1); overflow: hidden; }
+  .obs-body { padding: 16px 20px; }
+  .obs-textarea {
+    width: 100%; border: 1px solid var(--gray-l); border-radius: 4px;
+    padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--navy); background: var(--cream); resize: vertical; min-height: 80px;
+    outline: none; transition: border-color .2s;
+  }
+  .obs-textarea:focus { border-color: var(--gold); }
+
+  /* AÇÕES */
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn-acao { padding: 10px 24px; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: none; transition: all .2s; }
+  .btn-acao.primario { background: var(--gold); color: var(--navy); }
+  .btn-acao.primario:hover { background: var(--gold2); }
+  .btn-acao.secundario { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn-acao.secundario:hover { background: var(--navy); color: white; }
+
+  @media (max-width: 640px) {
+    .praca-row { grid-template-columns: 24px 1fr 1fr; }
+    .praca-row > :nth-child(4) { grid-column: 2 / 4; }
+    .praca-remove { grid-column: 1; grid-row: 1; }
+  }
+  @media print {
+    .toolbar, .acoes, .btn-add-praca, .praca-remove { display: none !important; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <!-- Logo placeholder — substituir pela logo RG Gastrô em base64 -->
+    <span style="font-family:'Playfair Display',serif;color:var(--gold);font-size:18px;font-weight:700;">RG Gastrô</span>
+  </div>
+  <div class="header-center">
+    <div class="header-eyebrow">RG Gastrô Educação</div>
+    <div class="header-title">Mapa de Setorização e Praças</div>
+  </div>
+  <span class="badge">Versão A · Canvas</span>
+</div>
+
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" placeholder="Seu nome"></div>
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" placeholder="Nome do cliente"></div>
+  <div class="id-field"><span class="id-label">Tipo de negócio</span><input class="id-input" type="text" placeholder="À la carte, self-service..."></div>
+  <div class="id-field"><span class="id-label">Data</span><input class="id-input" type="date"></div>
+  <div class="id-field"><span class="id-label">Responsável presente</span><input class="id-input" type="text" placeholder="Nome"></div>
+</div>
+
+<div class="main">
+
+  <!-- CANVAS -->
+  <div class="canvas-section">
+    <div class="canvas-header">
+      <span class="canvas-title">Layout da Cozinha</span>
+      <div class="toolbar">
+        <span class="tool-label">Ferramenta</span>
+        <div class="tool-group">
+          <button class="tool-btn ativo" id="btnCaneta" onclick="setTool('caneta')" title="Caneta livre">✏️</button>
+          <button class="tool-btn" id="btnRect" onclick="setTool('rect')" title="Retângulo (praça)">⬜</button>
+          <button class="tool-btn" id="btnTexto" onclick="setTool('texto')" title="Texto / rótulo">T</button>
+          <button class="tool-btn" id="btnSeta" onclick="setTool('seta')" title="Seta / fluxo">↗</button>
+          <button class="tool-btn" id="btnApagar" onclick="setTool('apagar')" title="Borracha">⬚</button>
+        </div>
+        <div class="tool-sep"></div>
+        <span class="tool-label">Espessura</span>
+        <div class="size-picker">
+          <button class="size-btn ativo" id="s1" style="width:10px;height:10px" onclick="setSize(2,'s1')" title="Fino"></button>
+          <button class="size-btn" id="s2" style="width:14px;height:14px" onclick="setSize(4,'s2')" title="Médio"></button>
+          <button class="size-btn" id="s3" style="width:18px;height:18px" onclick="setSize(8,'s3')" title="Grosso"></button>
+        </div>
+        <div class="tool-sep"></div>
+        <span class="tool-label">Cor</span>
+        <div class="tool-group" id="colorPicker">
+          <div class="color-swatch ativo" style="background:#011E34" onclick="setCor('#011E34',this)" title="Navy"></div>
+          <div class="color-swatch" style="background:#F7B700" onclick="setCor('#F7B700',this)" title="Gold"></div>
+          <div class="color-swatch" style="background:#F25C54" onclick="setCor('#F25C54',this)" title="Coral"></div>
+          <div class="color-swatch" style="background:#22c55e" onclick="setCor('#22c55e',this)" title="Verde"></div>
+          <div class="color-swatch" style="background:#3b82f6" onclick="setCor('#3b82f6',this)" title="Azul"></div>
+          <div class="color-swatch" style="background:#9ca3af" onclick="setCor('#9ca3af',this)" title="Cinza"></div>
+          <div class="color-swatch" style="background:#ffffff;border:1.5px solid #ccc" onclick="setCor('#ffffff',this)" title="Branco"></div>
+        </div>
+        <div class="tool-sep"></div>
+        <button class="tool-btn danger" onclick="undoLast()" title="Desfazer">↩</button>
+        <button class="tool-btn danger" onclick="limparCanvas()" title="Limpar desenho (mantém imagem de fundo)">🗑</button>
+        <div class="tool-sep"></div>
+        <span class="tool-label">Fundo</span>
+        <button class="tool-btn" onclick="document.getElementById('inputFundo').click()" title="Carregar foto ou planta baixa como fundo">🖼</button>
+        <button class="tool-btn danger" onclick="removerFundo()" title="Remover imagem de fundo">✕</button>
+        <input type="file" id="inputFundo" accept="image/*" style="display:none" onchange="carregarFundo(this)">
+      </div>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="bgCanvas" style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
+      <canvas id="mainCanvas" style="position:relative;z-index:1;"></canvas>
+    </div>
+  </div>
+
+  <!-- PRAÇAS -->
+  <div class="pracas-section">
+    <div class="sec-header"><span class="sec-title">Praças identificadas</span></div>
+    <div class="pracas-list" id="pracasList">
+      <!-- gerado por JS -->
+    </div>
+  </div>
+
+  <!-- OBSERVAÇÕES -->
+  <div class="obs-section">
+    <div class="sec-header"><span class="sec-title">Observações gerais da cozinha</span></div>
+    <div class="obs-body">
+      <textarea class="obs-textarea" placeholder="Impressões gerais sobre o espaço físico, fluxo de movimentação, pontos críticos de layout, oportunidades de melhoria..."></textarea>
+    </div>
+  </div>
+
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="salvarPNG()">Salvar imagem do mapa</button>
+  </div>
+
+</div>
+
+<script>
+// ── CANVAS SETUP ─────────────────────────────────────
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const bgCanvas = document.getElementById('bgCanvas');
+const bgCtx = bgCanvas.getContext('2d');
+const wrap = document.getElementById('canvasWrap');
+
+let tool = 'caneta';
+let cor = '#011E34';
+let tamanho = 2;
+let desenhando = false;
+let startX, startY;
+let history = [];
+let imagemFundo = null;
+
+function resizeCanvas() {
+  const w = wrap.clientWidth;
+  const h = Math.max(480, w * 0.55);
+
+  const snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  canvas.width = w;
+  canvas.height = h;
+  bgCanvas.width = w;
+  bgCanvas.height = h;
+  bgCanvas.style.width = w + 'px';
+  bgCanvas.style.height = h + 'px';
+
+  ctx.putImageData(snapshot, 0, 0);
+
+  if (imagemFundo) renderFundo();
+}
+
+function salvarEstado() {
+  history.push(canvas.toDataURL());
+  if (history.length > 40) history.shift();
+}
+
+function undoLast() {
+  if (history.length === 0) return;
+  const img = new Image();
+  img.src = history.pop();
+  img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); };
+}
+
+function limparCanvas() {
+  if (!confirm('Limpar o desenho? A imagem de fundo será mantida.')) return;
+  salvarEstado();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ── IMAGEM DE FUNDO ──────────────────────────────────
+function carregarFundo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      imagemFundo = img;
+      renderFundo();
+      wrap.classList.add('tem-fundo');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function renderFundo() {
+  if (!imagemFundo) return;
+  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+  const ratio = Math.min(bgCanvas.width / imagemFundo.width, bgCanvas.height / imagemFundo.height);
+  const w = imagemFundo.width * ratio;
+  const h = imagemFundo.height * ratio;
+  const x = (bgCanvas.width - w) / 2;
+  const y = (bgCanvas.height - h) / 2;
+  bgCtx.globalAlpha = 0.85;
+  bgCtx.drawImage(imagemFundo, x, y, w, h);
+  bgCtx.globalAlpha = 1;
+}
+
+function removerFundo() {
+  if (!imagemFundo) return;
+  if (!confirm('Remover a imagem de fundo?')) return;
+  imagemFundo = null;
+  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+  wrap.classList.remove('tem-fundo');
+}
+
+// ── FERRAMENTAS ──────────────────────────────────────
+function setTool(t) {
+  tool = t;
+  document.querySelectorAll('.tool-btn[id^=btn]').forEach(b => b.classList.remove('ativo'));
+  const map = { caneta:'btnCaneta', rect:'btnRect', texto:'btnTexto', seta:'btnSeta', apagar:'btnApagar' };
+  document.getElementById(map[t])?.classList.add('ativo');
+  canvas.style.cursor = t === 'apagar' ? 'cell' : t === 'texto' ? 'text' : 'crosshair';
+}
+
+function setSize(s, btnId) {
+  tamanho = s;
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('ativo'));
+  document.getElementById(btnId).classList.add('ativo');
+}
+
+function setCor(c, el) {
+  cor = c;
+  document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('ativo'));
+  el.classList.add('ativo');
+}
+
+// ── COORDENADAS ──────────────────────────────────────
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  if (e.touches) {
+    return {
+      x: (e.touches[0].clientX - rect.left) * scaleX,
+      y: (e.touches[0].clientY - rect.top) * scaleY
+    };
+  }
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+// ── EVENTOS ──────────────────────────────────────────
+function onStart(e) {
+  e.preventDefault();
+  const pos = getPos(e);
+  startX = pos.x; startY = pos.y;
+  desenhando = true;
+
+  if (tool === 'texto') {
+    const texto = prompt('Digite o rótulo:');
+    if (texto) {
+      salvarEstado();
+      ctx.font = `${Math.max(14, tamanho * 5)}px 'DM Sans', sans-serif`;
+      ctx.fillStyle = cor;
+      ctx.fillText(texto, pos.x, pos.y);
+    }
+    desenhando = false;
+    return;
+  }
+
+  if (tool === 'caneta' || tool === 'apagar') {
+    salvarEstado();
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+}
+
+function onMove(e) {
+  e.preventDefault();
+  if (!desenhando) return;
+  const pos = getPos(e);
+
+  if (tool === 'caneta') {
+    ctx.lineWidth = tamanho;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = cor;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+  } else if (tool === 'apagar') {
+    ctx.lineWidth = tamanho * 6;
+    ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over';
+  } else if (tool === 'rect' || tool === 'seta') {
+    // preview: redraw last state
+    if (history.length > 0) {
+      const img = new Image();
+      img.src = history[history.length - 1];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    ctx.strokeStyle = cor;
+    ctx.lineWidth = tamanho;
+    ctx.globalCompositeOperation = 'source-over';
+
+    if (tool === 'rect') {
+      ctx.beginPath();
+      ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+      // fill semi-transparente
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = cor;
+      ctx.fillRect(startX, startY, pos.x - startX, pos.y - startY);
+      ctx.globalAlpha = 1;
+    } else if (tool === 'seta') {
+      desenharSeta(startX, startY, pos.x, pos.y);
+    }
+  }
+}
+
+function onEnd(e) {
+  if (!desenhando) return;
+  desenhando = false;
+  const pos = e.changedTouches
+    ? { x: (e.changedTouches[0].clientX - canvas.getBoundingClientRect().left) * (canvas.width / canvas.getBoundingClientRect().width), y: (e.changedTouches[0].clientY - canvas.getBoundingClientRect().top) * (canvas.height / canvas.getBoundingClientRect().height) }
+    : getPos(e);
+
+  if (tool === 'rect') {
+    salvarEstado();
+    ctx.strokeStyle = cor;
+    ctx.lineWidth = tamanho;
+    ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = cor;
+    ctx.fillRect(startX, startY, pos.x - startX, pos.y - startY);
+    ctx.globalAlpha = 1;
+  } else if (tool === 'seta') {
+    salvarEstado();
+    desenharSeta(startX, startY, pos.x, pos.y);
+  }
+}
+
+function desenharSeta(x1, y1, x2, y2) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headLen = 14;
+  ctx.beginPath();
+  ctx.strokeStyle = cor;
+  ctx.lineWidth = tamanho;
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.stroke();
+}
+
+canvas.addEventListener('mousedown', onStart);
+canvas.addEventListener('mousemove', onMove);
+canvas.addEventListener('mouseup', onEnd);
+canvas.addEventListener('touchstart', onStart, { passive: false });
+canvas.addEventListener('touchmove', onMove, { passive: false });
+canvas.addEventListener('touchend', onEnd, { passive: false });
+
+// ── PRAÇAS ───────────────────────────────────────────
+let numPracas = 0;
+
+function addPraca() {
+  numPracas++;
+  const n = numPracas;
+  const list = document.getElementById('pracasList');
+  const addBtn = list.querySelector('.btn-add-praca');
+
+  const row = document.createElement('div');
+  row.className = 'praca-row';
+  row.id = `praca-${n}`;
+  row.innerHTML = `
+    <div class="praca-num">${String(n).padStart(2,'0')}</div>
+    <div class="praca-field">
+      <span class="praca-field-label">Nome da praça</span>
+      <input class="praca-input" type="text" placeholder="Ex: Frituras, Fogão, Saladas...">
+    </div>
+    <div class="praca-field">
+      <span class="praca-field-label">Responsável</span>
+      <input class="praca-input" type="text" placeholder="Nome ou função">
+    </div>
+    <div class="praca-field">
+      <span class="praca-field-label">Equipamentos principais</span>
+      <input class="praca-input" type="text" placeholder="Fritadeira, fogão, geladeira...">
+    </div>
+    <button class="praca-remove" onclick="removePraca(${n})" title="Remover praça">×</button>
+  `;
+  list.insertBefore(row, addBtn);
+}
+
+function removePraca(n) {
+  document.getElementById(`praca-${n}`)?.remove();
+}
+
+function salvarPNG() {
+  const merged = document.createElement('canvas');
+  merged.width = canvas.width;
+  merged.height = canvas.height;
+  const mCtx = merged.getContext('2d');
+  mCtx.fillStyle = '#f8f8f0';
+  mCtx.fillRect(0, 0, merged.width, merged.height);
+  if (imagemFundo) mCtx.drawImage(bgCanvas, 0, 0);
+  mCtx.drawImage(canvas, 0, 0);
+  const link = document.createElement('a');
+  link.download = 'mapa-setorizacao.png';
+  link.href = merged.toDataURL('image/png');
+  link.click();
+}
+
+// ── INIT ─────────────────────────────────────────────
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Adicionar 3 praças iniciais
+addPraca(); addPraca(); addPraca();
+</script>
+</body>
+</html>

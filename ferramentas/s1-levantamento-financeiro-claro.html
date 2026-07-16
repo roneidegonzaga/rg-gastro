@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Levantamento Financeiro | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008; --blue: #2a4a7a;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+main { max-width: 900px; margin: 0 auto; padding: 40px 48px 80px; }
+
+.instruction { background: rgba(2,82,145,0.06); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 16px 20px; margin-bottom: 40px; font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.8; }
+
+/* SEÇÕES */
+.secao { margin-bottom: 40px; }
+.secao-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.secao-num { font-family: 'Manrope', sans-serif; font-size: 36px; font-weight: 300; color: rgba(91,145,188,0.2); line-height: 1; width: 32px; flex-shrink: 0; }
+.secao-title { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 400; }
+.secao-sub { font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 2px; }
+
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.g1 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+.fb { display: flex; flex-direction: column; gap: 7px; }
+.fb-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+.fb-hint { font-size: 11px; color: rgba(1,30,52,0.4); line-height: 1.5; margin-top: -4px; }
+
+/* INPUT COM PREFIXO R$ */
+.input-wrap { position: relative; }
+.input-prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); pointer-events: none; }
+.input-suffix { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); pointer-events: none; }
+
+input[type="number"].f {
+  font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 10px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px;
+}
+input[type="number"].f.com-rs { padding-left: 32px; }
+input[type="number"].f.com-pct { padding-right: 32px; }
+input[type="number"].f::placeholder { color: rgba(1,30,52,0.4); }
+input[type="number"].f:focus { border-color: var(--gold); }
+
+/* CUSTOS FIXOS DETALHADOS */
+.custo-lista { display: flex; flex-direction: column; gap: 8px; }
+.custo-row { display: grid; grid-template-columns: 1fr 1fr 36px; gap: 8px; align-items: center; }
+.custo-row input[type="text"] {
+  font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 9px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px;
+}
+.custo-row input[type="text"]::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+.custo-row input[type="text"]:focus { border-color: var(--gold); }
+.del-btn { background: transparent; border: none; color: rgba(122,32,32,0.4); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px; transition: color 0.2s; }
+.del-btn:hover { color: #c07070; }
+.add-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 9px 18px; background: transparent; color: var(--muted); border: 1px solid rgba(1,30,52,0.2); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }
+.add-btn:hover { color: var(--gold); border-color: var(--border-h); }
+
+/* TOTALIZADOR PARCIAL */
+.subtotal { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(1,30,52,0.04); border: 1px solid var(--border); margin-top: 12px; }
+.subtotal-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.subtotal-valor { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 300; color: var(--gold); }
+
+/* DIAGNÓSTICO */
+.diagnostico { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 28px 32px; margin-top: 40px; }
+.diag-title { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 300; color: var(--gold-light); margin-bottom: 6px; }
+.diag-sub { font-size: 12px; font-weight: 300; color: var(--muted); margin-bottom: 28px; }
+
+.diag-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin-bottom: 24px; }
+.diag-item { background: var(--charcoal); padding: 18px 16px; }
+.diag-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.diag-valor { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; line-height: 1; color: var(--gold); }
+.diag-valor.grande { font-size: 36px; }
+.diag-valor.verde { color: #1a5e2a; }
+.diag-valor.amarelo { color: #7a4008; }
+.diag-valor.vermelho { color: #7a2020; }
+.diag-nota { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+.diag-bloco { margin-bottom: 20px; border: 1px solid var(--border); padding: 18px 20px; }
+.diag-bloco-title { font-size: 13px; font-weight: 500; color: var(--cream); margin-bottom: 12px; }
+.diag-linha { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.diag-linha:last-child { margin-bottom: 0; }
+.dl-label { font-size: 12px; color: var(--muted); }
+.dl-valor { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold-light); }
+.dl-valor.verde { color: #1a5e2a; }
+.dl-valor.amarelo { color: #7a4008; }
+.dl-valor.vermelho { color: #7a2020; }
+
+.diag-mensagem { font-size: 13px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.8; padding: 16px 20px; border: 1px solid var(--border); border-left: 3px solid var(--gold); background: rgba(2,82,145,0.06); }
+.diag-mensagem strong { font-weight: 500; color: var(--cream); }
+
+/* AÇÕES */
+.actions { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.btn-primary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: var(--gold); color: var(--charcoal); border: none; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+.btn-primary::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-primary:hover::after { transform: translateX(0); }
+.btn-primary span { position: relative; z-index: 1; }
+.btn-primary:hover span { color: var(--gold); }
+.btn-secondary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: transparent; color: var(--muted); border: 1px solid var(--border); cursor: pointer; transition: all 0.25s; }
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+/* PDF OVERLAY */
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .g2, .g3 { grid-template-columns: 1fr; }
+  .diag-grid { grid-template-columns: 1fr 1fr; }
+  .custo-row { grid-template-columns: 1fr 1fr; }
+  .custo-row .del-btn { display: none; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando relatório</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Levantamento<br><em>Financeiro</em></h1>
+    <p class="hsub">Mapeie os números reais do seu negócio. Faturamento, custos fixos, custos variáveis e indicadores-chave calculados automaticamente.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo S · S1</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+  <div class="fg"><span class="fl">Período de referência</span><input type="text" class="fi" id="periodo" placeholder="Ex: Janeiro 2026"></div>
+</div>
+
+<main>
+
+  <div class="instruction">
+    Preencha com os dados do último mês completo. Se não tiver os números exatos, use estimativas honestas. Um levantamento aproximado já é muito mais útil do que nenhum levantamento. Os indicadores são calculados automaticamente conforme você preenche.
+  </div>
+
+  <!-- SEÇÃO 1: FATURAMENTO -->
+  <div class="secao">
+    <div class="secao-header">
+      <span class="secao-num">1</span>
+      <div><h2 class="secao-title">Faturamento</h2><p class="secao-sub">Quanto o restaurante vendeu no período</p></div>
+    </div>
+    <div class="g3">
+      <div class="fb">
+        <label class="fb-label">Faturamento total bruto (R$)</label>
+        <p class="fb-hint">Tudo que entrou em vendas antes de qualquer desconto</p>
+        <div class="input-wrap">
+          <span class="input-prefix">R$</span>
+          <input type="number" class="f com-rs" id="fat_bruto" placeholder="0,00" min="0" step="0.01" oninput="calcTudo()">
+        </div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Dias trabalhados no mês</label>
+        <p class="fb-hint">Dias em que o restaurante esteve aberto</p>
+        <input type="number" class="f" id="dias_trab" placeholder="Ex: 26" min="1" max="31" step="1" oninput="calcTudo()">
+      </div>
+      <div class="fb">
+        <label class="fb-label">Número médio de clientes por dia</label>
+        <p class="fb-hint">Contagem média de atendimentos diários</p>
+        <input type="number" class="f" id="clientes_dia" placeholder="Ex: 45" min="0" step="1" oninput="calcTudo()">
+      </div>
+    </div>
+    <div class="g2" style="margin-top:14px">
+      <div class="fb">
+        <label class="fb-label">Faturamento delivery (R$)</label>
+        <p class="fb-hint">Parte do faturamento que veio por delivery</p>
+        <div class="input-wrap">
+          <span class="input-prefix">R$</span>
+          <input type="number" class="f com-rs" id="fat_delivery" placeholder="0,00" min="0" step="0.01" oninput="calcTudo()">
+        </div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Margem de lucro desejada (%)</label>
+        <p class="fb-hint">Quanto você quer lucrar sobre o faturamento</p>
+        <div class="input-wrap">
+          <input type="number" class="f com-pct" id="margem_desejada" placeholder="Ex: 15" min="0" max="100" step="0.5" oninput="calcTudo()">
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2: CUSTO DE INSUMOS (CMV) -->
+  <div class="secao">
+    <div class="secao-header">
+      <span class="secao-num">2</span>
+      <div><h2 class="secao-title">Custo de insumos (CMV)</h2><p class="secao-sub">Quanto foi gasto em mercadorias e insumos para produzir o que foi vendido</p></div>
+    </div>
+    <div class="g2">
+      <div class="fb">
+        <label class="fb-label">Total gasto em compras de insumos (R$)</label>
+        <p class="fb-hint">Tudo que foi comprado para a produção no período</p>
+        <div class="input-wrap">
+          <span class="input-prefix">R$</span>
+          <input type="number" class="f com-rs" id="cmv_compras" placeholder="0,00" min="0" step="0.01" oninput="calcTudo()">
+        </div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">CMV calculado</label>
+        <p class="fb-hint">Atualizado automaticamente</p>
+        <div style="padding:10px 0">
+          <span style="font-family:'Manrope',serif;font-size:36px;font-weight:300;color:var(--gold)" id="cmv_display">--%</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px" id="cmv_bench"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3: CUSTOS FIXOS -->
+  <div class="secao">
+    <div class="secao-header">
+      <span class="secao-num">3</span>
+      <div><h2 class="secao-title">Custos fixos</h2><p class="secao-sub">Custos que existem independente do volume de vendas</p></div>
+    </div>
+    <div class="custo-lista" id="listaCF">
+      <!-- Renderizado via JS -->
+    </div>
+    <button class="add-btn" onclick="addCusto('cf')">+ Adicionar custo fixo</button>
+    <div class="subtotal">
+      <span class="subtotal-label">Total de custos fixos</span>
+      <span class="subtotal-valor" id="totalCF">R$ 0,00</span>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: CUSTOS VARIÁVEIS -->
+  <div class="secao">
+    <div class="secao-header">
+      <span class="secao-num">4</span>
+      <div><h2 class="secao-title">Custos variáveis</h2><p class="secao-sub">Custos que aumentam ou diminuem conforme o volume de vendas</p></div>
+    </div>
+    <div class="custo-lista" id="listaCV">
+      <!-- Renderizado via JS -->
+    </div>
+    <button class="add-btn" onclick="addCusto('cv')">+ Adicionar custo variável</button>
+    <div class="subtotal">
+      <span class="subtotal-label">Total de custos variáveis</span>
+      <span class="subtotal-valor" id="totalCV">R$ 0,00</span>
+    </div>
+  </div>
+
+  <!-- DIAGNÓSTICO -->
+  <div class="diagnostico" id="diagnostico" style="display:none">
+    <p class="diag-title">Diagnóstico financeiro</p>
+    <p class="diag-sub">Calculado com base nos dados preenchidos acima. Cada indicador traz o número, o benchmark de referência e uma orientação prática.</p>
+
+    <!-- RESULTADO GERAL -->
+    <div id="diag_resultado_bloco"></div>
+
+    <!-- PAINÉIS CONTEXTUAIS -->
+    <div id="diag_paineis"></div>
+
+    <div class="diag-mensagem" id="diag_mensagem"></div>
+
+    <div class="actions">
+      <button class="btn-primary" onclick="gerarPDF()"><span>Gerar PDF do levantamento</span></button>
+      <button class="btn-secondary" onclick="salvarLocal()">Salvar rascunho</button>
+    </div>
+  </div>
+
+  <div class="actions" id="actionsSimples">
+    <button class="btn-secondary" onclick="salvarLocal()">Salvar rascunho</button>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta S1 · Levantamento Financeiro</span>
+</footer>
+
+<script>
+
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatBRLNum(valor, casas) {
+  if (valor === null || valor === undefined || isNaN(valor)) return '--';
+  casas = casas !== undefined ? casas : 2;
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+}
+
+// CUSTOS PRÉ-DEFINIDOS
+const CF_DEFAULTS = ['Aluguel','Energia elétrica','Água e gás','Folha de pagamento','Pró-labore (retirada do dono)','Contador','Internet e telefone','Manutenção e conservação'];
+const CV_DEFAULTS = ['Embalagens','Taxa de delivery (iFood, etc.)','Comissões sobre vendas','Material de limpeza e higiene','Outros custos variáveis'];
+
+let custosCF = [];
+let custosCV = [];
+
+// INIT
+carregarLocal();
+document.getElementById('rname').value = localStorage.getItem('dose-lf-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-lf-rname', e.target.value));
+if (custosCF.length === 0) CF_DEFAULTS.forEach(nome => addCusto('cf', nome));
+if (custosCV.length === 0) CV_DEFAULTS.forEach(nome => addCusto('cv', nome));
+
+// ADICIONAR CUSTO
+function addCusto(tipo, nomeDefault) {
+  const id = Date.now() + Math.random();
+  const lista = tipo === 'cf' ? custosCF : custosCV;
+  lista.push({ id, nome: nomeDefault || '', valor: '' });
+  renderCustos(tipo);
+  calcTudo();
+}
+
+function removerCusto(tipo, id) {
+  if (tipo === 'cf') custosCF = custosCF.filter(c => c.id !== id);
+  else custosCV = custosCV.filter(c => c.id !== id);
+  renderCustos(tipo);
+  calcTudo();
+}
+
+function renderCustos(tipo) {
+  const lista = tipo === 'cf' ? custosCF : custosCV;
+  const containerId = tipo === 'cf' ? 'listaCF' : 'listaCV';
+  const container = document.getElementById(containerId);
+  container.innerHTML = lista.map(c => `
+    <div class="custo-row" id="crow_${tipo}_${c.id}">
+      <input type="text" placeholder="Nome do custo" value="${esc(c.nome)}"
+        oninput="onCustoNome('${tipo}',${c.id},this.value)">
+      <div class="input-wrap">
+        <span class="input-prefix">R$</span>
+        <input type="number" class="f com-rs" placeholder="0,00" value="${c.valor||''}" min="0" step="0.01"
+          oninput="onCustoValor('${tipo}',${c.id},this.value)">
+      </div>
+      <button class="del-btn" onclick="removerCusto('${tipo}',${c.id})">×</button>
+    </div>`).join('');
+}
+
+function onCustoNome(tipo, id, val) {
+  const lista = tipo === 'cf' ? custosCF : custosCV;
+  const c = lista.find(c => c.id == id);
+  if (c) c.nome = val;
+}
+
+function onCustoValor(tipo, id, val) {
+  const lista = tipo === 'cf' ? custosCF : custosCV;
+  const c = lista.find(c => c.id == id);
+  if (c) { c.valor = val; calcTudo(); }
+}
+
+function somarCustos(lista) {
+  return lista.reduce((a, c) => a + (parseFloat(c.valor) || 0), 0);
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// CALCULAR TUDO
+function calcTudo() {
+  const fat = parseFloat(document.getElementById('fat_bruto').value) || 0;
+  const dias = parseFloat(document.getElementById('dias_trab').value) || 0;
+  const cliDia = parseFloat(document.getElementById('clientes_dia').value) || 0;
+  const fatDel = parseFloat(document.getElementById('fat_delivery').value) || 0;
+  const margemDes = parseFloat(document.getElementById('margem_desejada').value) || 0;
+  const cmvComp = parseFloat(document.getElementById('cmv_compras').value) || 0;
+
+  const totalCF = somarCustos(custosCF);
+  const totalCV = somarCustos(custosCV);
+  const totalCustos = totalCF + totalCV + cmvComp;
+
+  document.getElementById('totalCF').textContent = 'R$ ' + formatBRL(totalCF);
+  document.getElementById('totalCV').textContent = 'R$ ' + formatBRL(totalCV);
+
+  // CMV
+  const cmv = fat > 0 ? (cmvComp / fat) * 100 : 0;
+  const cmvEl = document.getElementById('cmv_display');
+  const cmvBench = document.getElementById('cmv_bench');
+  cmvEl.textContent = fat > 0 && cmvComp > 0 ? formatBRLNum(cmv, 1) + '%' : '--%';
+  cmvEl.style.color = cmv === 0 ? 'var(--gold)' : cmv <= 35 ? '#1a5e2a' : cmv <= 42 ? '#7a4008' : '#7a2020';
+  cmvBench.textContent = cmv > 0 ? (cmv <= 35 ? 'dentro do ideal' : 'acima do ideal') : '';
+
+  // Mostrar diagnóstico
+  if (fat > 0) {
+    document.getElementById('diagnostico').style.display = 'block';
+    document.getElementById('actionsSimples').style.display = 'none';
+    buildDiagnostico(fat, dias, cliDia, fatDel, margemDes, cmvComp, totalCF, totalCV, totalCustos, cmv);
+  } else {
+    document.getElementById('diagnostico').style.display = 'none';
+    document.getElementById('actionsSimples').style.display = 'flex';
+  }
+}
+
+function fmt(v) { return 'R$ ' + formatBRL(v||0); }
+function fmtPct(v) { return formatBRLNum(v||0, 1) + '%'; }
+function cor(v, limBom, limMed) { return v <= limBom ? 'verde' : v <= limMed ? 'amarelo' : 'vermelho'; }
+
+function buildDiagnostico(fat, dias, cliDia, fatDel, margemDes, cmvComp, totalCF, totalCV, totalCustos, cmv) {
+  const resultado = fat - totalCustos;
+  const margemReal = fat > 0 ? (resultado / fat) * 100 : 0;
+  const ticket = (dias > 0 && cliDia > 0) ? fat / (dias * cliDia) : 0;
+  const fatDia = dias > 0 ? fat / dias : 0;
+  const delPct = fat > 0 && fatDel > 0 ? (fatDel / fat) * 100 : 0;
+  const cfPct = fat > 0 ? (totalCF / fat) * 100 : 0;
+  const cvPct = fat > 0 ? (totalCV / fat) * 100 : 0;
+  const ctPct = fat > 0 ? (totalCustos / fat) * 100 : 0;
+  const mcPct = fat > 0 ? ((fat - cmvComp - totalCV) / fat) : 0;
+  const pe = mcPct > 0 ? totalCF / mcPct : 0;
+  const peDiff = pe > 0 ? fat - pe : null;
+  const peCli = (pe > 0 && ticket > 0 && dias > 0) ? Math.ceil(pe / dias / ticket) : null;
+  const markup = cmvComp > 0 ? fat / cmvComp : 0;
+  const fatMeta = margemDes > 0 && mcPct > 0 ? (totalCF + (fat * (margemDes / 100))) / mcPct : 0;
+
+  // RESULTADO GERAL
+  const corRes = resultado >= 0 ? '#1a5e2a' : '#7a2020';
+  const corCmv = cmvComp === 0 ? 'var(--gold)' : cmv <= 35 ? '#1a5e2a' : '#7a2020';
+  document.getElementById('diag_resultado_bloco').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:24px">
+      <div style="background:var(--charcoal);padding:18px 16px">
+        <p class="diag-label">Faturamento bruto</p>
+        <p class="diag-valor grande">${fmt(fat)}</p>
+      </div>
+      <div style="background:var(--charcoal);padding:18px 16px">
+        <p class="diag-label">Total de custos</p>
+        <p class="diag-valor">${fmt(totalCustos)}</p>
+        <p class="diag-nota">${fmtPct(ctPct)} do faturamento</p>
+      </div>
+      <div style="background:var(--charcoal);padding:18px 16px">
+        <p class="diag-label">Resultado do período</p>
+        <p class="diag-valor grande" style="color:${corRes}">${fmt(resultado)}</p>
+        <p class="diag-nota">${fmtPct(Math.abs(margemReal))} ${resultado >= 0 ? 'de margem' : 'de prejuízo'}</p>
+      </div>
+      <div style="background:var(--charcoal);padding:18px 16px">
+        <p class="diag-label">CMV</p>
+        <p class="diag-valor" style="color:${corCmv}">${cmvComp > 0 ? fmtPct(cmv) : '--%'}</p>
+        <p class="diag-nota">${cmvComp > 0 ? (cmv <= 35 ? 'dentro do ideal' : 'acima do ideal') : ''}</p>
+      </div>
+    </div>`;
+
+  // FUNÇÃO AUXILIAR PARA PAINEL CONTEXTUAL
+  function painel(titulo, valor, valorCor, benchmark, status, explicacao, orientacao) {
+    const statusCores = { verde:'rgba(26,94,42,0.15)', amarelo:'rgba(122,64,8,0.12)', vermelho:'rgba(122,32,32,0.12)', neutro:'rgba(91,145,188,0.05)' };
+    const statusBordas = { verde:'rgba(26,94,42,0.4)', amarelo:'rgba(122,64,8,0.4)', vermelho:'rgba(122,32,32,0.4)', neutro:'var(--border)' };
+    const statusTextoCores = { verde:'#1a5e2a', amarelo:'#7a4008', vermelho:'#7a2020', neutro:'var(--muted)' };
+    const statusLabels = { verde:'Dentro do ideal', amarelo:'Atenção', vermelho:'Precisa de ajuste', neutro:'Para referência' };
+    return `
+      <div style="border:1px solid ${statusBordas[status]};background:${statusCores[status]};padding:20px 22px;margin-bottom:12px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px">
+          <div>
+            <p style="font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:4px">${titulo}</p>
+            <p style="font-family:'Manrope',serif;font-size:32px;font-weight:300;line-height:1;color:${valorCor}">${valor}</p>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <span style="font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border:1px solid ${statusBordas[status]};color:${statusTextoCores[status]}">${statusLabels[status]}</span>
+            ${benchmark ? `<p style="font-size:11px;color:var(--muted);margin-top:6px">${benchmark}</p>` : ''}
+          </div>
+        </div>
+        <p style="font-size:12px;font-weight:300;color:rgba(1,30,52,0.65);line-height:1.7;margin-bottom:8px">${explicacao}</p>
+        ${orientacao ? `<p style="font-size:12px;font-weight:400;color:rgba(1,30,52,0.85);line-height:1.7;border-top:1px solid rgba(91,145,188,0.12);padding-top:8px;margin-top:4px"><strong style="color:var(--gold-light)">O que fazer:</strong> ${orientacao}</p>` : ''}
+      </div>`;
+  }
+
+  let html = '';
+
+  // 1. CMV
+  if (cmvComp > 0) {
+    const cmvStatus = cmv <= 35 ? 'verde' : 'vermelho';
+    const cmvExpl = `O CMV (Custo de Mercadoria Vendida) mostra quanto do seu faturamento foi consumido em insumos. Você gastou ${fmt(cmvComp)} para faturar ${fmt(fat)}, o que representa ${fmtPct(cmv)} do faturamento bruto.`;
+    const cmvOrient = cmv <= 35
+      ? 'Seu CMV está saudável. Mantenha o controle de estoque e as fichas técnicas atualizadas para preservar esse resultado.'
+      : `CMV acima de 35% compromete a margem do negócio. Prioridades: revisar fichas técnicas, mapear desperdícios, negociar preços com fornecedores e verificar se há desvios no estoque. Reduzir 5 pontos percentuais representaria ${fmt(fat * 0.05)} a mais de margem por mês. As ferramentas S2 e S5 tratam especificamente disso.`;
+    html += painel('CMV', fmtPct(cmv), corCmv, 'Ideal: até 35%', cmvStatus, cmvExpl, cmvOrient);
+  }
+
+  // 2. RESULTADO E MARGEM
+  const margemStatus = margemReal >= 15 ? 'verde' : margemReal >= 5 ? 'amarelo' : 'vermelho';
+  const margemExpl = resultado >= 0
+    ? `Depois de pagar todos os custos (insumos, fixos e variáveis), sobrou ${fmt(resultado)} no mês, o que representa ${fmtPct(margemReal)} do faturamento. É com esse valor que o negócio reinveste, amortiza dívidas e gera riqueza real para o dono.`
+    : `Os custos foram ${fmt(Math.abs(resultado))} maiores do que o faturamento. O negócio operou no prejuízo neste período. Isso não significa necessariamente colapso imediato, mas é um alerta que precisa de ação.`;
+  const margemOrient = margemReal >= 15
+    ? 'Margem saudável. Foque em manter a disciplina financeira e use o excedente para reinvestimento estratégico.'
+    : margemReal >= 5
+    ? `Margem apertada. Para chegar a 15%, o faturamento precisaria ser ${fmt(totalCF / (0.15 + mcPct - 1 > 0 ? 0.15 + mcPct - 1 : 0.01))} ou os custos precisam cair. Identifique os maiores custos e questione cada um.`
+    : resultado >= 0
+    ? 'Margem muito baixa. Revise todos os custos fixos e verifique se algum pode ser reduzido ou eliminado. Qualquer negociação de aluguel, conta de energia ou folha tem impacto direto aqui.'
+    : 'Resultado negativo. Identifique quais custos podem ser reduzidos imediatamente e se o faturamento do período foi atipicamente baixo. Se for recorrente, é necessário reestruturação financeira.';
+  html += painel('Resultado do período', fmt(resultado), resultado >= 0 ? '#1a5e2a' : '#7a2020', 'Saudável: acima de 15% do faturamento', margemStatus, margemExpl, margemOrient);
+
+  // 3. CUSTOS FIXOS
+  if (cfPct > 0) {
+    const cfStatus = cfPct <= 30 ? 'verde' : cfPct <= 40 ? 'amarelo' : 'vermelho';
+    const cfExpl = `Seus custos fixos somam ${fmt(totalCF)} por mês e representam ${fmtPct(cfPct)} do faturamento. São os custos que existem independente de quantos clientes você atende. Aluguel, folha, contador e energia são os maiores responsáveis nessa categoria.`;
+    const cfOrient = cfPct <= 30
+      ? 'Custos fixos bem controlados em relação ao faturamento. Atenção redobrada em períodos de queda de receita.'
+      : cfPct <= 40
+      ? `Custo fixo relevante. Cada queda de faturamento impacta diretamente a margem. Identifique quais custos fixos podem virar variáveis ou ser negociados. Renegociar o aluguel, por exemplo, pode gerar ${fmt(totalCF * 0.1)} mensais de economia se conseguir uma redução de 10%.`
+      : `Custos fixos muito altos para o faturamento atual. O negócio precisaria faturar ${fmt(pe)} por mês só para pagar os custos sem nenhum lucro. Revise cada item da lista e questione o que é estritamente necessário.`;
+    html += painel('Custos fixos', fmt(totalCF), cfPct <= 30 ? '#1a5e2a' : cfPct <= 40 ? '#7a4008' : '#7a2020', 'Ideal: até 30% do faturamento', cfStatus, cfExpl, cfOrient);
+  }
+
+  // 4. PONTO DE EQUILÍBRIO
+  if (pe > 0) {
+    const peStatus = peDiff !== null && peDiff >= 0 ? 'verde' : peDiff !== null && peDiff >= -fat * 0.1 ? 'amarelo' : 'vermelho';
+    const peExpl = `O ponto de equilíbrio é o faturamento mínimo para cobrir todos os custos sem lucro e sem prejuízo. Abaixo desse número, o negócio perde dinheiro. Acima, começa a lucrar. Seu ponto de equilíbrio atual é ${fmt(pe)} por mês.${peCli ? ` Isso equivale a ${peCli} clientes por dia (com o ticket médio atual${ticket > 0 ? ' de ' + fmt(ticket) : ''}).` : ''}`;
+    const peOrient = peDiff !== null && peDiff >= 0
+      ? `Você está ${fmt(peDiff)} acima do ponto de equilíbrio. Isso é sua margem de segurança. Eventos como queda de movimento, reforma ou sazonalidade não devem tirar o negócio do azul enquanto esse valor for positivo.`
+      : peDiff !== null
+      ? `Atenção: você está ${fmt(Math.abs(peDiff))} abaixo do ponto de equilíbrio. Existem duas saídas: aumentar o faturamento ou reduzir os custos fixos. Cada real cortado em custo fixo reduz diretamente o ponto de equilíbrio.`
+      : 'Revise os dados para calcular o ponto de equilíbrio com precisão.';
+    html += painel('Ponto de equilíbrio mensal', fmt(pe), peDiff !== null && peDiff >= 0 ? '#1a5e2a' : '#7a2020', peCli ? `${peCli} clientes/dia necessários` : '', peStatus, peExpl, peOrient);
+  }
+
+  // 5. TICKET MÉDIO
+  if (ticket > 0) {
+    const ticketExpl = `Cada cliente gerou em média ${fmt(ticket)} de receita. O ticket médio depende do mix de pedidos, do preço dos pratos e do consumo de bebidas e sobremesas. É um dos indicadores mais fáceis de mover sem precisar de novos clientes.`;
+    const ticketOrient = `Para aumentar o ticket sem reajustar preços: ofereça combo, sugira complementos, trabalhe a engenharia de cardápio para os pratos mais rentáveis ficarem em destaque. Um aumento de ${fmt(ticket * 0.1)} por cliente valeria ${fmt(ticket * 0.1 * dias * cliDia)} por mês no faturamento.`;
+    html += painel('Ticket médio por cliente', fmt(ticket), 'var(--gold-light)', `Faturamento médio/dia: ${fmt(fatDia)}`, 'neutro', ticketExpl, ticketOrient);
+  }
+
+  // 6. MARK-UP
+  if (cmvComp > 0) {
+    const MARKUP_TETO = 5;
+    const mkStatus = markup >= 3 && markup <= MARKUP_TETO ? 'verde' : markup < 3 ? 'vermelho' : 'amarelo';
+    const mkExpl = `O mark-up atual mostra quanto o preço de venda médio é maior que o custo de insumos. Um mark-up de ${formatBRLNum(markup)}x significa que para cada R$ 1,00 de custo de insumo, o negócio fatura R$ ${formatBRLNum(markup)}. O range saudável para a maioria dos estabelecimentos de alimentação fica entre 2,7x e 5x, variando pelo tipo de negócio e estrutura de custos.`;
+    const mkOrient = markup >= 3 && markup <= MARKUP_TETO
+      ? `Seu mark-up está alinhado com a margem desejada. Mantenha as fichas técnicas atualizadas para garantir que o custo real de cada prato não se afaste desse parâmetro.`
+      : markup < 3
+      ? 'Mark-up abaixo de 3x indica que a precificação pode não estar cobrindo custos fixos e margem adequadamente. Use a ferramenta S3 (Calculadora de Precificação) para revisar o preço de cada prato com base no custo real.'
+      : `Mark-up acima de 5x pode indicar preços fora do mercado ou CMV muito baixo em relação ao faturamento. Verifique se o cálculo de CMV está completo e se os preços estão competitivos. Use a ferramenta S3 para analisar prato a prato.`;
+    html += painel('Mark-up atual', formatBRLNum(markup) + 'x', markup >= 3 && markup <= MARKUP_TETO ? '#1a5e2a' : markup < 3 ? '#7a2020' : '#7a4008', 'Referência: entre 2,7x e 5x', mkStatus, mkExpl, mkOrient);
+  }
+
+  // 7. MARGEM DE CONTRIBUIÇÃO
+  if (mcPct > 0) {
+    const mcStatus = mcPct * 100 >= 50 ? 'verde' : mcPct * 100 >= 35 ? 'amarelo' : 'vermelho';
+    const mcExpl = `A margem de contribuição média é ${fmtPct(mcPct * 100)}. Isso significa que de cada ${fmt(100)} vendidos, ${fmt(mcPct * 100)} ficam disponíveis para cobrir os custos fixos e gerar lucro. O restante vai para insumos e custos variáveis.`;
+    const mcOrient = mcPct * 100 >= 50
+      ? 'Boa margem de contribuição. O negócio tem fôlego para cobrir os custos fixos e ainda lucrar. Mantenha o controle de CMV e custos variáveis.'
+      : `Margem de contribuição baixa. Para cada real vendido, pouco sobra para pagar os custos fixos. Reduza o CMV ou os custos variáveis para ampliar essa margem. ${fatMeta > 0 && margemDes > 0 ? `Para atingir ${fmtPct(margemDes)} de lucro, você precisaria faturar ${fmt(fatMeta)} por mês.` : ''}`;
+    html += painel('Margem de contribuição média', fmtPct(mcPct * 100), mcPct * 100 >= 50 ? '#1a5e2a' : mcPct * 100 >= 35 ? '#7a4008' : '#7a2020', 'Ideal: acima de 50%', mcStatus, mcExpl, mcOrient);
+  }
+
+  document.getElementById('diag_paineis').innerHTML = html;
+
+  // MENSAGEM GERAL
+  let msg = '';
+  if (resultado < 0) {
+    msg = `<strong>Resultado negativo neste período.</strong> O total de custos superou o faturamento em ${fmt(Math.abs(resultado))}. Leia cada painel acima para identificar quais indicadores precisam de ação imediata. O CMV, os custos fixos e o ponto de equilíbrio são os pontos de partida.`;
+  } else if (margemReal < 5) {
+    msg = `<strong>Margem muito apertada (${fmtPct(margemReal)}).</strong> O negócio está operando no positivo, mas qualquer variação de custos ou queda de faturamento pode inverter o resultado. Os painéis acima mostram onde agir com mais urgência.`;
+  } else if (margemReal < 15) {
+    msg = `<strong>Resultado positivo com espaço de melhora.</strong> Margem de ${fmtPct(margemReal)} é um ponto de partida. Use as orientações de cada painel para identificar onde é possível ganhar eficiência e ampliar essa margem ao longo dos próximos meses.`;
+  } else {
+    msg = `<strong>Negócio financeiramente saudável.</strong> Margem de ${fmtPct(margemReal)} com custos controlados. Mantenha a disciplina financeira e use as análises dos próximos módulos para identificar onde ainda é possível melhorar.`;
+  }
+  document.getElementById('diag_mensagem').innerHTML = msg;
+}
+
+// SALVAR
+function salvarLocal() {
+  const dados = {
+    rname: document.getElementById('rname').value,
+    periodo: document.getElementById('periodo').value,
+    fat_bruto: document.getElementById('fat_bruto').value,
+    dias_trab: document.getElementById('dias_trab').value,
+    clientes_dia: document.getElementById('clientes_dia').value,
+    fat_delivery: document.getElementById('fat_delivery').value,
+    margem_desejada: document.getElementById('margem_desejada').value,
+    cmv_compras: document.getElementById('cmv_compras').value,
+    custosCF, custosCV,
+  };
+  localStorage.setItem('dose-lf', JSON.stringify(dados));
+  const btn = document.querySelector('.btn-secondary');
+  const orig = btn.textContent;
+  btn.textContent = 'Salvo';
+  setTimeout(() => btn.textContent = orig, 2000);
+}
+
+function carregarLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem('dose-lf') || 'null');
+    if (!d) return;
+    if (d.rname) document.getElementById('rname').value = d.rname;
+    if (d.periodo) document.getElementById('periodo').value = d.periodo;
+    ['fat_bruto','dias_trab','clientes_dia','fat_delivery','margem_desejada','cmv_compras'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && d[id]) el.value = d[id];
+    });
+    if (d.custosCF?.length) { custosCF = d.custosCF; renderCustos('cf'); }
+    if (d.custosCV?.length) { custosCV = d.custosCV; renderCustos('cv'); }
+  } catch(e) {}
+}
+
+// PDF
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    const restaurante = document.getElementById('rname').value || 'Meu Restaurante';
+    const periodo = document.getElementById('periodo').value || 'Período não informado';
+    const fat = parseFloat(document.getElementById('fat_bruto').value) || 0;
+    const dias = parseFloat(document.getElementById('dias_trab').value) || 0;
+    const cliDia = parseFloat(document.getElementById('clientes_dia').value) || 0;
+    const fatDel = parseFloat(document.getElementById('fat_delivery').value) || 0;
+    const margemDes = parseFloat(document.getElementById('margem_desejada').value) || 0;
+    const cmvComp = parseFloat(document.getElementById('cmv_compras').value) || 0;
+    const totalCF = somarCustos(custosCF);
+    const totalCV = somarCustos(custosCV);
+    const totalCustos = totalCF + totalCV + cmvComp;
+    const resultado = fat - totalCustos;
+    const cmv = fat > 0 ? (cmvComp / fat) * 100 : 0;
+    const margemReal = fat > 0 ? (resultado / fat) * 100 : 0;
+
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210, H=297, mg=18, cw=W-mg*2;
+
+    const hdr = () => {
+      pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+      pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+      pdf.text('MÓDULO S  ·  S1',W-mg,11,{align:'right'});
+    };
+
+    const ftr = (p,t) => {
+      pdf.setPage(p);
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10);
+      pdf.text(`${p} / ${t}`,W-mg,H-10,{align:'right'});
+    };
+
+    hdr();
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(24); pdf.setTextColor(245,240,232); pdf.text('Levantamento',mg,40);
+    pdf.setFont('helvetica','bolditalic'); pdf.setTextColor(212,175,122); pdf.text('Financeiro',mg,52);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(122,115,105); pdf.text(restaurante,mg,62);
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,68,W-mg,68);
+    pdf.setFontSize(9); pdf.setTextColor(184,150,90); pdf.text(periodo,mg,75);
+    pdf.line(mg,79,W-mg,79);
+
+    let y=92;
+
+    // INDICADORES PRINCIPAIS
+    const blocos=[
+      ['Faturamento bruto',fmt(fat)],
+      ['Total de custos',fmt(totalCustos)],
+      ['Resultado',fmt(resultado), resultado>=0?[74,173,122]:[192,85,85]],
+      ['CMV', cmvComp>0?fmtPct(cmv):'--', cmv===0?[184,150,90]:cmv<=35?[74,173,122]:cmv<=42?[224,150,64]:[192,85,85]],
+    ];
+    const bw=cw/4;
+    blocos.forEach(([label,val,cor],i)=>{
+      const cx=mg+i*bw;
+      pdf.setFillColor(40,38,32); pdf.rect(cx,y,bw-2,22,'F');
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text(label.toUpperCase(),cx+5,y+6);
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
+      if(cor) pdf.setTextColor(...cor); else pdf.setTextColor(184,150,90);
+      pdf.text(val,cx+5,y+16);
+    });
+    y+=30;
+
+    // CUSTOS FIXOS
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232); pdf.text('Custos fixos',mg,y); y+=7;
+    custosCF.forEach((c,i)=>{
+      if(!c.valor||!parseFloat(c.valor)) return;
+      if(y>H-30){pdf.addPage();hdr();y=24;}
+      const bg=i%2===0;
+      if(bg){pdf.setFillColor(34,32,24);pdf.rect(mg,y-3,cw,9,'F');}
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(210,200,185);
+      pdf.text(c.nome||'Item',mg,y+3);
+      pdf.setTextColor(184,150,90);
+      pdf.text(fmt(parseFloat(c.valor)),W-mg,y+3,{align:'right'});
+      y+=9;
+    });
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(184,150,90);
+    pdf.text('Total',mg,y+4); pdf.text(fmt(totalCF),W-mg,y+4,{align:'right'}); y+=14;
+
+    // CUSTOS VARIÁVEIS
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232); pdf.text('Custos variáveis',mg,y); y+=7;
+    custosCV.forEach((c,i)=>{
+      if(!c.valor||!parseFloat(c.valor)) return;
+      if(y>H-30){pdf.addPage();hdr();y=24;}
+      const bg=i%2===0;
+      if(bg){pdf.setFillColor(34,32,24);pdf.rect(mg,y-3,cw,9,'F');}
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(210,200,185);
+      pdf.text(c.nome||'Item',mg,y+3);
+      pdf.setTextColor(184,150,90);
+      pdf.text(fmt(parseFloat(c.valor)),W-mg,y+3,{align:'right'});
+      y+=9;
+    });
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(184,150,90);
+    pdf.text('Total',mg,y+4); pdf.text(fmt(totalCV),W-mg,y+4,{align:'right'}); y+=14;
+
+    // DIAGNÓSTICO
+    pdf.addPage(); hdr(); y=26;
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(245,240,232); pdf.text('Diagnóstico financeiro',mg,y); y+=12;
+    const linhas=[
+      ['Ticket médio por cliente', (dias>0&&cliDia>0)?fmt(fat/(dias*cliDia)):'--'],
+      ['Faturamento médio por dia', dias>0?fmt(fat/dias):'--'],
+      ['Custos fixos sobre faturamento', fat>0?fmtPct(totalCF/fat*100):'--'],
+      ['Custo total sobre faturamento', fat>0?fmtPct(totalCustos/fat*100):'--'],
+      ['Margem real do período', fmtPct(Math.abs(margemReal)) + (resultado>=0?' de margem':' de prejuízo')],
+    ];
+    linhas.forEach(([label,val])=>{
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105);
+      pdf.text(label.toUpperCase(),mg,y);
+      pdf.setFontSize(10); pdf.setTextColor(210,200,185);
+      pdf.text(val,W-mg,y,{align:'right'}); y+=9;
+    });
+
+    const total=pdf.internal.getNumberOfPages();
+    for(let p=1;p<=total;p++) ftr(p,total);
+    pdf.save(`LevantamentoFinanceiro-${restaurante.replace(/\s+/g,'-')}.pdf`);
+  } catch(err){
+    console.error(err); alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fechamento de Caixa | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+.tabs-bar { display: flex; padding: 0 48px; border-bottom: 1px solid var(--border); }
+.tab-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 13px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn:hover:not(.active) { color: var(--cream); }
+
+main { max-width: 720px; margin: 0 auto; padding: 40px 48px 80px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* FORMULÁRIO DE FECHAMENTO */
+.data-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; gap: 16px; flex-wrap: wrap; }
+.data-hoje { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; color: var(--gold-light); }
+.data-input { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; outline: none; color-scheme: light; transition: border-color 0.25s; }
+.data-input:focus { border-bottom-color: var(--gold); }
+
+.campo-fechamento { margin-bottom: 28px; }
+.cf-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+.cf-hint { font-size: 11px; font-weight: 300; color: rgba(1,30,52,0.4); margin-bottom: 10px; line-height: 1.6; }
+.cf-input-wrap { position: relative; }
+.cf-rs { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--muted); pointer-events: none; }
+input[type="number"].cf-input {
+  font-family: 'Manrope', sans-serif; font-size: 36px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 16px 16px 16px 40px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px;
+}
+input[type="number"].cf-input::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="number"].cf-input:focus { border-color: var(--gold); }
+
+.cf-obs { font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 300; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); width: 100%; padding: 10px 13px; outline: none; transition: border-color 0.25s; resize: none; min-height: 64px; line-height: 1.7; }
+.cf-obs::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+.cf-obs:focus { border-color: var(--gold); }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+/* RESULTADO */
+.resultado-box { border: 1px solid var(--border-h); padding: 28px 32px; margin-bottom: 28px; text-align: center; transition: all 0.4s; }
+.resultado-box.verde { border-color: rgba(26,94,42,0.5); background: rgba(26,94,42,0.07); }
+.resultado-box.vermelho { border-color: rgba(122,32,32,0.5); background: rgba(122,32,32,0.07); }
+.resultado-box.neutro { border-color: var(--border-h); background: rgba(2,82,145,0.06); }
+.res-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.res-valor { font-family: 'Manrope', sans-serif; font-size: 64px; font-weight: 300; line-height: 1; margin-bottom: 8px; }
+.res-valor.verde { color: #1a5e2a; }
+.res-valor.vermelho { color: #7a2020; }
+.res-valor.neutro { color: var(--gold); }
+.res-mensagem { font-size: 13px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.7; }
+.res-mensagem strong { font-weight: 500; color: var(--cream); }
+
+/* MINI INDICADORES */
+.mini-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+.mini-item { border: 1px solid var(--border); padding: 14px 16px; }
+.mi-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.mi-val { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 300; color: var(--gold); line-height: 1; }
+
+/* BOTÕES */
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 13px 28px; cursor: pointer; transition: all 0.25s; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; position: relative; overflow: hidden; }
+.btn-gold::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-gold:hover::after { transform: translateX(0); }
+.btn-gold span { position: relative; z-index: 1; }
+.btn-gold:hover span { color: var(--gold); }
+.btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sm { padding: 6px 13px; font-size: 10px; }
+.btn-red-sm { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); font-size: 10px; padding: 5px 10px; }
+.btn-red-sm:hover { background: rgba(122,32,32,0.25); }
+
+/* HISTÓRICO */
+.hist-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 24px; }
+.hs { border: 1px solid var(--border); padding: 14px; }
+.hs-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.hs-val { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 300; color: var(--gold); line-height: 1; }
+.hs-val.verde { color: #1a5e2a; }
+.hs-val.vermelho { color: #7a2020; }
+
+.hist-filtros { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.hist-input { font-family: 'Manrope', sans-serif; font-size: 11px; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); padding: 7px 11px; outline: none; color-scheme: light; }
+.hist-input:focus { border-color: var(--gold); }
+
+.hist-canvas-wrap { border: 1px solid var(--border); padding: 16px 16px 10px; margin-bottom: 24px; display: none; }
+.hc-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--border); font-weight: 400; }
+tbody tr { border-bottom: 1px solid rgba(91,145,188,0.06); }
+tbody tr:hover { background: rgba(1,30,52,0.04); }
+td { padding: 10px 12px; vertical-align: middle; }
+.td-data { font-weight: 500; color: var(--cream); }
+.td-num { font-family: 'Manrope', sans-serif; font-size: 16px; color: var(--gold-light); }
+.td-pos { font-family: 'Manrope', sans-serif; font-size: 16px; color: #1a5e2a; }
+.td-neg { font-family: 'Manrope', sans-serif; font-size: 16px; color: #7a2020; }
+
+.empty-state { text-align: center; padding: 44px 20px; color: var(--muted); }
+.empty-icon { font-size: 34px; margin-bottom: 12px; opacity: 0.35; }
+.empty-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; line-height: 1.7; }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, .tabs-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .mini-grid { grid-template-columns: 1fr 1fr; }
+  .hist-stats { grid-template-columns: 1fr 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Fechamento<br><em>Diário de Caixa</em></h1>
+    <p class="hsub">Três campos. Resultado automático. Verde ou vermelho. Preencha todo dia em menos de 5 minutos e acumule o histórico do seu negócio.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo E · E2</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="ativarTab('fechar',this)">Fechar o dia</button>
+  <button class="tab-btn" onclick="ativarTab('historico',this)">Histórico</button>
+</div>
+
+<main>
+
+  <!-- FECHAR O DIA -->
+  <div class="tab-panel active" id="tab-fechar">
+
+    <!-- SELEÇÃO DE DATA -->
+    <div style="margin-bottom:32px">
+      <p style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:10px">Data do fechamento</p>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <input type="date" class="data-input" id="dataFechamento" onchange="atualizarData()" style="font-size:16px;padding:10px 14px;border:1px solid var(--border-h);background:rgba(91,145,188,0.05);border-radius:1px;color-scheme:dark">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="setDataAtalho(0)" style="font-family:'Manrope',sans-serif;font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Hoje</button>
+          <button onclick="setDataAtalho(1)" style="font-family:'Manrope',sans-serif;font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Ontem</button>
+          <button onclick="setDataAtalho(2)" style="font-family:'Manrope',sans-serif;font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Anteontem</button>
+        </div>
+      </div>
+      <p class="data-hoje" id="dataHoje" style="margin-top:8px;font-size:13px;color:var(--muted);font-weight:300"></p>
+    </div>
+
+    <!-- CAMPO 1: FATURAMENTO -->
+    <div class="campo-fechamento">
+      <p class="cf-label">Quanto você faturou hoje?</p>
+      <p class="cf-hint">Some tudo: dinheiro, cartão, delivery, Pix. Bruto, antes de qualquer desconto.</p>
+      <div class="cf-input-wrap">
+        <span class="cf-rs">R$</span>
+        <input type="number" class="cf-input" id="fat" placeholder="0,00" min="0" step="0.01" oninput="calcFechamento()">
+      </div>
+    </div>
+
+    <!-- CAMPO 2: CUSTOS DO DIA -->
+    <div class="campo-fechamento">
+      <p class="cf-label">Quanto saiu de caixa hoje?</p>
+      <p class="cf-hint">Compras, fornecedores pagos, despesas do dia. Não inclua contas fixas que não venceram hoje.</p>
+      <div class="cf-input-wrap">
+        <span class="cf-rs">R$</span>
+        <input type="number" class="cf-input" id="saidas" placeholder="0,00" min="0" step="0.01" oninput="calcFechamento()">
+      </div>
+    </div>
+
+    <!-- CAMPO 3: RETIRADA DO DONO -->
+    <div class="campo-fechamento">
+      <p class="cf-label">Retirada do dia (pró-labore ou sangria)?</p>
+      <p class="cf-hint">Opcional. Se o dono retirou dinheiro hoje, registre aqui para o resultado ficar preciso.</p>
+      <div class="cf-input-wrap">
+        <span class="cf-rs">R$</span>
+        <input type="number" class="cf-input" id="retirada" placeholder="0,00" min="0" step="0.01" oninput="calcFechamento()">
+      </div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="resultado-box neutro" id="resultadoBox">
+      <p class="res-label">Resultado do dia</p>
+      <p class="res-valor neutro" id="resValor">R$ 0,00</p>
+      <p class="res-mensagem" id="resMensagem">Preencha os campos acima para ver o resultado.</p>
+    </div>
+
+    <!-- MINI INDICADORES -->
+    <div class="mini-grid" id="miniGrid" style="display:none">
+      <div class="mini-item">
+        <p class="mi-label">Faturamento</p>
+        <p class="mi-val" id="miFat">R$ 0,00</p>
+      </div>
+      <div class="mini-item">
+        <p class="mi-label">Saídas totais</p>
+        <p class="mi-val" id="miSaidas">R$ 0,00</p>
+      </div>
+      <div class="mini-item">
+        <p class="mi-label">Margem do dia</p>
+        <p class="mi-val" id="miMargem">--%</p>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="campo-fechamento">
+      <p class="cf-label">Observação do dia (opcional)</p>
+      <textarea class="cf-obs" id="obs" placeholder="Ex: movimento fraco por causa da chuva, problema com fornecedor, evento especial..."></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="salvarFechamento()"><span>Salvar fechamento</span></button>
+      <button class="btn btn-outline" onclick="limparCampos()">Limpar</button>
+    </div>
+
+    <div id="feedbackSalvo" style="display:none;margin-top:16px;padding:14px 16px;font-size:12px;font-weight:300;border:1px solid;border-radius:1px"></div>
+
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="tab-panel" id="tab-historico">
+
+    <div class="hist-stats" id="histStats"></div>
+
+    <div class="hist-filtros">
+      <input type="month" class="hist-input" id="filtroMes" onchange="renderHistorico()" style="color-scheme:dark">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('filtroMes').value='';renderHistorico()">Ver todos</button>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="exportarExcel()">Exportar Excel</button>
+    </div>
+
+    <div class="hist-canvas-wrap" id="histCanvasWrap">
+      <p class="hc-label">Resultado diário</p>
+      <canvas id="cHist" height="140"></canvas>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Faturamento</th>
+          <th>Saídas</th>
+          <th>Resultado</th>
+          <th>Margem</th>
+          <th>Observação</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbodyHist"></tbody>
+    </table>
+    <div class="empty-state" id="emptyHist" style="display:none">
+      <div class="empty-icon">📅</div>
+      <p class="empty-title">Nenhum fechamento registrado</p>
+      <p class="empty-sub">Preencha o primeiro fechamento na aba "Fechar o dia".</p>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta E2 · Fechamento Diário de Caixa</span>
+</footer>
+
+<script>
+
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatBRLNum(valor, casas) {
+  if (valor === null || valor === undefined || isNaN(valor)) return '--';
+  casas = casas !== undefined ? casas : 2;
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+}
+
+let fechamentos = JSON.parse(localStorage.getItem('dose-caixa') || '[]');
+
+// INIT
+document.getElementById('rname').value = localStorage.getItem('dose-caixa-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-caixa-rname', e.target.value));
+const hoje = new Date();
+document.getElementById('dataFechamento').valueAsDate = hoje;
+atualizarData();
+
+function atualizarData() {
+  const val = document.getElementById('dataFechamento').value;
+  const d = val ? new Date(val + 'T12:00:00') : new Date();
+  document.getElementById('dataHoje').textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function setDataAtalho(diasAtras) {
+  const d = new Date();
+  d.setDate(d.getDate() - diasAtras);
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  document.getElementById('dataFechamento').value = `${ano}-${mes}-${dia}`;
+  atualizarData();
+}
+
+function ativarTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'historico') renderHistorico();
+}
+
+function fmt(v) { return 'R$ ' + formatBRL(v||0); }
+function fmtPct(v) { return formatBRLNum(v||0, 1) + '%'; }
+
+function calcFechamento() {
+  const fat = parseFloat(document.getElementById('fat').value) || 0;
+  const saidas = parseFloat(document.getElementById('saidas').value) || 0;
+  const retirada = parseFloat(document.getElementById('retirada').value) || 0;
+  const saidasTotal = saidas + retirada;
+  const resultado = fat - saidasTotal;
+  const margem = fat > 0 ? (resultado / fat) * 100 : 0;
+
+  const box = document.getElementById('resultadoBox');
+  const valEl = document.getElementById('resValor');
+  const msgEl = document.getElementById('resMensagem');
+  const mini = document.getElementById('miniGrid');
+
+  if (fat === 0 && saidas === 0 && retirada === 0) {
+    box.className = 'resultado-box neutro';
+    valEl.className = 'res-valor neutro';
+    valEl.textContent = 'R$ 0,00';
+    msgEl.innerHTML = 'Preencha os campos acima para ver o resultado.';
+    mini.style.display = 'none';
+    return;
+  }
+
+  mini.style.display = 'grid';
+  document.getElementById('miFat').textContent = fmt(fat);
+  document.getElementById('miSaidas').textContent = fmt(saidasTotal);
+  const mEl = document.getElementById('miMargem');
+  mEl.textContent = fat > 0 ? fmtPct(margem) : '--';
+  mEl.style.color = margem >= 15 ? '#1a5e2a' : margem >= 5 ? '#fcc740' : '#7a2020';
+
+  if (resultado > 0) {
+    box.className = 'resultado-box verde';
+    valEl.className = 'res-valor verde';
+    valEl.textContent = fmt(resultado);
+    msgEl.innerHTML = margem >= 20
+      ? `<strong>Dia excelente.</strong> Margem de ${fmtPct(margem)} com resultado positivo de ${fmt(resultado)}.`
+      : margem >= 10
+      ? `<strong>Dia positivo.</strong> Sobrou ${fmt(resultado)} depois de todas as saídas. Margem de ${fmtPct(margem)}.`
+      : `<strong>Dia no azul, mas margem apertada.</strong> Resultado de ${fmt(resultado)} com margem de ${fmtPct(margem)}. Verifique se há custos que podem ser reduzidos.`;
+  } else if (resultado === 0) {
+    box.className = 'resultado-box neutro';
+    valEl.className = 'res-valor neutro';
+    valEl.textContent = 'R$ 0,00';
+    msgEl.innerHTML = '<strong>Dia empatado.</strong> O que entrou cobriu exatamente o que saiu. Nenhum lucro, nenhum prejuízo.';
+  } else {
+    box.className = 'resultado-box vermelho';
+    valEl.className = 'res-valor vermelho';
+    valEl.textContent = fmt(resultado);
+    msgEl.innerHTML = fat === 0
+      ? '<strong>Sem faturamento registrado.</strong> Dia sem vendas ou dados não preenchidos.'
+      : `<strong>Dia no vermelho.</strong> As saídas superaram o faturamento em ${fmt(Math.abs(resultado))}. Verifique se há compras extraordinárias que justificam o resultado.`;
+  }
+}
+
+function salvarFechamento() {
+  const fat = parseFloat(document.getElementById('fat').value) || 0;
+  const saidas = parseFloat(document.getElementById('saidas').value) || 0;
+  const retirada = parseFloat(document.getElementById('retirada').value) || 0;
+  const obs = document.getElementById('obs').value.trim();
+  const data = document.getElementById('dataFechamento').value;
+  const fb = document.getElementById('feedbackSalvo');
+
+  if (!fat && !saidas) {
+    fb.style.display = 'block';
+    fb.style.background = 'rgba(122,32,32,0.1)'; fb.style.borderColor = 'rgba(122,32,32,0.3)'; fb.style.color = '#c07070';
+    fb.textContent = 'Preencha pelo menos o faturamento ou as saídas antes de salvar.';
+    return;
+  }
+
+  const idx = fechamentos.findIndex(f => f.data === data);
+  const registro = { id: Date.now(), data, fat, saidas, retirada, obs };
+  if (idx !== -1) {
+    if (!confirm(`Já existe um fechamento para ${formatarData(data)}. Deseja sobrescrever?`)) return;
+    fechamentos[idx] = registro;
+  } else {
+    fechamentos.push(registro);
+  }
+  fechamentos.sort((a, b) => b.data.localeCompare(a.data));
+  localStorage.setItem('dose-caixa', JSON.stringify(fechamentos));
+
+  fb.style.display = 'block';
+  fb.style.background = 'rgba(26,94,42,0.1)'; fb.style.borderColor = 'rgba(26,94,42,0.3)'; fb.style.color = '#1a5e2a';
+  fb.textContent = `Fechamento de ${formatarData(data)} salvo com sucesso.`;
+  setTimeout(() => fb.style.display = 'none', 3000);
+}
+
+function limparCampos() {
+  ['fat','saidas','retirada','obs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('dataFechamento').valueAsDate = new Date();
+  atualizarData();
+  calcFechamento();
+  document.getElementById('feedbackSalvo').style.display = 'none';
+}
+
+function formatarData(s) {
+  if (!s) return '';
+  const d = new Date(s + 'T12:00:00');
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatarDataCurta(s) {
+  if (!s) return '';
+  const d = new Date(s + 'T12:00:00');
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
+// HISTÓRICO
+function renderHistorico() {
+  const filtro = document.getElementById('filtroMes').value;
+  let lista = fechamentos.filter(f => !filtro || f.data.startsWith(filtro));
+
+  // Stats
+  renderHistStats(lista);
+
+  // Tabela
+  const tbody = document.getElementById('tbodyHist');
+  const empty = document.getElementById('emptyHist');
+  if (lista.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; document.getElementById('histCanvasWrap').style.display = 'none'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = lista.map(f => {
+    const saidasTotal = (f.saidas || 0) + (f.retirada || 0);
+    const resultado = f.fat - saidasTotal;
+    const margem = f.fat > 0 ? (resultado / f.fat) * 100 : 0;
+    return `<tr>
+      <td class="td-data">${formatarData(f.data)}</td>
+      <td class="td-num">${fmt(f.fat)}</td>
+      <td class="td-num">${fmt(saidasTotal)}</td>
+      <td class="${resultado >= 0 ? 'td-pos' : 'td-neg'}">${fmt(resultado)}</td>
+      <td style="font-size:12px;color:${margem>=15?'#1a5e2a':margem>=5?'#fcc740':'#7a2020'}">${f.fat > 0 ? fmtPct(margem) : '--'}</td>
+      <td class="td-muted" style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${f.obs||''}">${f.obs||''}</td>
+      <td><button class="btn-red-sm" onclick="removerFechamento(${f.id})">Remover</button></td>
+    </tr>`;
+  }).join('');
+
+  // Gráfico
+  if (lista.length >= 3) {
+    document.getElementById('histCanvasWrap').style.display = 'block';
+    desenharGrafico([...lista].reverse());
+  } else {
+    document.getElementById('histCanvasWrap').style.display = 'none';
+  }
+}
+
+function renderHistStats(lista) {
+  const el = document.getElementById('histStats');
+  if (lista.length === 0) { el.innerHTML = ''; return; }
+  const fats = lista.map(f => f.fat || 0);
+  const resultados = lista.map(f => f.fat - (f.saidas||0) - (f.retirada||0));
+  const fatTotal = fats.reduce((a, v) => a + v, 0);
+  const resTotal = resultados.reduce((a, v) => a + v, 0);
+  const fatMedio = fatTotal / lista.length;
+  const diasVerde = resultados.filter(v => v > 0).length;
+
+  el.innerHTML = `
+    <div class="hs"><p class="hs-label">Faturamento total</p><p class="hs-val">${fmt(fatTotal)}</p></div>
+    <div class="hs"><p class="hs-label">Resultado acumulado</p><p class="hs-val ${resTotal >= 0 ? 'verde' : 'vermelho'}">${fmt(resTotal)}</p></div>
+    <div class="hs"><p class="hs-label">Faturamento médio/dia</p><p class="hs-val">${fmt(fatMedio)}</p></div>
+    <div class="hs"><p class="hs-label">Dias no verde</p><p class="hs-val ${diasVerde === lista.length ? 'verde' : diasVerde >= lista.length * 0.7 ? '' : 'vermelho'}">${diasVerde} / ${lista.length}</p></div>`;
+}
+
+function removerFechamento(id) {
+  if (!confirm('Remover este fechamento?')) return;
+  fechamentos = fechamentos.filter(f => f.id !== id);
+  localStorage.setItem('dose-caixa', JSON.stringify(fechamentos));
+  renderHistorico();
+}
+
+function desenharGrafico(lista) {
+  const canvas = document.getElementById('cHist');
+  const W = canvas.parentElement.offsetWidth - 32 || 580;
+  canvas.width = W; canvas.height = 140;
+  const ctx = canvas.getContext('2d');
+  const pad = { top: 14, right: 14, bottom: 24, left: 56 };
+  const w = W - pad.left - pad.right;
+  const h = canvas.height - pad.top - pad.bottom;
+
+  const resultados = lista.map(f => f.fat - (f.saidas||0) - (f.retirada||0));
+  const min = Math.min(...resultados, 0);
+  const max = Math.max(...resultados, 0);
+  const range = max - min || 1;
+
+  ctx.fillStyle = '#fff6ec'; ctx.fillRect(0, 0, W, canvas.height);
+
+  // Zero line
+  const zeroY = pad.top + h - ((0 - min) / range) * h;
+  ctx.strokeStyle = 'rgba(91,145,188,0.2)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left + w, zeroY); ctx.stroke();
+
+  // Grid labels
+  [min, 0, max].filter((v, i, a) => a.indexOf(v) === i).forEach(v => {
+    const y = pad.top + h - ((v - min) / range) * h;
+    ctx.fillStyle = '#5d6d7c'; ctx.font = '9px Manrope'; ctx.textAlign = 'right';
+    ctx.fillText(v >= 1000 || v <= -1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0), pad.left - 4, y + 3);
+  });
+
+  // Barras
+  const mostrar = lista.slice(-30);
+  const resultadosMostrar = mostrar.map(f => f.fat - (f.saidas||0) - (f.retirada||0));
+  const barW = Math.max(4, w / mostrar.length * 0.65);
+  const barGap = w / mostrar.length;
+
+  resultadosMostrar.forEach((v, i) => {
+    const x = pad.left + i * barGap + (barGap - barW) / 2;
+    const y = pad.top + h - ((v - min) / range) * h;
+    const barH = Math.abs(y - zeroY);
+    ctx.fillStyle = v >= 0 ? 'rgba(26,94,42,0.7)' : 'rgba(122,32,32,0.7)';
+    ctx.fillRect(x, v >= 0 ? y : zeroY, barW, v >= 0 ? barH : -barH);
+  });
+
+  // Labels eixo x (a cada 5)
+  ctx.fillStyle = '#5d6d7c'; ctx.font = '9px Manrope'; ctx.textAlign = 'center';
+  mostrar.forEach((f, i) => {
+    if (mostrar.length <= 10 || i % Math.ceil(mostrar.length / 8) === 0) {
+      ctx.fillText(formatarDataCurta(f.data), pad.left + i * barGap + barGap / 2, canvas.height - 6);
+    }
+  });
+}
+
+// EXPORTAR EXCEL
+function exportarExcel() {
+  if (fechamentos.length === 0) { alert('Nenhum fechamento para exportar.'); return; }
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const filtro = document.getElementById('filtroMes').value;
+  const lista = fechamentos.filter(f => !filtro || f.data.startsWith(filtro));
+  const wb = XLSX.utils.book_new();
+  const C = { ouro:'B8965A', escuro:'1A1814', meiTom:'2A2620', creme:'F5F0E8', muteado:'7A7369', faixaA:'222018', faixaB:'1E1C18', verde:'4A7C59', vermelho:'8B3A3A' };
+  const cel = (v,bold=false,sz=10,color=C.creme,bg=C.escuro,align='left') => ({
+    v:v===null||v===undefined?'':v,t:typeof v==='number'?'n':'s',
+    s:{font:{bold,sz,color:{rgb:color},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:align,vertical:'center'}}
+  });
+  const rows = [
+    [cel('FECHAMENTO DIÁRIO DE CAIXA',true,13,C.ouro,C.meiTom),...Array(5).fill(cel('',false,10,C.creme,C.meiTom))],
+    [cel(nome,false,9,C.muteado,C.meiTom),...Array(4).fill(cel('',false,9,C.muteado,C.meiTom)),cel(hoje,false,9,C.muteado,C.meiTom,'right')],
+    Array(6).fill(cel('',false,10,C.creme,C.escuro)),
+    ['DATA','FATURAMENTO','SAÍDAS','RETIRADA','RESULTADO','MARGEM (%)'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+    ...lista.map((f,i) => {
+      const saidasTotal = (f.saidas||0) + (f.retirada||0);
+      const resultado = f.fat - saidasTotal;
+      const margem = f.fat > 0 ? (resultado / f.fat) * 100 : 0;
+      const bg = i%2===0?C.faixaA:C.faixaB;
+      const resCor = resultado >= 0 ? C.verde : C.vermelho;
+      const mk = (v,c=C.creme,b=false,a='left') => ({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:a,vertical:'center'}}});
+      const mn = (v,c=C.creme,a='right') => ({v:v||0,t:'n',s:{font:{bold:false,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:a,vertical:'center'}}});
+      return [mk(formatarData(f.data),C.creme,true),mn(f.fat,'B8965A'),mn(f.saidas||0,C.muteado),mn(f.retirada||0,C.muteado),mn(parseFloat(resultado.toFixed(2)),resCor),{v:f.fat>0?parseFloat(margem.toFixed(1)):0,t:'n',s:{font:{bold:false,sz:10,color:{rgb:margem>=15?C.verde:C.vermelho},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}}];
+    }),
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:16},{wch:16},{wch:14},{wch:14},{wch:14},{wch:12}];
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}},{s:{r:1,c:0},e:{r:1,c:4}}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Fechamento Diário');
+  XLSX.writeFile(wb, `FechamentoCaixa-${nome.replace(/\s+/g,'-')}.xlsx`);
+}
+</script>
+</body>
+</html>

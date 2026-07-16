@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Precificação | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008; --blue: #2a4a7a;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+main { max-width: 900px; margin: 0 auto; padding: 40px 48px 80px; }
+
+/* CUSTO BASE */
+.custo-base { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 28px 32px; margin-bottom: 40px; }
+.custo-base-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold-light); margin-bottom: 6px; }
+.custo-base-sub { font-size: 11px; font-weight: 300; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+.custo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.fb { display: flex; flex-direction: column; gap: 7px; }
+.fb-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+.fb-hint { font-size: 11px; color: rgba(1,30,52,0.4); line-height: 1.5; margin-top: -3px; }
+
+input[type="text"].f, input[type="number"].f {
+  font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 10px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px;
+}
+input[type="text"].f::placeholder, input[type="number"].f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="number"].f:focus, input[type="text"].f:focus { border-color: var(--gold); }
+
+.custo-display { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+.custo-rs { font-size: 14px; color: var(--muted); }
+.custo-valor { font-family: 'Manrope', sans-serif; font-size: 40px; font-weight: 300; color: var(--gold); line-height: 1; }
+.custo-por { font-size: 11px; color: var(--muted); }
+
+/* METODOS */
+.metodos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.metodo-card {
+  border: 1px solid var(--border);
+  background: rgba(1,30,52,0.04);
+  transition: border-color 0.25s;
+  overflow: hidden;
+}
+
+.metodo-card.ativo { border-color: var(--border-h); }
+
+.metodo-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 18px 20px 14px; gap: 12px; cursor: pointer;
+}
+
+.metodo-info { flex: 1; }
+.metodo-nome { font-size: 13px; font-weight: 500; color: var(--cream); margin-bottom: 3px; }
+.metodo-desc { font-size: 11px; font-weight: 300; color: var(--muted); line-height: 1.5; }
+
+.metodo-toggle {
+  width: 32px; height: 18px; border-radius: 9px;
+  background: rgba(1,30,52,0.12); border: none; cursor: pointer;
+  position: relative; flex-shrink: 0; margin-top: 2px; transition: background 0.25s;
+}
+.metodo-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--muted); transition: all 0.25s;
+}
+.metodo-card.ativo .metodo-toggle { background: var(--gold); }
+.metodo-card.ativo .metodo-toggle::after { left: 17px; background: var(--charcoal); }
+
+.metodo-body { display: none; padding: 0 20px 20px; }
+.metodo-card.ativo .metodo-body { display: block; }
+
+.metodo-note {
+  background: rgba(42,74,122,0.08); border-left: 3px solid rgba(42,74,122,0.4);
+  padding: 10px 14px; margin-bottom: 16px;
+  font-size: 11px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.7;
+}
+.metodo-note.aviso {
+  background: rgba(122,64,8,0.08); border-left-color: rgba(122,64,8,0.5);
+  color: rgba(224,150,64,0.8);
+}
+
+.metodo-inputs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.metodo-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* INPUT COM SUFIXO */
+.input-suf { position: relative; }
+.input-suf input { padding-right: 36px; }
+.suf { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
+
+/* RESULTADO DO METODO */
+.metodo-resultado {
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  background: rgba(1,30,52,0.04);
+}
+.res-linha { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.res-linha:last-child { margin-bottom: 0; }
+.res-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.res-val { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 300; color: var(--gold); line-height: 1; }
+.res-val.destaque { font-size: 32px; color: var(--gold-light); }
+.res-val.alerta { color: #7a2020; }
+.res-val.ok { color: #1a5e2a; }
+.res-val small { font-size: 14px; color: var(--muted); margin-left: 4px; }
+.res-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+/* COMPARATIVO */
+.comparativo { margin-top: 40px; border: 1px solid var(--border); }
+.comp-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.comp-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; }
+.comp-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.comp-body { padding: 20px 24px; }
+.comp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.comp-table th { text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); font-weight: 400; }
+.comp-table td { padding: 12px 12px; border-bottom: 1px solid rgba(91,145,188,0.06); vertical-align: middle; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-metodo { font-weight: 500; color: var(--cream); }
+.comp-preco { font-family: 'Manrope', sans-serif; font-size: 20px; color: var(--gold); }
+.comp-cmv { font-size: 11px; }
+.comp-cmv.bom { color: #1a5e2a; }
+.comp-cmv.medio { color: #7a4008; }
+.comp-cmv.alto { color: #7a2020; }
+.comp-na { color: var(--muted); font-style: italic; font-size: 11px; }
+.comp-tag { display: inline-block; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; }
+.comp-tag-verde { background: rgba(26,94,42,0.15); color: #1a5e2a; }
+.comp-tag-amarelo { background: rgba(122,64,8,0.15); color: #7a4008; }
+.comp-tag-cinza { background: rgba(1,30,52,0.12); color: var(--muted); }
+
+/* AÇÕES */
+.actions { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 13px 28px; cursor: pointer; transition: all 0.25s; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; position: relative; overflow: hidden; }
+.btn-gold::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-gold:hover::after { transform: translateX(0); }
+.btn-gold span { position: relative; z-index: 1; }
+.btn-gold:hover span { color: var(--gold); }
+.btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+/* PDF OVERLAY */
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .metodos-grid { grid-template-columns: 1fr; }
+  .custo-grid { grid-template-columns: 1fr 1fr; }
+  .metodo-input-row { grid-template-columns: 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando PDF</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Calculadora de<br><em>Precificação</em></h1>
+    <p class="hsub">Descubra o preço de venda ideal para cada prato. Insira o custo e escolha o método de precificação que faz mais sentido para o seu negócio agora.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo O · O4</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<main>
+
+  <!-- CUSTO BASE -->
+  <div class="custo-base">
+    <p class="custo-base-title">Dados do prato</p>
+    <p class="custo-base-sub">Informe o nome e o custo do prato. Se você preencheu a Ficha Técnica Gerencial (O2), o custo por porção está disponível lá.</p>
+    <div class="custo-grid">
+      <div class="fb" style="grid-column: 1 / -1">
+        <label class="fb-label">Nome do prato</label>
+        <input type="text" class="f" id="nomePrato" placeholder="Ex: Filé ao molho madeira" oninput="calcTudo()">
+      </div>
+      <div class="fb">
+        <label class="fb-label">Custo por porção (R$)</label>
+        <p class="fb-hint">Vem da Ficha Técnica Gerencial (O2)</p>
+        <input type="number" class="f" id="custoPorcao" placeholder="Ex: 12.50" min="0" step="0.01" oninput="calcTudo()">
+      </div>
+      <div class="fb">
+        <label class="fb-label">Preço atual de venda (R$)</label>
+        <p class="fb-hint">Deixe em branco se ainda não tem preço</p>
+        <input type="number" class="f" id="precoAtual" placeholder="Ex: 45.00" min="0" step="0.01" oninput="calcTudo()">
+      </div>
+      <div class="fb">
+        <label class="fb-label">CMV atual</label>
+        <p class="fb-hint">Calculado automaticamente</p>
+        <div class="custo-display" id="cmvAtualDisplay">
+          <span class="custo-rs"></span>
+          <span class="custo-valor" id="cmvAtualVal" style="font-size:28px;color:var(--muted)">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÉTODOS -->
+  <div class="metodos-grid">
+
+    <!-- 1. CMV ALVO -->
+    <div class="metodo-card" id="card-cmv">
+      <div class="metodo-header" onclick="toggleMetodo('cmv')">
+        <div class="metodo-info">
+          <p class="metodo-nome">CMV Alvo</p>
+          <p class="metodo-desc">Defina qual percentual do preço de venda pode ser custo de insumos.</p>
+        </div>
+        <button class="metodo-toggle" id="toggle-cmv"></button>
+      </div>
+      <div class="metodo-body">
+        <div class="metodo-note">
+          O CMV (Custo de Mercadoria Vendida) ideal varia por tipo de negócio. Restaurantes a la carte costumam trabalhar entre 28% e 35%. Delivery e lanchonetes entre 25% e 32%. Use como ponto de partida e ajuste conforme os demais custos do seu negócio.
+        </div>
+        <div class="metodo-inputs">
+          <div class="fb">
+            <label class="fb-label">CMV alvo (%)</label>
+            <div class="input-suf">
+              <input type="number" class="f" id="cmvAlvo" value="32" min="1" max="99" step="0.5" oninput="calcTudo()">
+              <span class="suf">%</span>
+            </div>
+          </div>
+        </div>
+        <div class="metodo-resultado" id="res-cmv">
+          <div class="res-linha">
+            <span class="res-label">Preço sugerido</span>
+            <span class="res-val destaque" id="preco-cmv">R$ --</span>
+          </div>
+          <hr class="res-divider">
+          <div class="res-linha">
+            <span class="res-label">Custo representa</span>
+            <span class="res-val" id="pct-cmv">-- %</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. MARK-UP -->
+    <div class="metodo-card" id="card-markup">
+      <div class="metodo-header" onclick="toggleMetodo('markup')">
+        <div class="metodo-info">
+          <p class="metodo-nome">Mark-up</p>
+          <p class="metodo-desc">Multiplique o custo por um fator para chegar no preço de venda.</p>
+        </div>
+        <button class="metodo-toggle" id="toggle-markup"></button>
+      </div>
+      <div class="metodo-body">
+        <div class="metodo-note aviso">
+          O mark-up correto depende de todos os seus custos fixos, variáveis e da margem de lucro desejada. Sem esse levantamento financeiro, use este método como estimativa inicial. No Módulo E você refinará esse número com base no ponto de equilíbrio real do negócio.
+        </div>
+        <div class="metodo-inputs">
+          <div class="fb">
+            <label class="fb-label">Fator de mark-up</label>
+            <p style="font-size:11px;color:rgba(1,30,52,0.55);margin-bottom:4px">Ex: 3 = preço é 3x o custo. Restaurantes comuns usam entre 2,5 e 4.</p>
+            <input type="number" class="f" id="markupFator" value="3" min="1" step="0.1" oninput="calcTudo()">
+          </div>
+        </div>
+        <div class="metodo-resultado" id="res-markup">
+          <div class="res-linha">
+            <span class="res-label">Preço sugerido</span>
+            <span class="res-val destaque" id="preco-markup">R$ --</span>
+          </div>
+          <hr class="res-divider">
+          <div class="res-linha">
+            <span class="res-label">CMV resultante</span>
+            <span class="res-val" id="cmv-markup">-- %</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. MARGEM DE CONTRIBUIÇÃO -->
+    <div class="metodo-card" id="card-mc">
+      <div class="metodo-header" onclick="toggleMetodo('mc')">
+        <div class="metodo-info">
+          <p class="metodo-nome">Margem de contribuição</p>
+          <p class="metodo-desc">Defina quanto cada prato precisa contribuir para cobrir os custos fixos.</p>
+        </div>
+        <button class="metodo-toggle" id="toggle-mc"></button>
+      </div>
+      <div class="metodo-body">
+        <div class="metodo-note aviso">
+          Para usar este método com precisão, você precisará do total de custos fixos mensais e da quantidade estimada de vendas do prato. Se ainda não fez esse levantamento, use os campos abaixo como estimativa. No Módulo E você revisará com os números reais.
+        </div>
+        <div class="metodo-inputs">
+          <div class="metodo-input-row">
+            <div class="fb">
+              <label class="fb-label">Custos fixos mensais (R$)</label>
+              <input type="number" class="f" id="mcCustoFixo" placeholder="Ex: 8000" min="0" step="100" oninput="calcTudo()">
+            </div>
+            <div class="fb">
+              <label class="fb-label">Vendas mensais estimadas (unid.)</label>
+              <input type="number" class="f" id="mcVendas" placeholder="Ex: 120" min="1" step="1" oninput="calcTudo()">
+            </div>
+          </div>
+          <div class="fb">
+            <label class="fb-label">Margem de contribuição desejada (%)</label>
+            <div class="input-suf">
+              <input type="number" class="f" id="mcMargem" value="60" min="1" max="99" step="1" oninput="calcTudo()">
+              <span class="suf">%</span>
+            </div>
+          </div>
+        </div>
+        <div class="metodo-resultado" id="res-mc">
+          <div class="res-linha">
+            <span class="res-label">Preço sugerido</span>
+            <span class="res-val destaque" id="preco-mc">R$ --</span>
+          </div>
+          <hr class="res-divider">
+          <div class="res-linha">
+            <span class="res-label">MC por prato (R$)</span>
+            <span class="res-val" id="mc-prato">R$ --</span>
+          </div>
+          <div class="res-linha">
+            <span class="res-label">Contrib. mensal estimada</span>
+            <span class="res-val" id="mc-mensal">R$ --</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PONTO DE EQUILÍBRIO -->
+    <div class="metodo-card" id="card-pe">
+      <div class="metodo-header" onclick="toggleMetodo('pe')">
+        <div class="metodo-info">
+          <p class="metodo-nome">Ponto de equilíbrio do prato</p>
+          <p class="metodo-desc">Quantas unidades precisam ser vendidas para cobrir todos os custos.</p>
+        </div>
+        <button class="metodo-toggle" id="toggle-pe"></button>
+      </div>
+      <div class="metodo-body">
+        <div class="metodo-note aviso">
+          O ponto de equilíbrio completo depende dos custos fixos totais do negócio. Use este cálculo para entender o comportamento de um prato específico. No Módulo E você calculará o ponto de equilíbrio do negócio inteiro.
+        </div>
+        <div class="metodo-inputs">
+          <div class="metodo-input-row">
+            <div class="fb">
+              <label class="fb-label">Preço de venda definido (R$)</label>
+              <input type="number" class="f" id="pePrecoDef" placeholder="Ex: 45.00" min="0" step="0.01" oninput="calcTudo()">
+            </div>
+            <div class="fb">
+              <label class="fb-label">Custos fixos alocados ao prato (R$)</label>
+              <p style="font-size:11px;color:rgba(1,30,52,0.5);margin-bottom:4px">Estimativa da parcela de custos fixos que este prato deve cobrir.</p>
+              <input type="number" class="f" id="peCustoFixo" placeholder="Ex: 500" min="0" step="10" oninput="calcTudo()">
+            </div>
+          </div>
+        </div>
+        <div class="metodo-resultado" id="res-pe">
+          <div class="res-linha">
+            <span class="res-label">MC por unidade</span>
+            <span class="res-val" id="pe-mc">R$ --</span>
+          </div>
+          <hr class="res-divider">
+          <div class="res-linha">
+            <span class="res-label">Ponto de equilíbrio</span>
+            <span class="res-val destaque" id="pe-qtd">-- un.</span>
+          </div>
+          <div class="res-linha">
+            <span class="res-label">Faturamento no ponto</span>
+            <span class="res-val" id="pe-fat">R$ --</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COMPARATIVO -->
+  <div class="comparativo" id="comparativo" style="display:none">
+    <div class="comp-header">
+      <div>
+        <p class="comp-title">Comparativo de preços</p>
+        <p class="comp-sub">Todos os métodos ativos lado a lado</p>
+      </div>
+    </div>
+    <div class="comp-body">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Método</th>
+            <th>Preço sugerido</th>
+            <th>CMV resultante</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody id="compBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-gold" onclick="gerarPDF()"><span>Gerar PDF</span></button>
+    <button class="btn btn-outline" onclick="limpar()">Limpar</button>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta O4 · Calculadora de Precificação</span>
+</footer>
+
+<script>
+
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatBRLNum(valor, casas) {
+  if (valor === null || valor === undefined || isNaN(valor)) return '--';
+  casas = casas !== undefined ? casas : 2;
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+}
+
+const metodosAtivos = { cmv: false, markup: false, mc: false, pe: false };
+
+document.getElementById('rname').value = localStorage.getItem('dose-precif-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-precif-rname', e.target.value));
+
+function toggleMetodo(id) {
+  metodosAtivos[id] = !metodosAtivos[id];
+  document.getElementById('card-' + id).classList.toggle('ativo', metodosAtivos[id]);
+  calcTudo();
+}
+
+function fmt(v) {
+  if (v === null || isNaN(v)) return '--';
+  return 'R$ ' + formatBRL(v);
+}
+
+function fmtPct(v) {
+  if (v === null || isNaN(v)) return '--';
+  return formatBRLNum(v, 1) + '%';
+}
+
+function calcTudo() {
+  const custo = parseFloat(document.getElementById('custoPorcao').value) || 0;
+  const precoAtual = parseFloat(document.getElementById('precoAtual').value) || 0;
+
+  // CMV atual
+  const cmvAtualEl = document.getElementById('cmvAtualVal');
+  if (custo > 0 && precoAtual > 0) {
+    const cmvAtual = (custo / precoAtual) * 100;
+    cmvAtualEl.textContent = fmtPct(cmvAtual);
+    cmvAtualEl.style.color = cmvAtual <= 35 ? '#1a5e2a' : cmvAtual <= 42 ? '#7a4008' : '#7a2020';
+  } else {
+    cmvAtualEl.textContent = '--';
+    cmvAtualEl.style.color = 'var(--muted)';
+  }
+
+  const resultados = {};
+
+  // CMV ALVO
+  if (metodosAtivos.cmv && custo > 0) {
+    const alvo = parseFloat(document.getElementById('cmvAlvo').value) || 32;
+    const preco = custo / (alvo / 100);
+    document.getElementById('preco-cmv').textContent = fmt(preco);
+    document.getElementById('pct-cmv').textContent = fmtPct(alvo);
+    resultados.cmv = { nome: 'CMV Alvo (' + alvo + '%)', preco, cmv: alvo };
+  }
+
+  // MARKUP
+  if (metodosAtivos.markup && custo > 0) {
+    const fator = parseFloat(document.getElementById('markupFator').value) || 3;
+    const preco = custo * fator;
+    const cmvRes = (custo / preco) * 100;
+    document.getElementById('preco-markup').textContent = fmt(preco);
+    const cmvEl = document.getElementById('cmv-markup');
+    cmvEl.textContent = fmtPct(cmvRes);
+    cmvEl.className = 'res-val ' + (cmvRes <= 35 ? 'ok' : cmvRes <= 42 ? '' : 'alerta');
+    resultados.markup = { nome: 'Mark-up (x' + formatBRLNum(fator, 1) + ')', preco, cmv: cmvRes };
+  }
+
+  // MARGEM DE CONTRIBUIÇÃO
+  if (metodosAtivos.mc && custo > 0) {
+    const mcMargem = parseFloat(document.getElementById('mcMargem').value) || 60;
+    const cfMensal = parseFloat(document.getElementById('mcCustoFixo').value) || 0;
+    const vendas = parseFloat(document.getElementById('mcVendas').value) || 0;
+    const preco = custo / (1 - mcMargem / 100);
+    const mcPrato = preco - custo;
+    const mcMensal = mcPrato * vendas;
+    document.getElementById('preco-mc').textContent = fmt(preco);
+    document.getElementById('mc-prato').textContent = fmt(mcPrato);
+    document.getElementById('mc-mensal').textContent = fmt(mcMensal > 0 ? mcMensal : null);
+    resultados.mc = { nome: 'Margem de contribuição (' + mcMargem + '%)', preco, cmv: (custo / preco) * 100 };
+  }
+
+  // PONTO DE EQUILÍBRIO
+  if (metodosAtivos.pe && custo > 0) {
+    const precoDiv = parseFloat(document.getElementById('pePrecoDef').value) || 0;
+    const cfAlocado = parseFloat(document.getElementById('peCustoFixo').value) || 0;
+    if (precoDiv > custo) {
+      const mcUnit = precoDiv - custo;
+      const peQtd = cfAlocado > 0 ? Math.ceil(cfAlocado / mcUnit) : null;
+      const peFat = peQtd ? peQtd * precoDiv : null;
+      document.getElementById('pe-mc').textContent = fmt(mcUnit);
+      document.getElementById('pe-qtd').textContent = peQtd !== null ? peQtd + ' un.' : '--';
+      document.getElementById('pe-fat').textContent = fmt(peFat);
+      resultados.pe = { nome: 'Ponto de equilíbrio', preco: precoDiv, cmv: (custo / precoDiv) * 100 };
+    } else {
+      document.getElementById('pe-mc').textContent = '--';
+      document.getElementById('pe-qtd').textContent = custo > 0 ? 'Preço abaixo do custo' : '--';
+      document.getElementById('pe-qtd').className = 'res-val alerta';
+      document.getElementById('pe-fat').textContent = '--';
+    }
+  }
+
+  // COMPARATIVO
+  renderComparativo(resultados, custo);
+}
+
+function renderComparativo(resultados, custo) {
+  const keys = Object.keys(resultados);
+  const comp = document.getElementById('comparativo');
+  if (keys.length < 2) { comp.style.display = 'none'; return; }
+  comp.style.display = 'block';
+  const tbody = document.getElementById('compBody');
+  tbody.innerHTML = keys.map(k => {
+    const r = resultados[k];
+    const cmvBom = r.cmv <= 35;
+    const cmvMedio = r.cmv > 35 && r.cmv <= 42;
+    const cmvAlto = r.cmv > 42;
+    const cmvCls = cmvBom ? 'bom' : cmvMedio ? 'medio' : 'alto';
+    const tagCls = cmvBom ? 'comp-tag-verde' : cmvMedio ? 'comp-tag-amarelo' : 'comp-tag-cinza';
+    const tagTxt = cmvBom ? 'dentro do ideal' : cmvMedio ? 'atenção' : 'acima do ideal';
+    return `<tr>
+      <td class="comp-metodo">${r.nome}</td>
+      <td class="comp-preco">${r.preco ? 'R$ ' + formatBRL(r.preco) : '--'}</td>
+      <td class="comp-cmv ${cmvCls}">${r.cmv ? formatBRLNum(r.cmv, 1) + '%' : '--'}</td>
+      <td><span class="comp-tag ${tagCls}">${tagTxt}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function limpar() {
+  ['custoPorcao','precoAtual','nomePrato','cmvAlvo','markupFator','mcCustoFixo','mcVendas','mcMargem','pePrecoDef','peCustoFixo']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = el.defaultValue || ''; });
+  Object.keys(metodosAtivos).forEach(k => {
+    metodosAtivos[k] = false;
+    document.getElementById('card-' + k).classList.remove('ativo');
+  });
+  calcTudo();
+}
+
+// PDF
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    const restaurante = document.getElementById('rname').value || 'Meu Restaurante';
+    const nomePrato = document.getElementById('nomePrato').value || 'Prato sem nome';
+    const custo = parseFloat(document.getElementById('custoPorcao').value) || 0;
+    const precoAtual = parseFloat(document.getElementById('precoAtual').value) || 0;
+    const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210, H=297, mg=18, cw=W-mg*2;
+
+    pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+    pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+    pdf.text('MÓDULO O  ·  O4',W-mg,11,{align:'right'});
+
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(22); pdf.setTextColor(245,240,232); pdf.text('Calculadora de',mg,40);
+    pdf.setFont('helvetica','bolditalic'); pdf.setTextColor(212,175,122); pdf.text('Precificação',mg,52);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(122,115,105); pdf.text(restaurante,mg,62);
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,68,W-mg,68);
+
+    pdf.setFontSize(9); pdf.setTextColor(184,150,90); pdf.text(nomePrato.toUpperCase(),mg,75);
+    pdf.setTextColor(122,115,105); pdf.text(hoje,W-mg,75,{align:'right'});
+    pdf.line(mg,79,W-mg,79);
+
+    let y = 92;
+    const rowInfo = (label, val, color=[210,200,185]) => {
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105); pdf.text(label.toUpperCase(),mg,y);
+      pdf.setFontSize(11); pdf.setTextColor(...color); pdf.text(val,W-mg,y,{align:'right'});
+      y+=10;
+    };
+
+    rowInfo('Custo por porção', custo>0?'R$ ' + formatBRL(custo):'Não informado');
+    if(precoAtual>0){
+      const cmv=(custo/precoAtual)*100;
+      rowInfo('Preço atual de venda','R$ ' + formatBRL(precoAtual));
+      rowInfo('CMV atual',fmtPct(cmv), cmv<=35?[74,173,122]:cmv<=42?[224,150,64]:[192,85,85]);
+    }
+    y+=6;
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.2); pdf.line(mg,y,W-mg,y); y+=10;
+
+    // Resultados dos métodos ativos
+    const calculos = [
+      metodosAtivos.cmv && custo>0 ? (() => {
+        const alvo=parseFloat(document.getElementById('cmvAlvo').value)||32;
+        return { nome:`CMV Alvo (${alvo}%)`, preco:custo/(alvo/100), cmv:alvo, obs:`Custo representa ${alvo}% do preço de venda.` };
+      })() : null,
+      metodosAtivos.markup && custo>0 ? (() => {
+        const fator=parseFloat(document.getElementById('markupFator').value)||3;
+        const preco=custo*fator;
+        return { nome:'Mark-up (x' + formatBRLNum(fator, 1) + ')', preco, cmv:(custo/preco)*100, obs:'Custo multiplicado por ' + formatBRLNum(fator, 1) + '.' };
+      })() : null,
+      metodosAtivos.mc && custo>0 ? (() => {
+        const m=parseFloat(document.getElementById('mcMargem').value)||60;
+        const preco=custo/(1-m/100);
+        return { nome:'Margem de contribuição (' + m + '%)', preco, cmv:(custo/preco)*100, obs:'MC por prato: R$ ' + formatBRL(preco-custo) + '.' };
+      })() : null,
+      metodosAtivos.pe && custo>0 ? (() => {
+        const pd=parseFloat(document.getElementById('pePrecoDef').value)||0;
+        const cf=parseFloat(document.getElementById('peCustoFixo').value)||0;
+        if(pd<=custo) return null;
+        const mc=pd-custo, pe=cf>0?Math.ceil(cf/mc):null;
+        return { nome:'Ponto de equilíbrio', preco:pd, cmv:(custo/pd)*100, obs:pe?`Vender ${pe} unidades para cobrir os custos alocados.`:'' };
+      })() : null,
+    ].filter(Boolean);
+
+    if(calculos.length===0){
+      pdf.setFont('helvetica','italic'); pdf.setFontSize(10); pdf.setTextColor(122,115,105);
+      pdf.text('Nenhum método de precificação foi ativado.',mg,y);
+    } else {
+      calculos.forEach(c => {
+        if(y>H-40){ pdf.addPage(); pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F'); y=24; }
+        pdf.setFillColor(40,38,32); pdf.rect(mg,y,2,20,'F');
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232);
+        pdf.text(c.nome,mg+7,y+7);
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(18); pdf.setTextColor(212,175,122);
+        pdf.text('R$ ' + formatBRL(c.preco),mg+7,y+16);
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(9);
+        const cmvColor=c.cmv<=35?[74,173,122]:c.cmv<=42?[224,150,64]:[192,85,85];
+        pdf.setTextColor(...cmvColor);
+        pdf.text('CMV: ' + formatBRLNum(c.cmv, 1) + '%',W-mg,y+7,{align:'right'});
+        pdf.setTextColor(122,115,105); pdf.text(c.obs,W-mg,y+16,{align:'right'});
+        y+=28;
+      });
+    }
+
+    const total=pdf.internal.getNumberOfPages();
+    for(let p=1;p<=total;p++){
+      pdf.setPage(p); pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10); pdf.text(`${p} / ${total}`,W-mg,H-10,{align:'right'});
+    }
+
+    pdf.save(`Precificacao-${nomePrato.replace(/\s+/g,'-')}.pdf`);
+  } catch(err){
+    console.error(err); alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+
+// HELPERS
+function fmtPct(v){ if(!v||isNaN(v)) return '--'; return formatBRLNum(v, 1)+' %'; }
+</script>
+</body>
+</html>

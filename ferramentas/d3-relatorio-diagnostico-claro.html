@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Diagnóstico | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2);
+  --green: #1a5e2a; --amber: #7a4008; --red: #7a2020;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.header-title { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.header-title em { font-style: italic; color: var(--gold-light); }
+.header-subtitle { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 420px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.08); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 24px; padding: 20px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi, input[type="date"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; outline: none; transition: border-color 0.25s; color-scheme: light; }
+input[type="text"].fi { width: 200px; }
+input[type="date"].fi { width: 140px; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus, input[type="date"].fi:focus { border-bottom-color: var(--gold); }
+
+main { max-width: 860px; margin: 0 auto; padding: 48px 48px 80px; }
+
+.instruction { background: rgba(2,82,145,0.04); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 16px 20px; margin-bottom: 40px; font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.8; }
+
+.section { margin-bottom: 44px; }
+.section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.section-num { font-family: 'Manrope', sans-serif; font-size: 36px; font-weight: 300; color: rgba(91,145,188,0.2); line-height: 1; flex-shrink: 0; width: 32px; }
+.section-title { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 600; }
+.section-sub { font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 2px; }
+
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.fb { display: flex; flex-direction: column; gap: 7px; }
+.fb-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+
+input[type="text"].ctx, select.ctx {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 11px 14px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="text"].ctx::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="text"].ctx:focus, select.ctx:focus { border-color: var(--gold); }
+select.ctx { cursor: pointer; color-scheme: light; }
+select.ctx option { background: #f9e8d7; color: #011e34; }
+.sw { position: relative; }
+.sa { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+
+.etapa-row { display: grid; grid-template-columns: 3px 1fr auto; align-items: center; gap: 16px; border: 1px solid var(--border); padding: 14px 16px; background: rgba(1,30,52,0.03); margin-bottom: 10px; }
+.etapa-bar { width: 3px; height: 28px; border-radius: 2px; flex-shrink: 0; align-self: center; }
+.etapa-name { font-size: 13px; font-weight: 500; color: var(--cream); }
+.etapa-name small { display: block; font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 2px; }
+.doc-toggle { display: flex; gap: 4px; }
+.doc-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.doc-btn.yes.active { background: rgba(26,94,42,0.1); border-color: var(--green); color: var(--green); }
+.doc-btn.no.active { background: rgba(193,112,112,0.12); border-color: #c17070; color: #c07070; }
+.doc-btn:hover:not(.active) { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+
+.vaz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.vaz-card { border: 1px solid var(--border); padding: 14px 16px; background: rgba(1,30,52,0.03); }
+.vaz-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
+.vaz-name { font-size: 12px; font-weight: 500; color: var(--cream); line-height: 1.4; flex: 1; }
+.sev-select { display: flex; gap: 3px; flex-shrink: 0; }
+.sev-btn { font-family: 'Manrope', sans-serif; font-size: 9px; font-weight: 500; padding: 4px 8px; border: 1px solid transparent; background: transparent; cursor: pointer; transition: all 0.2s; border-radius: 1px; }
+.sev-n { color: rgba(1,30,52,0.4); border-color: rgba(1,30,52,0.4); }
+.sev-n.active { background: rgba(1,30,52,0.08); border-color: var(--muted); color: var(--cream); }
+.sev-l { color: rgba(74,124,89,0.6); border-color: rgba(74,124,89,0.2); }
+.sev-l.active { background: rgba(26,94,42,0.1); border-color: var(--green); color: var(--green); }
+.sev-m { color: rgba(193,127,42,0.6); border-color: rgba(193,127,42,0.2); }
+.sev-m.active { background: rgba(122,64,8,0.1); border-color: var(--amber); color: var(--amber); }
+.sev-c { color: rgba(139,58,58,0.6); border-color: rgba(139,58,58,0.2); }
+.sev-c.active { background: rgba(122,32,32,0.1); border-color: var(--red); color: var(--red); }
+.vobs { font-family: 'Manrope', sans-serif; font-size: 11.5px; font-weight: 300; background: transparent; border: none; border-bottom: 1px solid rgba(91,145,188,0.12); color: var(--cream); width: 100%; padding: 5px 0; outline: none; transition: border-color 0.25s; }
+.vobs::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+.vobs:focus { border-bottom-color: var(--gold); }
+
+textarea.ta { font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); width: 100%; padding: 14px 16px; resize: vertical; min-height: 88px; outline: none; line-height: 1.8; transition: border-color 0.25s; border-radius: 1px; }
+textarea.ta::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+textarea.ta:focus { border-color: var(--gold); }
+textarea.ta.green { background: rgba(74,124,89,0.04); border-color: rgba(74,124,89,0.2); }
+textarea.ta.green:focus { border-color: var(--green); }
+
+.prio-list { display: flex; flex-direction: column; gap: 10px; }
+.prio-item { display: flex; align-items: flex-start; gap: 14px; border: 1px solid var(--border); padding: 14px 16px; background: rgba(1,30,52,0.03); }
+.prio-num { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; color: rgba(91,145,188,0.25); line-height: 1; flex-shrink: 0; width: 24px; margin-top: -2px; }
+.prio-content { flex: 1; }
+.prio-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); font-weight: 700; margin-bottom: 6px; }
+.prio-input { font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 300; background: transparent; border: none; border-bottom: 1px solid rgba(91,145,188,0.15); color: var(--cream); width: 100%; padding: 4px 0; outline: none; transition: border-color 0.25s; }
+.prio-input::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+.prio-input:focus { border-bottom-color: var(--gold); }
+
+.actions { display: flex; gap: 12px; margin-top: 40px; flex-wrap: wrap; }
+.btn-primary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: var(--gold); color: var(--charcoal); border: none; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+.btn-primary::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-primary:hover::after { transform: translateX(0); }
+.btn-primary span { position: relative; z-index: 1; }
+.btn-primary:hover span { color: var(--gold); }
+.btn-secondary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: transparent; color: var(--muted); border: 1px solid var(--border); cursor: pointer; transition: all 0.25s; }
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .g2 { grid-template-columns: 1fr; }
+  .vaz-grid { grid-template-columns: 1fr; }
+  .etapa-row { grid-template-columns: 3px 1fr; gap: 12px; }
+  .doc-toggle { grid-column: 2; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando PDF</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="header-title">Relatório de<br><em>Diagnóstico</em></h1>
+    <p class="header-subtitle">Consolide tudo que você observou nas ferramentas D1 e D2 num único documento. Este relatório é o ponto de partida para os próximos módulos.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo D · D3</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+  <div class="fg"><span class="fl">Data</span><input type="date" class="fi" id="rdate"></div>
+</div>
+
+<main>
+
+  <div class="instruction">
+    Preencha este relatório com base no que você mapeou nas ferramentas anteriores. Consulte o Mapa de Operação (D1) e o Checklist dos Vazamentos (D2) enquanto preenche. Leva em torno de 15 a 20 minutos e o resultado é um documento completo do estado atual do seu negócio.
+  </div>
+
+  <!-- 1: CONTEXTO -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">1</span>
+      <div><h2 class="section-title">Contexto do negócio</h2><p class="section-sub">Informações gerais para situar o diagnóstico</p></div>
+    </div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="fb"><label class="fb-label">Tipo de negócio</label>
+        <div class="sw"><select class="ctx" id="ctx_tipo"><option value="">Selecione</option><option>Restaurante a la carte</option><option>Restaurante por quilo</option><option>Delivery</option><option>Lanchonete</option><option>Cafeteria</option><option>Padaria</option><option>Hamburgueria</option><option>Pizzaria</option><option>Food truck</option><option>Bar e petiscaria</option><option>Outro</option></select><span class="sa">▾</span></div>
+      </div>
+      <div class="fb"><label class="fb-label">Há quanto tempo está aberto</label>
+        <div class="sw"><select class="ctx" id="ctx_tempo"><option value="">Selecione</option><option>Menos de 6 meses</option><option>6 meses a 1 ano</option><option>1 a 2 anos</option><option>2 a 5 anos</option><option>Mais de 5 anos</option></select><span class="sa">▾</span></div>
+      </div>
+      <div class="fb"><label class="fb-label">Número de funcionários</label>
+        <div class="sw"><select class="ctx" id="ctx_func"><option value="">Selecione</option><option>1 a 3</option><option>4 a 7</option><option>8 a 15</option><option>16 a 30</option><option>Mais de 30</option></select><span class="sa">▾</span></div>
+      </div>
+      <div class="fb"><label class="fb-label">Faturamento mensal aproximado</label>
+        <div class="sw"><select class="ctx" id="ctx_fat"><option value="">Prefiro não informar</option><option>Até R$ 10.000</option><option>R$ 10.000 a R$ 30.000</option><option>R$ 30.000 a R$ 60.000</option><option>R$ 60.000 a R$ 100.000</option><option>R$ 100.000 a R$ 200.000</option><option>Acima de R$ 200.000</option></select><span class="sa">▾</span></div>
+      </div>
+    </div>
+    <div class="fb"><label class="fb-label">Principais produtos ou pratos</label>
+      <input type="text" class="ctx" id="ctx_pratos" placeholder="Ex: hambúrgueres artesanais, marmitas executivas, café e doces...">
+    </div>
+  </div>
+
+  <!-- 2: ETAPAS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">2</span>
+      <div><h2 class="section-title">Etapas operacionais</h2><p class="section-sub">Para cada etapa, indique se existe um processo documentado ou se é feito de cabeça</p></div>
+    </div>
+    <div id="etapaGrid"></div>
+  </div>
+
+  <!-- 3: VAZAMENTOS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">3</span>
+      <div><h2 class="section-title">Vazamentos identificados</h2><p class="section-sub">Registre a gravidade de cada área e o que você observou. N/I = não identificado.</p></div>
+    </div>
+    <div class="vaz-grid" id="vazGrid"></div>
+  </div>
+
+  <!-- 4: PONTOS POSITIVOS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">4</span>
+      <div><h2 class="section-title">Pontos positivos observados</h2><p class="section-sub">O que já funciona bem e deve ser preservado</p></div>
+    </div>
+    <textarea class="ta green" id="positivos" placeholder="Ex: equipe comprometida e de baixa rotatividade, produto de qualidade reconhecida pelos clientes, boa localização com fluxo constante de pessoas..."></textarea>
+  </div>
+
+  <!-- 5: PRIORIDADES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">5</span>
+      <div><h2 class="section-title">Prioridades para os próximos passos</h2><p class="section-sub">Com base no diagnóstico, quais são as 3 áreas que precisam de atenção primeiro?</p></div>
+    </div>
+    <div class="prio-list">
+      <div class="prio-item"><span class="prio-num">1</span><div class="prio-content"><p class="prio-label">Prioridade mais urgente</p><input type="text" class="prio-input" id="prio1" placeholder="Ex: criar fichas técnicas dos pratos mais vendidos"></div></div>
+      <div class="prio-item"><span class="prio-num">2</span><div class="prio-content"><p class="prio-label">Segunda prioridade</p><input type="text" class="prio-input" id="prio2" placeholder="Ex: estabelecer lista de compras semanal com fornecedores fixos"></div></div>
+      <div class="prio-item"><span class="prio-num">3</span><div class="prio-content"><p class="prio-label">Terceira prioridade</p><input type="text" class="prio-input" id="prio3" placeholder="Ex: documentar processo de recebimento e conferência de mercadoria"></div></div>
+    </div>
+  </div>
+
+  <!-- 6: OBSERVAÇÕES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">6</span>
+      <div><h2 class="section-title">Observações livres</h2><p class="section-sub">Qualquer coisa relevante que você queira registrar sobre o momento atual do negócio</p></div>
+    </div>
+    <textarea class="ta" id="observacoes" placeholder="Percepções, intuições, contexto que não coube nas outras seções. Quanto mais detalhado, mais útil será para você no futuro."></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" onclick="gerarPDF()"><span>Gerar PDF do diagnóstico</span></button>
+    <button class="btn-secondary" onclick="salvarLocal()">Salvar rascunho</button>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta D3 · Relatório de Diagnóstico</span>
+</footer>
+
+<script>
+const ETAPAS = [
+  { id:'compras',    nome:'Compras',      cor:'#6b7fa3', hint:'Lista de compras, cronograma, critérios definidos' },
+  { id:'recebimento',nome:'Recebimento',  cor:'#7a9e7e', hint:'Checklist de conferência, critérios de qualidade' },
+  { id:'estoque',    nome:'Estoque',      cor:'#b97e10', hint:'Planilha de entradas e saídas, inventário periódico' },
+  { id:'prepreparo', nome:'Pré-preparo',  cor:'#9b7ec8', hint:'Receitas de base, porcionamentos padronizados' },
+  { id:'producao',   nome:'Produção',     cor:'#c17070', hint:'Fichas técnicas, roteiros de montagem, padrão de saída' },
+  { id:'servico',    nome:'Serviço',      cor:'#5a9e9e', hint:'Roteiro de atendimento ou fluxo de expedição delivery' },
+];
+
+const VAZ = [
+  'Desperdício de insumos na produção',
+  'Compras sem planejamento',
+  'Precificação abaixo do custo real',
+  'Produção despadronizada',
+  'Estoque sem controle',
+];
+
+const docStatus = {};
+const vazSev = {1:'none',2:'none',3:'none',4:'none',5:'none'};
+
+document.getElementById('rdate').valueAsDate = new Date();
+renderEtapas();
+renderVazamentos();
+carregarRascunho();
+
+function renderEtapas() {
+  const grid = document.getElementById('etapaGrid');
+  ETAPAS.forEach(et => {
+    docStatus[et.id] = 'nao';
+    const d = document.createElement('div');
+    d.className = 'etapa-row';
+    d.innerHTML = `<div class="etapa-bar" style="background:${et.cor}"></div>
+      <div class="etapa-name">${et.nome}<small>${et.hint}</small></div>
+      <div class="doc-toggle">
+        <button class="doc-btn yes" onclick="setDoc('${et.id}','sim',this)">Sim</button>
+        <button class="doc-btn no active" onclick="setDoc('${et.id}','nao',this)">Não</button>
+      </div>`;
+    grid.appendChild(d);
+  });
+}
+
+function renderVazamentos() {
+  const grid = document.getElementById('vazGrid');
+  VAZ.forEach((nome, i) => {
+    const n = i + 1;
+    const d = document.createElement('div');
+    d.className = 'vaz-card';
+    d.innerHTML = `<div class="vaz-header">
+        <p class="vaz-name">${nome}</p>
+        <div class="sev-select">
+          <button class="sev-btn sev-n active" onclick="setSev(${n},'none',this)">N/I</button>
+          <button class="sev-btn sev-l" onclick="setSev(${n},'leve',this)">Leve</button>
+          <button class="sev-btn sev-m" onclick="setSev(${n},'moderado',this)">Mod</button>
+          <button class="sev-btn sev-c" onclick="setSev(${n},'critico',this)">Crit</button>
+        </div>
+      </div>
+      <input type="text" class="vobs" id="vobs${n}" placeholder="O que você observou nesta área...">`;
+    grid.appendChild(d);
+  });
+}
+
+function setDoc(et, val, btn) {
+  docStatus[et] = val;
+  btn.closest('.doc-toggle').querySelectorAll('.doc-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setSev(n, val, btn) {
+  vazSev[n] = val;
+  btn.closest('.sev-select').querySelectorAll('.sev-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function coletar() {
+  const vazObs = {};
+  [1,2,3,4,5].forEach(i => { vazObs[i] = document.getElementById('vobs'+i)?.value || ''; });
+  return {
+    rname: document.getElementById('rname').value,
+    ctx_tipo: document.getElementById('ctx_tipo').value,
+    ctx_tempo: document.getElementById('ctx_tempo').value,
+    ctx_func: document.getElementById('ctx_func').value,
+    ctx_fat: document.getElementById('ctx_fat').value,
+    ctx_pratos: document.getElementById('ctx_pratos').value,
+    positivos: document.getElementById('positivos').value,
+    prio1: document.getElementById('prio1').value,
+    prio2: document.getElementById('prio2').value,
+    prio3: document.getElementById('prio3').value,
+    observacoes: document.getElementById('observacoes').value,
+    docStatus: {...docStatus},
+    vazSev: {...vazSev},
+    vazObs,
+  };
+}
+
+function salvarLocal() {
+  localStorage.setItem('dose-relatorio-rascunho', JSON.stringify(coletar()));
+  const btn = document.querySelector('.btn-secondary');
+  const orig = btn.textContent;
+  btn.textContent = 'Rascunho salvo';
+  setTimeout(() => btn.textContent = orig, 2000);
+}
+
+function carregarRascunho() {
+  try {
+    const d = JSON.parse(localStorage.getItem('dose-relatorio-rascunho') || 'null');
+    if (!d) return;
+    ['rname','ctx_tipo','ctx_tempo','ctx_func','ctx_fat','ctx_pratos','positivos','prio1','prio2','prio3','observacoes']
+      .forEach(id => { const el = document.getElementById(id); if (el && d[id]) el.value = d[id]; });
+    if (d.vazObs) [1,2,3,4,5].forEach(i => { const el = document.getElementById('vobs'+i); if (el && d.vazObs[i]) el.value = d.vazObs[i]; });
+    if (d.docStatus) Object.entries(d.docStatus).forEach(([et, val]) => {
+      const rows = document.querySelectorAll('.etapa-row');
+      rows.forEach(row => {
+        if (row.innerHTML.includes(`'${et}'`)) {
+          const btn = row.querySelector(`.doc-btn.${val === 'sim' ? 'yes' : 'no'}`);
+          if (btn) setDoc(et, val, btn);
+        }
+      });
+    });
+    if (d.vazSev) Object.entries(d.vazSev).forEach(([n, val]) => {
+      const clsMap = {none:'sev-n',leve:'sev-l',moderado:'sev-m',critico:'sev-c'};
+      const card = document.querySelectorAll('.vaz-card')[parseInt(n)-1];
+      if (card) { const btn = card.querySelector('.'+clsMap[val]); if (btn) setSev(parseInt(n), val, btn); }
+    });
+  } catch(e) {}
+}
+
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    const d = coletar();
+    const nome = d.rname || 'Meu Restaurante';
+    const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210, H=297, mg=18, cw=W-mg*2;
+
+    const hdr = () => {
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+      pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+      pdf.text('MÓDULO D  ·  D3',W-mg,11,{align:'right'});
+    };
+
+    const ftr = (p,t) => {
+      pdf.setPage(p);
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10);
+      pdf.text(`${p} / ${t}`,W-mg,H-10,{align:'right'});
+    };
+
+    // CAPA
+    pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F'); hdr();
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(28); pdf.setTextColor(245,240,232); pdf.text('Relatório de',mg,42);
+    pdf.setFont('helvetica','bolditalic'); pdf.setTextColor(212,175,122); pdf.text('Diagnóstico',mg,56);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(122,115,105); pdf.text('Sistema D.O.S.E. · Módulo D',mg,66);
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3);
+    pdf.line(mg,74,W-mg,74);
+    pdf.setFontSize(9); pdf.setTextColor(184,150,90); pdf.text(nome.toUpperCase(),mg,81);
+    pdf.setTextColor(122,115,105); pdf.text(hoje,W-mg,81,{align:'right'});
+    pdf.line(mg,85,W-mg,85);
+    let y = 98;
+    [['Tipo de negócio',d.ctx_tipo],['Tempo de operação',d.ctx_tempo],['Funcionários',d.ctx_func],['Faturamento mensal',d.ctx_fat],['Principais produtos',d.ctx_pratos]]
+      .filter(([,v])=>v).forEach(([l,v])=>{
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105); pdf.text(l.toUpperCase(),mg,y); y+=5;
+        pdf.setFontSize(10); pdf.setTextColor(210,200,185); pdf.text(v,mg,y); y+=9;
+      });
+
+    // ETAPAS
+    pdf.addPage(); pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F'); hdr();
+    y=28; pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(245,240,232); pdf.text('Etapas operacionais',mg,y); y+=12;
+    const eCores = {compras:[107,127,163],recebimento:[122,158,126],estoque:[193,127,42],prepreparo:[155,126,200],producao:[193,112,112],servico:[90,158,158]};
+    ETAPAS.forEach(et => {
+      const cor = eCores[et.id]||[122,115,105];
+      const doc = d.docStatus[et.id];
+      pdf.setFillColor(...cor); pdf.rect(mg,y,2,10,'F');
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(245,240,232); pdf.text(et.nome,mg+6,y+6);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8);
+      pdf.setTextColor(...(doc==='sim'?[122,158,126]:[193,112,112]));
+      pdf.text(doc==='sim'?'Documentado':'Sem documentação',W-mg,y+6,{align:'right'});
+      pdf.setDrawColor(184,150,90,0.1); pdf.setLineWidth(0.2); pdf.line(mg,y+14,W-mg,y+14);
+      y+=18;
+    });
+
+    // VAZAMENTOS
+    pdf.addPage(); pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F'); hdr();
+    y=28; pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(245,240,232); pdf.text('Vazamentos identificados',mg,y); y+=12;
+    const sC={none:[122,115,105],leve:[74,124,89],moderado:[193,127,42],critico:[139,58,58]};
+    const sL={none:'Não identificado',leve:'Leve',moderado:'Moderado',critico:'Crítico'};
+    [1,2,3,4,5].forEach(i=>{
+      const sev=d.vazSev[i]||'none', obs=d.vazObs[i]||'';
+      pdf.setFillColor(...sC[sev]); pdf.rect(mg,y,2,obs?16:10,'F');
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(245,240,232); pdf.text(VAZ[i-1],mg+6,y+6);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(...sC[sev]); pdf.text(sL[sev].toUpperCase(),mg+6,y+12);
+      if(obs){pdf.setTextColor(122,115,105);const ol=pdf.splitTextToSize(obs,cw-60);pdf.text(ol.slice(0,2),mg+66,y+12);}
+      pdf.setDrawColor(184,150,90,0.1); pdf.setLineWidth(0.2); pdf.line(mg,y+(obs?20:15),W-mg,y+(obs?20:15));
+      y+=obs?25:18;
+    });
+
+    // PRIORIDADES + POSITIVOS + OBS
+    pdf.addPage(); pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F'); hdr();
+    y=28; pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(245,240,232); pdf.text('Prioridades para os próximos passos',mg,y); y+=12;
+    [[1,'Prioridade mais urgente',d.prio1],[2,'Segunda prioridade',d.prio2],[3,'Terceira prioridade',d.prio3]].forEach(([,l,v])=>{
+      pdf.setFillColor(184,150,90); pdf.rect(mg,y,2,14,'F');
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90); pdf.text(l,mg+6,y+5);
+      pdf.setFontSize(10); pdf.setTextColor(210,200,185);
+      const ls=pdf.splitTextToSize(v||'Não preenchido',cw-8); pdf.text(ls.slice(0,2),mg+6,y+11); y+=22;
+    });
+    if(d.positivos){y+=4;pdf.setFont('helvetica','bold');pdf.setFontSize(12);pdf.setTextColor(122,158,126);pdf.text('Pontos positivos',mg,y);y+=8;pdf.setFont('helvetica','normal');pdf.setFontSize(9.5);pdf.setTextColor(160,185,160);pdf.text(pdf.splitTextToSize(d.positivos,cw).slice(0,5),mg,y);y+=40;}
+    if(d.observacoes){pdf.setFont('helvetica','bold');pdf.setFontSize(12);pdf.setTextColor(245,240,232);pdf.text('Observações',mg,y);y+=8;pdf.setFont('helvetica','normal');pdf.setFontSize(9.5);pdf.setTextColor(160,152,140);pdf.text(pdf.splitTextToSize(d.observacoes,cw).slice(0,8),mg,y);}
+
+    const total=pdf.internal.getNumberOfPages();
+    for(let p=1;p<=total;p++) ftr(p,total);
+    pdf.save(`DOSE-Relatorio-Diagnostico-${nome.replace(/\s+/g,'-')}.pdf`);
+  } catch(err){ console.error(err); alert('Não foi possível gerar o PDF. Tente novamente.'); }
+  finally { document.getElementById('pdfOverlay').classList.remove('visible'); }
+}
+</script>
+</body>
+</html>

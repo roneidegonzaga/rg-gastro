@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ponto de Equilíbrio | Sistema D.O.S.E. Bônus</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --charcoal:#011e34;--cream:#fff1e6;--gold:#5b91bc;--gold-light:#8fb3d1;
+  --muted:#5d6d7c;--border:rgba(91,145,188,0.18);
+  --azul:#3a5a7a;--azul-light:#6a9acd;--azul-bg:rgba(58,90,122,0.08);
+  --ok:#4a7c59;--ok-light:#6aad7a;
+  --alert:#8a4a4a;--alert-light:#c07070;--alert-bg:rgba(138,74,74,0.08);
+}
+html,body{min-height:100%;font-family:'Manrope',sans-serif;color:var(--cream);background:var(--charcoal);}
+
+.hero{padding:52px 48px 36px;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+.hero::before{content:'₢';position:absolute;right:40px;top:-20px;font-family:'Manrope',serif;font-size:260px;font-weight:300;color:rgba(91,145,188,0.04);pointer-events:none;line-height:1;}
+.hero-badge{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(91,145,188,0.3);display:inline-block;padding:5px 14px;margin-bottom:20px;}
+.hero-title{font-family:'Manrope',serif;font-size:clamp(30px,3.5vw,54px);font-weight:300;line-height:1.05;margin-bottom:12px;}
+.hero-title em{font-style:italic;color:var(--gold-light);}
+.hero-sub{font-size:13px;font-weight:300;color:rgba(245,240,232,0.55);max-width:620px;line-height:1.8;}
+
+/* ABAS DE MODO */
+.modo-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 48px;}
+.modo-tab{padding:16px 24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:none;border-left:none;border-right:none;border-top:none;}
+.modo-tab:hover{color:var(--azul-light);}
+.modo-tab.active{color:var(--azul-light);border-bottom-color:var(--azul);}
+
+.modo-panel{display:none;padding:40px 48px;}
+.modo-panel.active{display:block;}
+
+/* GRID INPUTS */
+.inputs-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;}
+.campo-group{}
+.campo-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;font-weight:500;}
+.campo-hint{font-size:11px;font-weight:300;color:rgba(245,240,232,0.3);margin-bottom:6px;line-height:1.5;}
+.input-wrap{position:relative;}
+.input-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);}
+.input-suffix{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);}
+input[type="number"]{width:100%;background:rgba(245,240,232,0.03);border:1px solid rgba(91,145,188,0.18);color:var(--cream);font-family:'Manrope',sans-serif;font-size:15px;font-weight:300;padding:13px 14px 13px 36px;outline:none;transition:border-color 0.2s;-moz-appearance:textfield;}
+input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input[type="number"]:focus{border-color:rgba(91,145,188,0.5);}
+input[type="number"].sem-prefix{padding-left:14px;}
+input[type="number"].com-suffix{padding-right:40px;}
+
+.campo-full{grid-column:1/-1;}
+
+.btn-calcular{width:100%;margin-top:8px;padding:16px;font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:500;background:var(--gold);color:var(--charcoal);border:none;cursor:pointer;font-family:'Manrope',sans-serif;transition:all 0.2s;}
+.btn-calcular:hover{background:var(--gold-light);}
+
+/* RESULTADO */
+.resultado{display:none;margin-top:32px;border-top:1px solid var(--border);padding-top:32px;}
+.resultado.show{display:block;}
+
+.resultado-hero{text-align:center;margin-bottom:36px;}
+.resultado-hero-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.resultado-hero-valor{font-family:'Manrope',serif;font-size:clamp(52px,6vw,80px);font-weight:300;line-height:1;}
+.resultado-hero-valor.viavel{color:var(--ok-light);}
+.resultado-hero-valor.atencao{color:var(--gold-light);}
+.resultado-hero-valor.risco{color:var(--alert-light);}
+.resultado-hero-sub{font-size:13px;font-weight:300;color:rgba(245,240,232,0.5);margin-top:10px;}
+
+.cards-resultado{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.card-r{padding:18px 18px;border:1px solid var(--border);background:rgba(245,240,232,0.02);}
+.card-r.azul{border-color:rgba(58,90,122,0.35);background:var(--azul-bg);}
+.card-r.ok{border-color:rgba(74,124,89,0.3);background:rgba(74,124,89,0.06);}
+.card-r.alert{border-color:rgba(138,74,74,0.3);background:var(--alert-bg);}
+.card-r-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.card-r.azul .card-r-label{color:var(--azul-light);}
+.card-r.ok .card-r-label{color:var(--ok-light);}
+.card-r.alert .card-r-label{color:var(--alert-light);}
+.card-r-valor{font-family:'Manrope',serif;font-size:24px;font-weight:300;color:var(--cream);line-height:1.1;}
+.card-r-desc{font-size:11px;font-weight:300;color:rgba(245,240,232,0.35);margin-top:4px;line-height:1.5;}
+
+.veredicto-box{padding:20px 22px;margin-bottom:20px;}
+.veredicto-box.viavel{border:1px solid rgba(74,124,89,0.35);background:rgba(74,124,89,0.07);}
+.veredicto-box.atencao{border:1px solid rgba(91,145,188,0.35);background:rgba(91,145,188,0.06);}
+.veredicto-box.risco{border:1px solid rgba(138,74,74,0.3);background:var(--alert-bg);}
+.veredicto-titulo{font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+.veredicto-box.viavel .veredicto-titulo{color:var(--ok-light);}
+.veredicto-box.atencao .veredicto-titulo{color:var(--gold-light);}
+.veredicto-box.risco .veredicto-titulo{color:var(--alert-light);}
+.veredicto-texto{font-size:13px;font-weight:300;color:rgba(245,240,232,0.65);line-height:1.8;}
+
+/* GRAFICO SIMPLES */
+.grafico-wrap{margin-bottom:24px;}
+.grafico-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.grafico-barra-wrap{height:8px;background:rgba(245,240,232,0.05);border-radius:0;margin-bottom:8px;position:relative;overflow:hidden;}
+.grafico-barra{height:100%;transition:width 0.8s ease;border-radius:0;}
+.grafico-barra.fixos{background:rgba(192,112,112,0.6);}
+.grafico-barra.variaveis{background:rgba(91,145,188,0.6);}
+.grafico-barra.margem{background:rgba(74,124,89,0.7);}
+.grafico-linhas{display:flex;gap:16px;flex-wrap:wrap;}
+.grafico-linha{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:300;color:rgba(245,240,232,0.5);}
+.grafico-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+.footer{padding:24px 48px;border-top:1px solid var(--border);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(91,145,188,0.3);margin-top:40px;}
+
+@media(max-width:700px){
+  .inputs-grid{grid-template-columns:1fr;}
+  .cards-resultado{grid-template-columns:1fr 1fr;}
+  .hero,.modo-panel,.footer{padding-left:24px;padding-right:24px;}
+  .modo-tabs{padding:0 24px;}
+  .campo-full{grid-column:auto;}
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">Sistema D.O.S.E. · Bônus 2</div>
+  <h1 class="hero-title">Ponto de Equilíbrio<br><em>para Novos Negócios</em></h1>
+  <p class="hero-sub">Antes de abrir ou expandir: descubra quanto precisa vender para cobrir os custos e se o negócio é viável com os números que você tem em mente.</p>
+</div>
+
+<div class="modo-tabs">
+  <button class="modo-tab active" onclick="setModo('novo')">Novo negócio</button>
+  <button class="modo-tab" onclick="setModo('produto')">Novo produto ou unidade</button>
+  <button class="modo-tab" onclick="setModo('simulador')">Simulador de cenários</button>
+</div>
+
+<!-- MODO 1: NOVO NEGÓCIO -->
+<div class="modo-panel active" id="modo-novo">
+  <div class="inputs-grid">
+    <div class="campo-group">
+      <label class="campo-label">Aluguel estimado</label>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="n-aluguel" placeholder="0,00" step="100" min="0" oninput="calcNovo()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Folha de pagamento estimada</label>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="n-folha" placeholder="0,00" step="100" min="0" oninput="calcNovo()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Outros custos fixos</label>
+      <p class="campo-hint">Contador, energia, internet, etc.</p>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="n-outros-fixos" placeholder="0,00" step="100" min="0" oninput="calcNovo()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Pró-labore do dono</label>
+      <p class="campo-hint">Seu salário como gestor do negócio</p>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="n-prolabore" placeholder="0,00" step="100" min="0" oninput="calcNovo()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Ticket médio esperado</label>
+      <p class="campo-hint">Quanto cada cliente gastará em média</p>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="n-ticket" placeholder="0,00" step="1" min="0" oninput="calcNovo()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">CMV estimado (%)</label>
+      <p class="campo-hint">Percentual do faturamento em insumos</p>
+      <div class="input-wrap"><input type="number" id="n-cmv" placeholder="32" class="sem-prefix com-suffix" step="1" min="1" max="80" oninput="calcNovo()"><span class="input-suffix">%</span></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Custos variáveis estimados (%)</label>
+      <p class="campo-hint">Embalagens, taxas, comissões</p>
+      <div class="input-wrap"><input type="number" id="n-variaveis" placeholder="10" class="sem-prefix com-suffix" step="1" min="0" max="50" oninput="calcNovo()"><span class="input-suffix">%</span></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Dias abertos por mês</label>
+      <div class="input-wrap"><input type="number" id="n-dias" placeholder="26" class="sem-prefix" step="1" min="1" max="31" oninput="calcNovo()"></div>
+    </div>
+  </div>
+
+  <div class="resultado" id="resultado-novo">
+    <div class="resultado-hero">
+      <p class="resultado-hero-label">Faturamento mínimo mensal necessário</p>
+      <div class="resultado-hero-valor" id="fat-minimo-novo">R$ 0</div>
+      <p class="resultado-hero-sub" id="fat-diario-novo">R$ 0 por dia · 0 clientes por dia</p>
+    </div>
+
+    <div class="cards-resultado">
+      <div class="card-r azul"><p class="card-r-label">Total custos fixos</p><div class="card-r-valor" id="nr-fixos">R$ 0</div><p class="card-r-desc">Por mês, independente do volume</p></div>
+      <div class="card-r"><p class="card-r-label">Margem de contribuição</p><div class="card-r-valor" id="nr-mc">0%</div><p class="card-r-desc">Sobra após insumos e variáveis</p></div>
+      <div class="card-r"><p class="card-r-label">Clientes por mês (PE)</p><div class="card-r-valor" id="nr-clientes">0</div><p class="card-r-desc">Para cobrir todos os custos</p></div>
+    </div>
+
+    <div class="grafico-wrap">
+      <p class="grafico-label">Composição do faturamento no ponto de equilíbrio</p>
+      <div style="margin-bottom:6px;font-size:11px;color:var(--muted)">Custos fixos</div>
+      <div class="grafico-barra-wrap"><div class="grafico-barra fixos" id="barra-fixos" style="width:0%"></div></div>
+      <div style="margin-bottom:6px;font-size:11px;color:var(--muted)">CMV + variáveis</div>
+      <div class="grafico-barra-wrap"><div class="grafico-barra variaveis" id="barra-variaveis" style="width:0%"></div></div>
+    </div>
+
+    <div class="veredicto-box" id="veredicto-novo">
+      <p class="veredicto-titulo" id="veredicto-titulo-novo">Análise</p>
+      <p class="veredicto-texto" id="veredicto-texto-novo">Aguardando dados...</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODO 2: NOVO PRODUTO -->
+<div class="modo-panel" id="modo-produto">
+  <div class="inputs-grid">
+    <div class="campo-group">
+      <label class="campo-label">Custos fixos que o produto precisa cobrir</label>
+      <p class="campo-hint">Espaço, equipamento, mão de obra alocada</p>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="p-fixos" placeholder="0,00" step="100" min="0" oninput="calcProduto()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Custo de insumos por unidade</label>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="p-custo-unit" placeholder="0,00" step="0.01" min="0" oninput="calcProduto()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Preço de venda por unidade</label>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="p-preco" placeholder="0,00" step="0.01" min="0" oninput="calcProduto()"></div>
+    </div>
+    <div class="campo-group">
+      <label class="campo-label">Custos variáveis por unidade</label>
+      <p class="campo-hint">Embalagem, taxa de entrega, etc.</p>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="p-variaveis-unit" placeholder="0,00" step="0.01" min="0" oninput="calcProduto()"></div>
+    </div>
+  </div>
+
+  <div class="resultado" id="resultado-produto">
+    <div class="resultado-hero">
+      <p class="resultado-hero-label">Unidades necessárias por mês para cobrir os fixos</p>
+      <div class="resultado-hero-valor" id="unidades-pe">0</div>
+      <p class="resultado-hero-sub" id="unidades-dia-pe">0 unidades por dia (em 26 dias úteis)</p>
+    </div>
+
+    <div class="cards-resultado">
+      <div class="card-r"><p class="card-r-label">CMV do produto</p><div class="card-r-valor" id="pr-cmv">0%</div><p class="card-r-desc">Custo sobre preço de venda</p></div>
+      <div class="card-r"><p class="card-r-label">MC por unidade</p><div class="card-r-valor" id="pr-mc-unit">R$ 0</div><p class="card-r-desc">Contribuição por venda</p></div>
+      <div class="card-r"><p class="card-r-label">Faturamento no PE</p><div class="card-r-valor" id="pr-fat-pe">R$ 0</div><p class="card-r-desc">Receita mínima necessária</p></div>
+    </div>
+
+    <div class="veredicto-box" id="veredicto-produto">
+      <p class="veredicto-titulo" id="vt-prod">Análise</p>
+      <p class="veredicto-texto" id="vtx-prod">Aguardando dados...</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODO 3: SIMULADOR DE CENÁRIOS -->
+<div class="modo-panel" id="modo-simulador">
+  <p style="font-size:13px;font-weight:300;color:rgba(245,240,232,0.55);margin-bottom:28px;line-height:1.8;">Compare até três cenários de projeção. Útil para avaliar impacto de diferentes volumes de venda, preços ou estrutura de custos antes de decidir.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+
+    <div id="cen-1" style="border:1px solid rgba(91,145,188,0.2);padding:20px 18px;">
+      <p style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-light);margin-bottom:16px;font-weight:500;">Cenário 1</p>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">Custos fixos (R$)</label><div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="s1-fixos" placeholder="0" step="100" min="0" oninput="calcSim()"></div></div>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">Ticket médio (R$)</label><div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="s1-ticket" placeholder="0" step="1" min="0" oninput="calcSim()"></div></div>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">CMV + variáveis (%)</label><div class="input-wrap"><input type="number" id="s1-total-pct" placeholder="42" class="sem-prefix com-suffix" step="1" min="1" max="90" oninput="calcSim()"><span class="input-suffix">%</span></div></div>
+      <div style="margin-top:16px;padding:14px;background:rgba(245,240,232,0.02);border:1px solid var(--border);">
+        <p style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Fat. mínimo</p>
+        <p style="font-family:'Manrope',serif;font-size:24px;color:var(--gold-light)" id="s1-result">R$ 0</p>
+      </div>
+    </div>
+
+    <div id="cen-2" style="border:1px solid rgba(74,106,138,0.3);padding:20px 18px;">
+      <p style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--azul-light);margin-bottom:16px;font-weight:500;">Cenário 2</p>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">Custos fixos (R$)</label><div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="s2-fixos" placeholder="0" step="100" min="0" oninput="calcSim()"></div></div>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">Ticket médio (R$)</label><div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="s2-ticket" placeholder="0" step="1" min="0" oninput="calcSim()"></div></div>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">CMV + variáveis (%)</label><div class="input-wrap"><input type="number" id="s2-total-pct" placeholder="42" class="sem-prefix com-suffix" step="1" min="1" max="90" oninput="calcSim()"><span class="input-suffix">%</span></div></div>
+      <div style="margin-top:16px;padding:14px;background:rgba(245,240,232,0.02);border:1px solid var(--border);">
+        <p style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Fat. mínimo</p>
+        <p style="font-family:'Manrope',serif;font-size:24px;color:var(--azul-light)" id="s2-result">R$ 0</p>
+      </div>
+    </div>
+
+    <div id="cen-3" style="border:1px solid rgba(74,124,89,0.25);padding:20px 18px;">
+      <p style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ok-light);margin-bottom:16px;font-weight:500;">Cenário 3</p>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">Custos fixos (R$)</label><div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="s3-fixos" placeholder="0" step="100" min="0" oninput="calcSim()"></div></div>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">Ticket médio (R$)</label><div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="s3-ticket" placeholder="0" step="1" min="0" oninput="calcSim()"></div></div>
+      <div class="campo-group" style="margin-bottom:14px;"><label class="campo-label">CMV + variáveis (%)</label><div class="input-wrap"><input type="number" id="s3-total-pct" placeholder="42" class="sem-prefix com-suffix" step="1" min="1" max="90" oninput="calcSim()"><span class="input-suffix">%</span></div></div>
+      <div style="margin-top:16px;padding:14px;background:rgba(245,240,232,0.02);border:1px solid var(--border);">
+        <p style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Fat. mínimo</p>
+        <p style="font-family:'Manrope',serif;font-size:24px;color:var(--ok-light)" id="s3-result">R$ 0</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Elaborado por Rô Gonzaga | RG Gastrô Educação · Sistema D.O.S.E. Bônus 2</div>
+
+<script>
+function setModo(id){
+  document.querySelectorAll('.modo-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.modo-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('modo-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function fmt(n){return n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmtD(n){return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function calcNovo(){
+  const aluguel=parseFloat(document.getElementById('n-aluguel').value)||0;
+  const folha=parseFloat(document.getElementById('n-folha').value)||0;
+  const outros=parseFloat(document.getElementById('n-outros-fixos').value)||0;
+  const prolabore=parseFloat(document.getElementById('n-prolabore').value)||0;
+  const ticket=parseFloat(document.getElementById('n-ticket').value)||0;
+  const cmvPct=(parseFloat(document.getElementById('n-cmv').value)||32)/100;
+  const varPct=(parseFloat(document.getElementById('n-variaveis').value)||10)/100;
+  const dias=parseFloat(document.getElementById('n-dias').value)||26;
+
+  const fixosTotal=aluguel+folha+outros+prolabore;
+  if(fixosTotal<=0||ticket<=0){document.getElementById('resultado-novo').classList.remove('show');return;}
+
+  const mc=1-cmvPct-varPct;
+  if(mc<=0){return;}
+  const fatMinimo=fixosTotal/mc;
+  const fatDiario=fatMinimo/dias;
+  const clientesDia=fatDiario/ticket;
+  const clientesMes=fatMinimo/ticket;
+
+  document.getElementById('resultado-novo').classList.add('show');
+  const el=document.getElementById('fat-minimo-novo');
+  el.textContent='R$ '+fmt(fatMinimo);
+  el.className='resultado-hero-valor '+(fatMinimo<20000?'viavel':fatMinimo<50000?'atencao':'risco');
+  document.getElementById('fat-diario-novo').textContent='R$ '+fmt(fatDiario)+' por dia · '+fmt(clientesDia)+' clientes por dia';
+  document.getElementById('nr-fixos').textContent='R$ '+fmt(fixosTotal);
+  document.getElementById('nr-mc').textContent=Math.round(mc*100)+'%';
+  document.getElementById('nr-clientes').textContent=fmt(clientesMes);
+
+  const pctFixos=(fixosTotal/fatMinimo)*100;
+  const pctVarCMV=(cmvPct+varPct)*100;
+  document.getElementById('barra-fixos').style.width=pctFixos+'%';
+  document.getElementById('barra-variaveis').style.width=pctVarCMV+'%';
+
+  const vb=document.getElementById('veredicto-novo');
+  const vt=document.getElementById('veredicto-titulo-novo');
+  const vtx=document.getElementById('veredicto-texto-novo');
+  if(clientesDia<=30){
+    vb.className='veredicto-box viavel';vt.textContent='Viabilidade positiva';
+    vtx.textContent=`Com um ticket médio de R$ ${fmtD(ticket)}, você precisa de ${fmt(clientesDia)} clientes por dia para cobrir todos os custos. Para um negócio novo, esse volume é atingível com estratégia de divulgação e localização adequada. Os custos fixos de R$ ${fmt(fixosTotal)}/mês representam ${Math.round(pctFixos)}% do faturamento mínimo.`;
+  } else if(clientesDia<=80){
+    vb.className='veredicto-box atencao';vt.textContent='Atenção: volume exigente';
+    vtx.textContent=`Você precisaria de ${fmt(clientesDia)} clientes por dia para cobrir os custos. É um volume significativo para um negócio novo. Considere revisar os custos fixos (especialmente aluguel e folha) ou aumentar o ticket médio antes de avançar.`;
+  } else {
+    vb.className='veredicto-box risco';vt.textContent='Risco alto: revise os números';
+    vtx.textContent=`${fmt(clientesDia)} clientes por dia é um volume muito alto para um negócio em fase inicial. O ponto de equilíbrio está em R$ ${fmt(fatMinimo)}/mês. Recomenda-se reduzir custos fixos, aumentar o ticket médio ou rever a proposta antes de investir.`;
+  }
+}
+
+function calcProduto(){
+  const fixos=parseFloat(document.getElementById('p-fixos').value)||0;
+  const custoUnit=parseFloat(document.getElementById('p-custo-unit').value)||0;
+  const preco=parseFloat(document.getElementById('p-preco').value)||0;
+  const varUnit=parseFloat(document.getElementById('p-variaveis-unit').value)||0;
+  if(fixos<=0||preco<=0||custoUnit<=0){document.getElementById('resultado-produto').classList.remove('show');return;}
+  const mcUnit=preco-custoUnit-varUnit;
+  if(mcUnit<=0){return;}
+  const unidadesPE=Math.ceil(fixos/mcUnit);
+  const cmv=(custoUnit/preco)*100;
+  const fatPE=unidadesPE*preco;
+  document.getElementById('resultado-produto').classList.add('show');
+  const el=document.getElementById('unidades-pe');
+  el.textContent=fmt(unidadesPE);
+  el.className='resultado-hero-valor '+(unidadesPE<300?'viavel':unidadesPE<800?'atencao':'risco');
+  document.getElementById('unidades-dia-pe').textContent=Math.ceil(unidadesPE/26)+' unidades por dia (em 26 dias úteis)';
+  document.getElementById('pr-cmv').textContent=fmtD(cmv)+'%';
+  document.getElementById('pr-mc-unit').textContent='R$ '+fmtD(mcUnit);
+  document.getElementById('pr-fat-pe').textContent='R$ '+fmt(fatPE);
+  const vb=document.getElementById('veredicto-produto');
+  const vt=document.getElementById('vt-prod');const vtx=document.getElementById('vtx-prod');
+  if(unidadesPE<300){vb.className='veredicto-box viavel';vt.textContent='Produto viável';vtx.textContent=`Com ${fmt(unidadesPE)} unidades mensais (${Math.ceil(unidadesPE/26)}/dia), o produto cobre os custos alocados. A margem de contribuição de R$ ${fmtD(mcUnit)} por unidade é saudável e permite flexibilidade de preço.`;}
+  else{vb.className='veredicto-box atencao';vt.textContent='Volume exige atenção';vtx.textContent=`São necessárias ${fmt(unidadesPE)} unidades por mês. Avalie se esse volume é realista para o canal de vendas planejado. Se não, revise o preço ou reduza os custos fixos alocados ao produto.`;}
+}
+
+function calcSim(){
+  [1,2,3].forEach(i=>{
+    const fixos=parseFloat(document.getElementById('s'+i+'-fixos').value)||0;
+    const ticket=parseFloat(document.getElementById('s'+i+'-ticket').value)||0;
+    const pct=(parseFloat(document.getElementById('s'+i+'-total-pct').value)||42)/100;
+    const el=document.getElementById('s'+i+'-result');
+    if(fixos>0&&ticket>0&&pct<1){
+      const mc=1-pct;
+      const fat=fixos/mc;
+      el.textContent='R$ '+fmt(fat);
+    } else {el.textContent='R$ 0';}
+  });
+}
+</script>
+</body>
+</html>

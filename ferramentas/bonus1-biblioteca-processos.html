@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca de Processos | Sistema D.O.S.E. Bônus</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --charcoal:#011e34;--cream:#fff1e6;--gold:#5b91bc;--gold-light:#8fb3d1;
+  --muted:#5d6d7c;--border:rgba(91,145,188,0.18);
+  --card-bg:rgba(245,240,232,0.03);
+}
+html,body{min-height:100%;font-family:'Manrope',sans-serif;color:var(--cream);background:var(--charcoal);}
+body{padding:0;}
+
+/* TOPO */
+.hero{padding:56px 48px 40px;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+.hero::before{content:'PROCESSOS';position:absolute;right:-20px;top:50%;transform:translateY(-50%);font-family:'Manrope',serif;font-size:140px;font-weight:300;color:rgba(91,145,188,0.04);white-space:nowrap;pointer-events:none;line-height:1;}
+.hero-badge{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(91,145,188,0.3);display:inline-block;padding:5px 14px;margin-bottom:20px;}
+.hero-title{font-family:'Manrope',serif;font-size:clamp(36px,4vw,60px);font-weight:300;line-height:1.05;margin-bottom:14px;}
+.hero-title em{font-style:italic;color:var(--gold-light);}
+.hero-sub{font-size:13px;font-weight:300;color:rgba(245,240,232,0.55);max-width:600px;line-height:1.8;}
+.hero-meta{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(91,145,188,0.4);margin-top:20px;}
+
+/* INSTRUCOES */
+.instrucoes{padding:24px 48px;background:rgba(91,145,188,0.04);border-bottom:1px solid var(--border);display:flex;gap:32px;align-items:center;flex-wrap:wrap;}
+.inst-item{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:300;color:rgba(245,240,232,0.5);}
+.inst-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+
+/* NAVEGACAO SETORES */
+.setores-nav{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;padding:0 48px;}
+.setor-tab{padding:16px 24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;background:none;border-left:none;border-right:none;border-top:none;}
+.setor-tab:hover{color:var(--gold-light);}
+.setor-tab.active{color:var(--gold-light);border-bottom-color:var(--gold);}
+
+/* CONTAINER */
+.container{padding:40px 48px;max-width:1100px;}
+
+/* SETOR HEADER */
+.setor-header{margin-bottom:32px;}
+.setor-nome{font-family:'Manrope',serif;font-size:clamp(28px,3vw,44px);font-weight:300;margin-bottom:8px;}
+.setor-nome em{font-style:italic;color:var(--gold-light);}
+.setor-desc{font-size:13px;font-weight:300;color:rgba(245,240,232,0.5);line-height:1.75;max-width:680px;}
+
+/* PROCESSO CARD */
+.processo-grid{display:flex;flex-direction:column;gap:16px;}
+.processo-card{border:1px solid var(--border);background:var(--card-bg);}
+.processo-header{padding:18px 22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;transition:background 0.2s;}
+.processo-header:hover{background:rgba(91,145,188,0.04);}
+.processo-header-left{display:flex;align-items:center;gap:14px;}
+.processo-num{font-family:'Manrope',serif;font-size:28px;font-weight:300;color:rgba(91,145,188,0.25);width:32px;flex-shrink:0;}
+.processo-info{}
+.processo-titulo{font-size:13px;font-weight:500;color:var(--cream);margin-bottom:3px;}
+.processo-tempo{font-size:11px;font-weight:300;color:var(--muted);}
+.processo-toggle{font-size:11px;color:rgba(91,145,188,0.4);transition:transform 0.3s;flex-shrink:0;}
+.processo-toggle.open{transform:rotate(180deg);}
+.processo-body{display:none;padding:0 22px 22px;border-top:1px solid rgba(91,145,188,0.08);}
+.processo-body.open{display:block;}
+.processo-body-inner{padding-top:18px;}
+
+/* CHECKLIST */
+.checklist-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;font-weight:500;}
+.checklist{list-style:none;}
+.checklist li{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid rgba(91,145,188,0.06);font-size:13px;font-weight:300;color:rgba(245,240,232,0.7);line-height:1.65;cursor:pointer;}
+.checklist li:last-child{border-bottom:none;}
+.check-box{width:16px;height:16px;border:1px solid rgba(91,145,188,0.3);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.check-box.checked{background:var(--gold);border-color:var(--gold);}
+.check-box.checked::after{content:'✓';font-size:10px;color:var(--charcoal);font-weight:600;}
+.checklist li.done .check-text{text-decoration:line-through;color:rgba(245,240,232,0.3);}
+
+/* NOTA */
+.nota{margin-top:16px;padding:14px 16px;border:1px solid rgba(91,145,188,0.15);background:rgba(91,145,188,0.04);}
+.nota-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:500;}
+.nota-text{font-size:12px;font-weight:300;color:rgba(245,240,232,0.5);line-height:1.7;}
+
+/* CAMPO ADAPT */
+.campo-adaptar{margin-top:16px;}
+.campo-adaptar label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;}
+.campo-adaptar textarea{width:100%;background:rgba(245,240,232,0.03);border:1px solid rgba(91,145,188,0.15);color:var(--cream);font-family:'Manrope',sans-serif;font-size:12px;font-weight:300;padding:12px 14px;resize:vertical;min-height:60px;outline:none;line-height:1.7;}
+.campo-adaptar textarea::placeholder{color:rgba(245,240,232,0.2);}
+.campo-adaptar textarea:focus{border-color:rgba(91,145,188,0.4);}
+
+/* ACOES */
+.acoes{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+.btn{padding:10px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'Manrope',sans-serif;}
+.btn-gold{background:transparent;border:1px solid rgba(91,145,188,0.5);color:var(--gold-light);}
+.btn-gold:hover{background:rgba(91,145,188,0.1);border-color:var(--gold);}
+.btn-ghost{background:transparent;border:1px solid rgba(245,240,232,0.1);color:rgba(245,240,232,0.4);}
+.btn-ghost:hover{border-color:rgba(245,240,232,0.25);color:rgba(245,240,232,0.6);}
+
+/* PROGRESSO */
+.progresso-bar-wrap{height:2px;background:rgba(91,145,188,0.08);margin-bottom:32px;}
+.progresso-bar-fill{height:100%;background:var(--gold);transition:width 0.4s ease;}
+.progresso-info{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:8px;}
+
+/* FOOTER */
+.footer{padding:24px 48px;border-top:1px solid var(--border);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(91,145,188,0.3);margin-top:40px;}
+
+/* HIDDEN */
+.setor-panel{display:none;}
+.setor-panel.active{display:block;}
+
+@media(max-width:600px){
+  .hero,.container,.instrucoes{padding-left:24px;padding-right:24px;}
+  .setores-nav{padding:0 24px;}
+  .footer{padding:24px;}
+}
+
+.item-del { background: transparent; border: none; color: rgba(91,145,188,0.25); cursor: pointer; font-size: 14px; padding: 0 4px; line-height: 1; flex-shrink: 0; transition: color 0.2s; margin-left: auto; }
+.item-del:hover { color: #8b3a3a; }
+.add-item-wrap { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(91,145,188,0.08); }
+.add-item-input { flex: 1; font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300; background: rgba(245,240,232,0.03); border: 1px solid rgba(91,145,188,0.15); color: var(--cream); padding: 8px 12px; outline: none; transition: border-color 0.2s; }
+.add-item-input:focus { border-color: var(--gold); }
+.add-item-input::placeholder { color: rgba(122,115,105,0.4); font-style: italic; }
+.add-item-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 14px; background: transparent; border: 1px solid rgba(91,145,188,0.35); color: var(--gold-light); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.add-item-btn:hover { background: rgba(91,145,188,0.08); border-color: var(--gold); }
+.checklist li { position: relative; }
+
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">Sistema D.O.S.E. · Bônus 1</div>
+  <h1 class="hero-title">Biblioteca de<br><em>Processos Prontos</em></h1>
+  <p class="hero-sub">Checklists e manuais para os setores mais comuns. Plug-and-play: leia, adapte para a realidade do seu negócio e coloque em prática.</p>
+  <p class="hero-meta">Gasttro Design · roneidegonzaga.com</p>
+</div>
+
+<div class="instrucoes">
+  <div class="inst-item"><div class="inst-dot"></div>Clique em cada processo para expandir</div>
+  <div class="inst-item"><div class="inst-dot"></div>Marque os itens conforme executa</div>
+  <div class="inst-item"><div class="inst-dot"></div>Use o campo "Adaptar" para personalizar</div>
+  <div class="inst-item"><div class="inst-dot"></div>Imprima ou salve em PDF para a equipe</div>
+</div>
+
+<div class="setores-nav">
+  <button class="setor-tab active" onclick="setSetor('abertura')">Abertura e Fechamento</button>
+  <button class="setor-tab" onclick="setSetor('mercadoria')">Recebimento de Mercadoria</button>
+  <button class="setor-tab" onclick="setSetor('estoque')">Higienização de Estoque</button>
+  <button class="setor-tab" onclick="setSetor('caixa')">Fechamento de Caixa</button>
+  <button class="setor-tab" onclick="setSetor('equipe')">Gestão de Equipe</button>
+</div>
+
+<div class="container">
+
+<!-- ===== ABERTURA E FECHAMENTO ===== -->
+<div class="setor-panel active" id="setor-abertura">
+  <div class="setor-header">
+    <h2 class="setor-nome">Abertura e <em>Fechamento</em></h2>
+    <p class="setor-desc">Os rituais que abrem e fecham o dia do seu negócio. Quando estão documentados, qualquer membro da equipe consegue executar com consistência, independente de quem está presente.</p>
+  </div>
+
+  <div class="progresso-info"><span id="prog-text-abertura">0 de 0 itens concluídos</span><span id="prog-pct-abertura">0%</span></div>
+  <div class="progresso-bar-wrap"><div class="progresso-bar-fill" id="prog-abertura" style="width:0%"></div></div>
+
+  <div class="processo-grid">
+
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('ab1')">
+        <div class="processo-header-left">
+          <span class="processo-num">01</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Abertura da operação</p>
+            <p class="processo-tempo">Tempo estimado: 20 a 30 min antes do serviço</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-ab1">▼</span>
+      </div>
+      <div class="processo-body" id="body-ab1">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Checklist de abertura</p>
+          <ul class="checklist" id="cl-ab1">
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Verificar se todas as luzes e equipamentos estão funcionando</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Conferir temperatura de geladeiras e freezers (registrar se necessário)</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Verificar limpeza geral do salão, banheiros e cozinha</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Conferir mise en place: insumos separados e prontos para o serviço</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Verificar estoque de embalagens (delivery e viagem)</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Confirmar escala do dia: todos os funcionários chegaram?</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Abrir o caixa com o fundo de troco padrão (R$ ______)</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Ligar plataformas de delivery e confirmar cardápio atualizado</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Informar a equipe sobre itens em falta ou alterações do dia</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-ab1" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-ab1','abertura')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-ab1','abertura')">+ Adicionar</button>
+          </div>
+          <div class="nota">
+            <p class="nota-label">Observação importante</p>
+            <p class="nota-text">Se algum equipamento estiver com problema de temperatura, acione o responsável imediatamente e isole os produtos potencialmente comprometidos antes de qualquer outra tarefa.</p>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('ab1','Abertura da operação')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-ab1','abertura')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('ab2')">
+        <div class="processo-header-left">
+          <span class="processo-num">02</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Fechamento da operação</p>
+            <p class="processo-tempo">Tempo estimado: 30 a 45 min após o último atendimento</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-ab2">▼</span>
+      </div>
+      <div class="processo-body" id="body-ab2">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Checklist de fechamento</p>
+          <ul class="checklist" id="cl-ab2">
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Encerrar atendimento de delivery nas plataformas</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Fazer o pré-preparo do que for necessário para o próximo dia</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Acondicionar todos os alimentos com identificação e data</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Descartar o que passou da validade ou não pode ser aproveitado</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Limpeza completa de equipamentos, bancadas e piso da cozinha</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Limpeza do salão, banheiros e entrada</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Verificar se fogões, fritadeiras e churrasqueiras estão desligados</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Fechar o caixa e registrar na ferramenta E2 (Fechamento Diário)</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'abertura')"><div class="check-box"></div><span class="check-text">Verificar portas, janelas e sistema de alarme</span><button class="item-del" onclick="excluirItem(event,this,'abertura')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-ab2" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-ab2','abertura')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-ab2','abertura')">+ Adicionar</button>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('ab2','Fechamento da operação')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-ab2','abertura')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== RECEBIMENTO DE MERCADORIA ===== -->
+<div class="setor-panel" id="setor-mercadoria">
+  <div class="setor-header">
+    <h2 class="setor-nome">Recebimento de <em>Mercadoria</em></h2>
+    <p class="setor-desc">O recebimento sem processo é onde o prejuízo começa silenciosamente. Produto errado, peso diferente, validade vencendo: sem checklist, tudo passa. Com checklist, nada escapa.</p>
+  </div>
+  <div class="progresso-info"><span id="prog-text-mercadoria">0 de 0 itens concluídos</span><span id="prog-pct-mercadoria">0%</span></div>
+  <div class="progresso-bar-wrap"><div class="progresso-bar-fill" id="prog-mercadoria" style="width:0%"></div></div>
+  <div class="processo-grid">
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('mc1')">
+        <div class="processo-header-left">
+          <span class="processo-num">01</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Conferência de entrega</p>
+            <p class="processo-tempo">Tempo estimado: 15 a 25 min por entrega</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-mc1">▼</span>
+      </div>
+      <div class="processo-body" id="body-mc1">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Checklist de recebimento</p>
+          <ul class="checklist" id="cl-mc1">
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Conferir nota fiscal contra pedido realizado (produto, quantidade, preço)</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Verificar validade de todos os itens recebidos</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Pesar itens vendidos por peso e conferir com a nota</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Verificar temperatura de produtos refrigerados e congelados</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Inspecionar embalagens: amassadas, abertas ou com sinais de vazamento</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Verificar aparência e odor dos produtos frescos (carnes, hortifrutti)</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Recusar produto fora do padrão e registrar na nota fiscal</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Armazenar imediatamente os produtos refrigerados e congelados</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Registrar entrada no controle de estoque (ferramenta O5)</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Arquivar nota fiscal no local definido</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-mc1" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-mc1','mercadoria')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-mc1','mercadoria')">+ Adicionar</button>
+          </div>
+          <div class="nota">
+            <p class="nota-label">Regra de ouro</p>
+            <p class="nota-text">Nunca assine a nota antes de conferir. Produto aceito sem conferência é problema que você assume. Produto recusado devidamente registrado é problema do fornecedor.</p>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('mc1','Conferência de entrega')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-mc1','mercadoria')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('mc2')">
+        <div class="processo-header-left">
+          <span class="processo-num">02</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Armazenamento correto por categoria</p>
+            <p class="processo-tempo">Executar imediatamente após o recebimento</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-mc2">▼</span>
+      </div>
+      <div class="processo-body" id="body-mc2">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Checklist de armazenamento</p>
+          <ul class="checklist" id="cl-mc2">
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Carnes: embalar individualmente, identificar com data de entrada e validade, armazenar na parte mais fria da geladeira (abaixo de 4°C)</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Hortifrutti: higienizar antes de armazenar, separar por tipo, retirar folhas danificadas</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Laticínios: verificar temperatura e armazenar na posição correta (embalagens fechadas)</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Secos: armazenar em local fresco e arejado, longe do chão e da parede</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Aplicar regra PVPS: Primeiro que Vence, Primeiro que Sai. Novos produtos ficam atrás.</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'mercadoria')"><div class="check-box"></div><span class="check-text">Etiquetar todos os produtos abertos com data de abertura e validade após aberto</span><button class="item-del" onclick="excluirItem(event,this,'mercadoria')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-mc2" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-mc2','mercadoria')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-mc2','mercadoria')">+ Adicionar</button>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('mc2','Armazenamento correto')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-mc2','mercadoria')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HIGIENIZACAO DE ESTOQUE ===== -->
+<div class="setor-panel" id="setor-estoque">
+  <div class="setor-header">
+    <h2 class="setor-nome">Higienização de <em>Estoque</em></h2>
+    <p class="setor-desc">Estoque desorganizado e sujo esconde perdas, dificulta o controle e cria risco sanitário. Este processo garante que o estoque seja um ativo do negócio, não uma fonte de problema.</p>
+  </div>
+  <div class="progresso-info"><span id="prog-text-estoque">0 de 0 itens concluídos</span><span id="prog-pct-estoque">0%</span></div>
+  <div class="progresso-bar-wrap"><div class="progresso-bar-fill" id="prog-estoque" style="width:0%"></div></div>
+  <div class="processo-grid">
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('es1')">
+        <div class="processo-header-left">
+          <span class="processo-num">01</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Higienização semanal do estoque seco</p>
+            <p class="processo-tempo">Tempo estimado: 30 a 45 min por semana</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-es1">▼</span>
+      </div>
+      <div class="processo-body" id="body-es1">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Checklist semanal</p>
+          <ul class="checklist" id="cl-es1">
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Retirar todos os produtos das prateleiras</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Limpar prateleiras com pano úmido e produto adequado</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Verificar validade de todos os produtos durante a reposição</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Separar produtos próximos da validade para uso prioritário</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Descartar produtos vencidos (registrar o descarte)</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Reposicionar produtos seguindo a regra PVPS</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Verificar sinais de pragas ou umidade nas embalagens</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Atualizar o inventário na ferramenta O5 se houver divergência</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-es1" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-es1','estoque')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-es1','estoque')">+ Adicionar</button>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('es1','Higienização semanal do estoque')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-es1','estoque')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('es2')">
+        <div class="processo-header-left">
+          <span class="processo-num">02</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Organização e inventário mensal</p>
+            <p class="processo-tempo">Tempo estimado: 1h a 1h30 por mês</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-es2">▼</span>
+      </div>
+      <div class="processo-body" id="body-es2">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Checklist mensal</p>
+          <ul class="checklist" id="cl-es2">
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Contar fisicamente todos os itens do estoque (não confiar no sistema)</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Comparar contagem física com o saldo da ferramenta O5</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Registrar diferenças como desvio ou desperdício não registrado</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Limpar profundamente geladeiras, freezers e câmara fria</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Verificar funcionamento de termômetros e sensores de temperatura</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Identificar quais produtos estiveram em falta no mês (para ajustar pedido mínimo)</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'estoque')"><div class="check-box"></div><span class="check-text">Identificar quais produtos sobraram em excesso (para ajustar pedido máximo)</span><button class="item-del" onclick="excluirItem(event,this,'estoque')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-es2" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-es2','estoque')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-es2','estoque')">+ Adicionar</button>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('es2','Inventário mensal')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-es2','estoque')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FECHAMENTO DE CAIXA ===== -->
+<div class="setor-panel" id="setor-caixa">
+  <div class="setor-header">
+    <h2 class="setor-nome">Fechamento de <em>Caixa</em></h2>
+    <p class="setor-desc">O fechamento de caixa é o dado que alimenta todos os indicadores financeiros. Menos de dez minutos por dia. Mas precisa acontecer todo dia, sem exceção.</p>
+  </div>
+  <div class="progresso-info"><span id="prog-text-caixa">0 de 0 itens concluídos</span><span id="prog-pct-caixa">0%</span></div>
+  <div class="progresso-bar-wrap"><div class="progresso-bar-fill" id="prog-caixa" style="width:0%"></div></div>
+  <div class="processo-grid">
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('cx1')">
+        <div class="processo-header-left">
+          <span class="processo-num">01</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Fechamento diário de caixa</p>
+            <p class="processo-tempo">Tempo estimado: 8 a 12 min por dia</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-cx1">▼</span>
+      </div>
+      <div class="processo-body" id="body-cx1">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Sequência de fechamento</p>
+          <ul class="checklist" id="cl-cx1">
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Contar o dinheiro físico no caixa e anotar o valor total</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Verificar relatório de vendas no cartão (crédito + débito separados)</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Verificar total de vendas por Pix</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Conferir total de pedidos nas plataformas de delivery</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Somar todas as formas de pagamento para chegar ao faturamento do dia</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Registrar o número de clientes atendidos</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Registrar qualquer saída de caixa do dia (compra de emergência, etc.)</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Abrir a ferramenta E2 e registrar todos os dados</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'caixa')"><div class="check-box"></div><span class="check-text">Guardar o troco padrão e depositar ou guardar o restante com segurança</span><button class="item-del" onclick="excluirItem(event,this,'caixa')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-cx1" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-cx1','caixa')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-cx1','caixa')">+ Adicionar</button>
+          </div>
+          <div class="nota">
+            <p class="nota-label">Se não fechar no mesmo dia</p>
+            <p class="nota-text">Use os atalhos Hoje, Ontem e Anteontem da ferramenta E2 para garantir que o dado vá para a data correta. Não acumule mais de dois dias sem registrar.</p>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('cx1','Fechamento diário de caixa')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-cx1','caixa')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GESTAO DE EQUIPE ===== -->
+<div class="setor-panel" id="setor-equipe">
+  <div class="setor-header">
+    <h2 class="setor-nome">Gestão de <em>Equipe</em></h2>
+    <p class="setor-desc">Equipe sem processo claro executa com incerteza. Com processos documentados, cada pessoa sabe o que é esperado dela antes de precisar perguntar.</p>
+  </div>
+  <div class="progresso-info"><span id="prog-text-equipe">0 de 0 itens concluídos</span><span id="prog-pct-equipe">0%</span></div>
+  <div class="progresso-bar-wrap"><div class="progresso-bar-fill" id="prog-equipe" style="width:0%"></div></div>
+  <div class="processo-grid">
+    <div class="processo-card">
+      <div class="processo-header" onclick="toggleProcesso('eq1')">
+        <div class="processo-header-left">
+          <span class="processo-num">01</span>
+          <div class="processo-info">
+            <p class="processo-titulo">Integração de novo funcionário</p>
+            <p class="processo-tempo">Primeiros 3 dias de trabalho</p>
+          </div>
+        </div>
+        <span class="processo-toggle" id="toggle-eq1">▼</span>
+      </div>
+      <div class="processo-body" id="body-eq1">
+        <div class="processo-body-inner">
+          <p class="checklist-title">Checklist de integração</p>
+          <ul class="checklist" id="cl-eq1">
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Apresentar o espaço físico: cozinha, estoque, banheiros, saídas de emergência</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Explicar os horários de trabalho, escala e política de folga</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Apresentar o cardápio completo com descrição de cada prato</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Mostrar as fichas técnicas operacionais dos pratos que ele vai preparar</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Explicar as regras de higiene e manipulação de alimentos</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Apresentar o checklist da sua função (abertura, serviço ou fechamento)</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Fazer a pessoa executar ao lado de alguém experiente no primeiro dia</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Confirmar entendimento ao final do segundo dia com perguntas práticas</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+            <li onclick="toggleItem(this,'equipe')"><div class="check-box"></div><span class="check-text">Coletar feedback da pessoa sobre o que ficou com dúvida no terceiro dia</span><button class="item-del" onclick="excluirItem(event,this,'equipe')" title="Excluir item">×</button></li>
+          </ul>
+          <div class="add-item-wrap">
+            <input type="text" class="add-item-input" id="add-cl-eq1" placeholder="Adicionar item ao checklist..." onkeydown="if(event.key==='Enter')adicionarItem('cl-eq1','equipe')">
+            <button class="add-item-btn" onclick="adicionarItem('cl-eq1','equipe')">+ Adicionar</button>
+          </div>
+          <div class="campo-adaptar">
+            <label>Adaptar para o meu negócio</label>
+            <textarea placeholder="Adicione aqui os itens específicos da sua operação..."></textarea>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-gold" onclick="imprimirProcesso('eq1','Integração de novo funcionário')">Imprimir / Salvar PDF</button>
+            <button class="btn btn-ghost" onclick="resetChecklist('cl-eq1','equipe')">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<div class="footer">Elaborado por Rô Gonzaga | RG Gastrô Educação · Sistema D.O.S.E. Bônus 1</div>
+
+<script>
+
+// EXCLUIR ITEM
+function excluirItem(e, btn, setor) {
+  e.stopPropagation();
+  const li = btn.closest('li');
+  if (!li) return;
+  li.remove();
+  atualizarProgresso(setor);
+}
+
+// ADICIONAR ITEM
+function adicionarItem(clId, setor) {
+  const input = document.getElementById('add-' + clId);
+  if (!input) return;
+  const texto = input.value.trim();
+  if (!texto) { input.focus(); return; }
+  
+  const ul = document.getElementById(clId);
+  if (!ul) return;
+  
+  const li = document.createElement('li');
+  li.setAttribute('onclick', "toggleItem(this,'" + setor + "')");
+  li.innerHTML = '<div class="check-box"></div>' +
+    '<span class="check-text">' + texto + '</span>' +
+    '<button class="item-del" onclick="excluirItem(event,this,\'' + setor + '\')" title="Excluir item">×</button>';
+  
+  ul.appendChild(li);
+  input.value = '';
+  input.focus();
+  atualizarProgresso(setor);
+}
+
+// TOGGLE PROCESSO
+function toggleProcesso(id){
+  const body=document.getElementById('body-'+id);
+  const tog=document.getElementById('toggle-'+id);
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  tog.classList.toggle('open',!open);
+}
+
+// TOGGLE ITEM CHECKLIST
+function toggleItem(li,setor){
+  li.classList.toggle('done');
+  const box=li.querySelector('.check-box');
+  box.classList.toggle('checked',li.classList.contains('done'));
+  atualizarProgresso(setor);
+}
+
+// SETOR
+function setSetor(id){
+  document.querySelectorAll('.setor-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.setor-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('setor-'+id).classList.add('active');
+  document.querySelector(`[onclick="setSetor('${id}')"]`).classList.add('active');
+}
+
+// PROGRESSO
+function atualizarProgresso(setor){
+  const panel=document.getElementById('setor-'+setor);
+  if(!panel)return;
+  const total=panel.querySelectorAll('.checklist li').length;
+  const done=panel.querySelectorAll('.checklist li.done').length;
+  const pct=total>0?Math.round(done/total*100):0;
+  const fill=document.getElementById('prog-'+setor);
+  const txt=document.getElementById('prog-text-'+setor);
+  const pctEl=document.getElementById('prog-pct-'+setor);
+  if(fill)fill.style.width=pct+'%';
+  if(txt)txt.textContent=done+' de '+total+' itens concluídos';
+  if(pctEl)pctEl.textContent=pct+'%';
+}
+
+// RESET
+function resetChecklist(clId,setor){
+  document.querySelectorAll('#'+clId+' li').forEach(li=>{
+    li.classList.remove('done');
+    li.querySelector('.check-box').classList.remove('checked');
+  });
+  atualizarProgresso(setor);
+}
+
+// IMPRIMIR
+function imprimirProcesso(id,nome){
+  const body=document.getElementById('body-'+id);
+  const items=Array.from(body.querySelectorAll('.checklist li')).map(li=>{
+    const feito=li.classList.contains('done');
+    const texto=li.querySelector('.check-text').textContent;
+    return `<li style="padding:6px 0;border-bottom:1px solid #eee;display:flex;gap:10px;align-items:flex-start"><span style="width:14px;height:14px;border:1px solid #999;display:inline-block;flex-shrink:0;margin-top:2px;background:${feito?'#5b91bc':'transparent'}"></span><span style="${feito?'text-decoration:line-through;color:#999':''}">${texto}</span></li>`;
+  }).join('');
+  const adapt=body.querySelector('textarea')?.value||'';
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${nome}</title><style>body{font-family:sans-serif;max-width:700px;margin:40px auto;color:#222;font-size:13px}h1{font-size:20px;margin-bottom:4px}p{color:#666;margin-bottom:20px}ul{list-style:none;padding:0}${adapt?'.adapt{border:1px solid #ddd;padding:12px;margin-top:20px;font-size:12px;color:#555}':''}.footer{margin-top:32px;font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:1px}</style></head><body><h1>${nome}</h1><p>Sistema D.O.S.E. · Gasttro Design</p><ul>${items}</ul>${adapt?`<div class="adapt"><strong>Adaptações do meu negócio:</strong><br>${adapt}</div>`:''}<div class="footer">Elaborado por Rô Gonzaga | RG Gastrô Educação</div></body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),400);
+}
+
+// Init progress
+['abertura','mercadoria','estoque','caixa','equipe'].forEach(s=>atualizarProgresso(s));
+</script>
+</body>
+</html>

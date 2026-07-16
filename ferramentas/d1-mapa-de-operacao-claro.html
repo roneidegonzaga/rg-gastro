@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de Operação | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream: #011e34;
+  --warm-white: #12314e;
+  --charcoal: #fff6ec;
+  --charcoal-soft: #f9e8d7;
+  --charcoal-mid: #f2ddc8;
+  --gold: #025291;
+  --gold-light: #013a68;
+  --gold-pale: #5b91bc;
+  --muted: #33475c;
+  --muted-light: #4e6172;
+  --border: rgba(2,82,145,0.2);
+  --border-strong: rgba(2,82,145,0.45);
+  --step-d: #2a4a7a;
+  --step-d-bg: rgba(42,74,122,0.08);
+  --step-e: #1a5e2a;
+  --step-e-bg: rgba(26,94,42,0.08);
+  --step-p: #7a4008;
+  --step-p-bg: rgba(122,64,8,0.08);
+  --step-pp: #5a2e90;
+  --step-pp-bg: rgba(90,46,144,0.08);
+  --step-prod: #7a2020;
+  --step-prod-bg: rgba(122,32,32,0.08);
+  --step-serv: #0a5e5e;
+  --step-serv-bg: rgba(10,94,94,0.08);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Manrope', sans-serif;
+  background: var(--charcoal);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1000; opacity: 0.2;
+}
+
+/* HEADER */
+header {
+  padding: 40px 48px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.brand {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.header-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.header-title em {
+  font-style: italic;
+  color: var(--gold-light);
+}
+
+.header-subtitle {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 12px;
+  letter-spacing: 0.5px;
+  line-height: 1.7;
+  max-width: 400px;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.module-badge {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(91,145,188,0.1);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 2px;
+}
+
+/* SESSION BAR */
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 48px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.field-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+input[type="text"].field-input,
+input[type="date"].field-input {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--cream);
+  padding: 4px 0;
+  outline: none;
+  transition: border-color 0.25s;
+  color-scheme: light;
+}
+
+input[type="text"].field-input { width: 200px; }
+input[type="date"].field-input { width: 140px; }
+
+input[type="text"].field-input::placeholder { color: rgba(1,30,52,0.5); }
+
+input[type="text"].field-input:focus,
+input[type="date"].field-input:focus { border-bottom-color: var(--gold); }
+
+/* PROGRESS */
+.progress-bar {
+  padding: 0 48px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  gap: 0;
+}
+
+.progress-step {
+  flex: 1;
+  min-width: 80px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+
+.progress-step:hover { background: rgba(1,30,52,0.03); }
+.progress-step.active { border-bottom-color: var(--gold); }
+.progress-step.complete { border-bottom-color: rgba(91,145,188,0.4); }
+
+.ps-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+
+.progress-step.active .ps-dot { background: var(--gold); border-color: var(--gold); }
+.progress-step.complete .ps-dot { background: rgba(91,145,188,0.5); border-color: rgba(91,145,188,0.5); }
+
+.ps-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  transition: color 0.25s;
+}
+
+.progress-step.active .ps-name { color: var(--gold); }
+.progress-step.complete .ps-name { color: rgba(91,145,188,0.7); }
+
+/* MAIN */
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 48px 80px;
+}
+
+/* STEP PANEL */
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* STEP HEADER */
+.step-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.step-number-big {
+  font-family: 'Manrope', sans-serif;
+  font-size: 72px;
+  font-weight: 300;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.15;
+  margin-top: -8px;
+}
+
+.step-header-content { flex: 1; }
+
+.step-eyebrow {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.step-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.step-desc {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 480px;
+}
+
+/* SERVICE TYPE SELECTOR */
+.service-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.svc-btn {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 9px 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 1px;
+}
+
+.svc-btn.active {
+  background: rgba(90,158,158,0.12);
+  border-color: var(--step-serv);
+  color: var(--step-serv);
+}
+
+.svc-btn:hover:not(.active) {
+  border-color: rgba(91,145,188,0.4);
+  color: var(--cream);
+}
+
+/* FIELDS GRID */
+.fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.fields-grid.single { grid-template-columns: 1fr; }
+
+.field-block { display: flex; flex-direction: column; gap: 8px; }
+
+.field-block-label {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--cream);
+  font-weight: 700;
+}
+
+.field-block-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: -4px;
+  font-weight: 400;
+}
+
+textarea.field-textarea {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12.5px;
+  font-weight: 300;
+  background: rgba(1,30,52,0.04);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  width: 100%;
+  padding: 12px 14px;
+  resize: vertical;
+  min-height: 88px;
+  outline: none;
+  line-height: 1.7;
+  transition: border-color 0.25s;
+  border-radius: 1px;
+}
+
+textarea.field-textarea.short { min-height: 56px; }
+
+textarea.field-textarea::placeholder {
+  color: rgba(1,30,52,0.45);
+  font-style: italic;
+}
+
+textarea.field-textarea:focus { border-color: var(--gold); }
+
+/* DOCUMENTED TOGGLE */
+.documented-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+  background: rgba(1,30,52,0.03);
+}
+
+.documented-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(1,30,52,0.75);
+}
+
+.documented-label span {
+  display: block;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 4px;
+}
+
+.toggle-btn {
+  font-family: 'Manrope', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.yes.active {
+  background: rgba(122,158,126,0.15);
+  border-color: var(--step-e);
+  color: var(--step-e);
+}
+
+.toggle-btn.no.active {
+  background: rgba(193,112,112,0.12);
+  border-color: var(--step-prod);
+  color: var(--step-prod);
+}
+
+/* STEP NAV */
+.step-nav {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  justify-content: space-between;
+  align-items: center;
+}
+
+.step-counter {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.step-counter strong {
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.nav-btns { display: flex; gap: 10px; }
+
+.btn-nav {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: all 0.25s;
+  border-radius: 1px;
+}
+
+.btn-prev {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.btn-prev:hover { border-color: var(--gold); color: var(--gold); }
+
+.btn-next {
+  background: var(--gold);
+  color: var(--charcoal);
+  border: 1px solid var(--gold);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-next::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--charcoal);
+  transform: translateX(-100%);
+  transition: transform 0.25s;
+}
+
+.btn-next:hover::after { transform: translateX(0); }
+.btn-next span { position: relative; z-index: 1; }
+.btn-next:hover span { color: var(--gold); }
+
+/* SUMMARY PANEL */
+#summaryPanel { display: none; }
+#summaryPanel.active { display: block; }
+
+.summary-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 28px;
+  font-weight: 300;
+  margin-bottom: 8px;
+}
+
+.summary-subtitle {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-bottom: 36px;
+}
+
+.summary-step {
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.summary-step-hd {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  cursor: pointer;
+  background: rgba(1,30,52,0.03);
+  transition: background 0.2s;
+}
+
+.summary-step-hd:hover { background: rgba(1,30,52,0.05); }
+
+.summary-step-color {
+  width: 3px;
+  height: 24px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.summary-step-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cream);
+  flex: 1;
+}
+
+.summary-step-doc {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 1px;
+}
+
+.summary-step-doc.yes { color: var(--step-e); border-color: rgba(122,158,126,0.4); }
+.summary-step-doc.no { color: var(--step-prod); border-color: rgba(193,112,112,0.4); }
+.summary-step-doc.na { color: var(--muted); border-color: var(--border); }
+
+.summary-step-body {
+  display: none;
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.summary-step-body.open { display: block; }
+
+.summary-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.sf-item {}
+.sf-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.sf-value {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(1,30,52,0.75);
+  line-height: 1.6;
+}
+
+.sf-value.empty { color: rgba(1,30,52,0.45); font-style: italic; }
+
+/* ACTIONS */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 36px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  background: var(--gold);
+  color: var(--charcoal);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--charcoal);
+  transform: translateX(-100%);
+  transition: transform 0.25s;
+}
+
+.btn-primary:hover::after { transform: translateX(0); }
+.btn-primary span { position: relative; z-index: 1; }
+.btn-primary:hover span { color: var(--gold); }
+
+.btn-secondary {
+  font-family: 'Manrope', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+/* PDF OVERLAY */
+.pdf-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(1,30,52,0.7);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.pdf-overlay.visible { display: flex; }
+
+.pdf-spinner-text {
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 14px;
+  text-align: center;
+}
+
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); opacity: 0.3;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+/* FOOTER */
+footer {
+  padding: 24px 48px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-brand {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+.footer-tool {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  header, .session-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .progress-bar { padding: 0 20px; }
+  .fields-grid { grid-template-columns: 1fr; }
+  .summary-fields { grid-template-columns: 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots">
+      <div class="pdf-dot"></div>
+      <div class="pdf-dot"></div>
+      <div class="pdf-dot"></div>
+    </div>
+    <p class="pdf-spinner-text">Gerando PDF</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="header-title">Mapa de<br><em>Operação</em></h1>
+    <p class="header-subtitle">Documente como o seu restaurante funciona de verdade, etapa por etapa. Antes de mudar qualquer coisa, é preciso enxergar tudo.</p>
+  </div>
+  <div class="header-right">
+    <span class="module-badge">Módulo D · D1</span>
+  </div>
+</header>
+
+<div class="session-bar">
+  <div class="field-group">
+    <span class="field-label">Restaurante</span>
+    <input type="text" class="field-input" id="restaurantName" placeholder="Nome do seu restaurante">
+  </div>
+  <div class="field-group">
+    <span class="field-label">Data</span>
+    <input type="date" class="field-input" id="sessionDate">
+  </div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar">
+  <div class="progress-step active" onclick="goToStep(0)" id="ps0">
+    <div class="ps-dot"></div>
+    <span class="ps-name">Compras</span>
+  </div>
+  <div class="progress-step" onclick="goToStep(1)" id="ps1">
+    <div class="ps-dot"></div>
+    <span class="ps-name">Recebimento</span>
+  </div>
+  <div class="progress-step" onclick="goToStep(2)" id="ps2">
+    <div class="ps-dot"></div>
+    <span class="ps-name">Estoque</span>
+  </div>
+  <div class="progress-step" onclick="goToStep(3)" id="ps3">
+    <div class="ps-dot"></div>
+    <span class="ps-name">Pré-preparo</span>
+  </div>
+  <div class="progress-step" onclick="goToStep(4)" id="ps4">
+    <div class="ps-dot"></div>
+    <span class="ps-name">Produção</span>
+  </div>
+  <div class="progress-step" onclick="goToStep(5)" id="ps5">
+    <div class="ps-dot"></div>
+    <span class="ps-name">Serviço</span>
+  </div>
+  <div class="progress-step" onclick="goToStep(6)" id="ps6">
+    <div class="ps-dot"></div>
+    <span class="ps-name">Resumo</span>
+  </div>
+</div>
+
+<main>
+
+<!-- ETAPA 1: COMPRAS -->
+<div class="step-panel active" id="step0">
+  <div class="step-header">
+    <span class="step-number-big" style="color:var(--step-d)">01</span>
+    <div class="step-header-content">
+      <p class="step-eyebrow" style="color:var(--step-d)">Etapa 1 de 6</p>
+      <h2 class="step-title">Compras</h2>
+      <p class="step-desc">Como o restaurante abastece sua operação. Quem decide o que comprar, como as compras são feitas e com quais fornecedores.</p>
+    </div>
+  </div>
+
+  <div class="documented-row">
+    <div>
+      <p class="documented-label">Existe um processo documentado para as compras?</p>
+      <span>Lista de compras, cronograma, critérios definidos ou é feito de cabeça.</span>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn yes" onclick="setDoc('compras','sim',this)">Sim</button>
+      <button class="toggle-btn no active" onclick="setDoc('compras','nao',this)">Não</button>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Responsável</label>
+      <p class="field-block-hint">Quem executa as compras no dia a dia</p>
+      <textarea class="field-textarea short" id="compras_resp" placeholder="Ex: o próprio dono, o gerente, o cozinheiro chefe..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Onde acontece</label>
+      <p class="field-block-hint">Local físico ou canal onde as compras são feitas</p>
+      <textarea class="field-textarea short" id="compras_onde" placeholder="Ex: mercado local, distribuidora, WhatsApp com fornecedores..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Como é feito</label>
+      <p class="field-block-hint">Descreva o processo atual de compras</p>
+      <textarea class="field-textarea" id="compras_como" placeholder="Ex: toda segunda-feira o gerente verifica o que está faltando e liga para os fornecedores. Não tem lista padrão..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Ferramentas e equipamentos</label>
+      <p class="field-block-hint">O que é usado para organizar ou executar as compras</p>
+      <textarea class="field-textarea" id="compras_ferramentas" placeholder="Ex: planilha no celular, caderninho, aplicativo de lista, nenhuma ferramenta..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Tempo médio gasto</label>
+      <p class="field-block-hint">Quanto tempo a etapa de compras consome por semana</p>
+      <textarea class="field-textarea short" id="compras_tempo" placeholder="Ex: cerca de 2 horas por semana, não sei ao certo..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Problemas e gargalos observados</label>
+      <p class="field-block-hint">O que costuma dar errado ou gerar retrabalho</p>
+      <textarea class="field-textarea short" id="compras_gargalos" placeholder="Ex: compras de emergência frequentes, estoque parado, fornecedor que não cumpre prazo..."></textarea>
+    </div>
+  </div>
+
+  <div class="step-nav">
+    <span class="step-counter">Etapa <strong>1</strong> de 6</span>
+    <div class="nav-btns">
+      <button class="btn-nav btn-next" onclick="nextStep(0)"><span>Próxima etapa</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ETAPA 2: RECEBIMENTO -->
+<div class="step-panel" id="step1">
+  <div class="step-header">
+    <span class="step-number-big" style="color:var(--step-e)">02</span>
+    <div class="step-header-content">
+      <p class="step-eyebrow" style="color:var(--step-e)">Etapa 2 de 6</p>
+      <h2 class="step-title">Recebimento</h2>
+      <p class="step-desc">O que acontece quando a mercadoria chega. Como é conferida, quem verifica a qualidade e o que é feito com produtos fora do padrão.</p>
+    </div>
+  </div>
+
+  <div class="documented-row">
+    <div>
+      <p class="documented-label">Existe um processo documentado para o recebimento?</p>
+      <span>Checklist de conferência, critérios de qualidade, protocolo para devoluções.</span>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn yes" onclick="setDoc('recebimento','sim',this)">Sim</button>
+      <button class="toggle-btn no active" onclick="setDoc('recebimento','nao',this)">Não</button>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Responsável</label>
+      <p class="field-block-hint">Quem recebe e confere a mercadoria</p>
+      <textarea class="field-textarea short" id="recebimento_resp" placeholder="Ex: qualquer funcionário que estiver disponível, o gerente..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Onde acontece</label>
+      <p class="field-block-hint">Local físico onde a mercadoria é recebida e conferida</p>
+      <textarea class="field-textarea short" id="recebimento_onde" placeholder="Ex: entrada da cozinha, área de descarga, corredor do fundo..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Como é feito</label>
+      <p class="field-block-hint">Descreva o processo atual de recebimento</p>
+      <textarea class="field-textarea" id="recebimento_como" placeholder="Ex: o entregador deixa a mercadoria e alguém guarda. Raramente confere peso ou validade na hora..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Ferramentas e equipamentos</label>
+      <p class="field-block-hint">Balança, checklist, termômetro, outros</p>
+      <textarea class="field-textarea" id="recebimento_ferramentas" placeholder="Ex: balança disponível mas pouco usada, sem checklist de conferência..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Tempo médio gasto</label>
+      <textarea class="field-textarea short" id="recebimento_tempo" placeholder="Ex: 15 a 30 minutos por entrega..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Problemas e gargalos observados</label>
+      <textarea class="field-textarea short" id="recebimento_gargalos" placeholder="Ex: produtos com problema aceitos sem registro, divergência de peso, prazo de validade curto..."></textarea>
+    </div>
+  </div>
+
+  <div class="step-nav">
+    <span class="step-counter">Etapa <strong>2</strong> de 6</span>
+    <div class="nav-btns">
+      <button class="btn-nav btn-prev" onclick="prevStep(1)">Voltar</button>
+      <button class="btn-nav btn-next" onclick="nextStep(1)"><span>Próxima etapa</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ETAPA 3: ESTOQUE -->
+<div class="step-panel" id="step2">
+  <div class="step-header">
+    <span class="step-number-big" style="color:var(--step-p)">03</span>
+    <div class="step-header-content">
+      <p class="step-eyebrow" style="color:var(--step-p)">Etapa 3 de 6</p>
+      <h2 class="step-title">Estoque</h2>
+      <p class="step-desc">Como os insumos são armazenados, organizados e controlados. Se há controle de entrada e saída, e quem tem acesso.</p>
+    </div>
+  </div>
+
+  <div class="documented-row">
+    <div>
+      <p class="documented-label">Existe um processo documentado para o controle de estoque?</p>
+      <span>Planilha de entradas e saídas, inventário periódico, FIFO ou PEPS.</span>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn yes" onclick="setDoc('estoque','sim',this)">Sim</button>
+      <button class="toggle-btn no active" onclick="setDoc('estoque','nao',this)">Não</button>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Responsável</label>
+      <p class="field-block-hint">Quem controla e organiza o estoque</p>
+      <textarea class="field-textarea short" id="estoque_resp" placeholder="Ex: o cozinheiro chefe, acesso livre a todos..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Onde acontece</label>
+      <p class="field-block-hint">Localização e estrutura do estoque</p>
+      <textarea class="field-textarea short" id="estoque_onde" placeholder="Ex: câmara fria, despensa, prateleiras na cozinha..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Como é feito</label>
+      <p class="field-block-hint">Descreva como o estoque é gerenciado hoje</p>
+      <textarea class="field-textarea" id="estoque_como" placeholder="Ex: os produtos são guardados conforme chegam, sem organização por validade. O inventário é feito de cabeça..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Ferramentas e equipamentos</label>
+      <textarea class="field-textarea" id="estoque_ferramentas" placeholder="Ex: planilha desatualizada, nenhum sistema, etiquetas de validade..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Tempo médio gasto</label>
+      <textarea class="field-textarea short" id="estoque_tempo" placeholder="Ex: organização diária de 20 min, inventário mensal..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Problemas e gargalos observados</label>
+      <textarea class="field-textarea short" id="estoque_gargalos" placeholder="Ex: produtos vencendo, falta de insumos no pico, acesso descontrolado..."></textarea>
+    </div>
+  </div>
+
+  <div class="step-nav">
+    <span class="step-counter">Etapa <strong>3</strong> de 6</span>
+    <div class="nav-btns">
+      <button class="btn-nav btn-prev" onclick="prevStep(2)">Voltar</button>
+      <button class="btn-nav btn-next" onclick="nextStep(2)"><span>Próxima etapa</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ETAPA 4: PRÉ-PREPARO -->
+<div class="step-panel" id="step3">
+  <div class="step-header">
+    <span class="step-number-big" style="color:var(--step-pp)">04</span>
+    <div class="step-header-content">
+      <p class="step-eyebrow" style="color:var(--step-pp)">Etapa 4 de 6</p>
+      <h2 class="step-title">Pré-preparo</h2>
+      <p class="step-desc">O que é feito antes do serviço começar. Higienização, cortes, porcionamento, marinadas e demais preparações antecipadas.</p>
+    </div>
+  </div>
+
+  <div class="documented-row">
+    <div>
+      <p class="documented-label">Existe um processo documentado para o pré-preparo?</p>
+      <span>Receitas de base, porcionamentos padronizados, mise en place definida.</span>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn yes" onclick="setDoc('prepreparo','sim',this)">Sim</button>
+      <button class="toggle-btn no active" onclick="setDoc('prepreparo','nao',this)">Não</button>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Responsável</label>
+      <textarea class="field-textarea short" id="prepreparo_resp" placeholder="Ex: equipe de cozinha no turno da manhã..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Onde acontece</label>
+      <textarea class="field-textarea short" id="prepreparo_onde" placeholder="Ex: cozinha fria, bancada de corte, câmara de descongelamento..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Como é feito</label>
+      <textarea class="field-textarea" id="prepreparo_como" placeholder="Ex: cada cozinheiro faz do jeito que aprendeu. Não há padrão de porcionamento definido..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Ferramentas e equipamentos</label>
+      <textarea class="field-textarea" id="prepreparo_ferramentas" placeholder="Ex: balança de porcionamento, processador, facas específicas..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Tempo médio gasto</label>
+      <textarea class="field-textarea short" id="prepreparo_tempo" placeholder="Ex: 2 a 3 horas por dia antes do serviço do almoço..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Problemas e gargalos observados</label>
+      <textarea class="field-textarea short" id="prepreparo_gargalos" placeholder="Ex: pré-preparo insuficiente no rush, desperdício por excesso, qualidade inconsistente..."></textarea>
+    </div>
+  </div>
+
+  <div class="step-nav">
+    <span class="step-counter">Etapa <strong>4</strong> de 6</span>
+    <div class="nav-btns">
+      <button class="btn-nav btn-prev" onclick="prevStep(3)">Voltar</button>
+      <button class="btn-nav btn-next" onclick="nextStep(3)"><span>Próxima etapa</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ETAPA 5: PRODUÇÃO -->
+<div class="step-panel" id="step4">
+  <div class="step-header">
+    <span class="step-number-big" style="color:var(--step-prod)">05</span>
+    <div class="step-header-content">
+      <p class="step-eyebrow" style="color:var(--step-prod)">Etapa 5 de 6</p>
+      <h2 class="step-title">Produção</h2>
+      <p class="step-desc">Como os pratos são executados durante o serviço. O fluxo da cozinha em operação, a comunicação entre as estações e o controle de qualidade na saída.</p>
+    </div>
+  </div>
+
+  <div class="documented-row">
+    <div>
+      <p class="documented-label">Existe um processo documentado para a produção?</p>
+      <span>Fichas técnicas, roteiros de montagem, padrão de empratamento, tempo de preparo.</span>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn yes" onclick="setDoc('producao','sim',this)">Sim</button>
+      <button class="toggle-btn no active" onclick="setDoc('producao','nao',this)">Não</button>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Responsável</label>
+      <textarea class="field-textarea short" id="producao_resp" placeholder="Ex: cozinheiro chefe coordena, equipe executa por estação..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Onde acontece</label>
+      <textarea class="field-textarea short" id="producao_onde" placeholder="Ex: grelha, fritadeira, praça fria, montagem..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Como é feito</label>
+      <textarea class="field-textarea" id="producao_como" placeholder="Ex: comanda chega na cozinha, cada cozinheiro monta seu prato. Não há checklist de saída..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Ferramentas e equipamentos</label>
+      <textarea class="field-textarea" id="producao_ferramentas" placeholder="Ex: equipamentos disponíveis, estado de conservação, o que falta..."></textarea>
+    </div>
+  </div>
+
+  <div class="fields-grid">
+    <div class="field-block">
+      <label class="field-block-label">Tempo médio de produção por prato</label>
+      <textarea class="field-textarea short" id="producao_tempo" placeholder="Ex: varia muito, entre 10 e 25 minutos dependendo do prato..."></textarea>
+    </div>
+    <div class="field-block">
+      <label class="field-block-label">Problemas e gargalos observados</label>
+      <textarea class="field-textarea short" id="producao_gargalos" placeholder="Ex: gargalo na grelha nos horários de pico, prato saindo diferente entre turnos..."></textarea>
+    </div>
+  </div>
+
+  <div class="step-nav">
+    <span class="step-counter">Etapa <strong>5</strong> de 6</span>
+    <div class="nav-btns">
+      <button class="btn-nav btn-prev" onclick="prevStep(4)">Voltar</button>
+      <button class="btn-nav btn-next" onclick="nextStep(4)"><span>Próxima etapa</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ETAPA 6: SERVIÇO -->
+<div class="step-panel" id="step5">
+  <div class="step-header">
+    <span class="step-number-big" style="color:var(--step-serv)">06</span>
+    <div class="step-header-content">
+      <p class="step-eyebrow" style="color:var(--step-serv)">Etapa 6 de 6</p>
+      <h2 class="step-title">Serviço</h2>
+      <p class="step-desc">A entrega final para o cliente. Selecione os formatos que se aplicam ao seu negócio. Você pode preencher os dois se o restaurante opera salão e delivery.</p>
+    </div>
+  </div>
+
+  <div class="service-selector">
+    <button class="svc-btn active" id="btnSalao" onclick="toggleService('salao')">Salão</button>
+    <button class="svc-btn" id="btnDelivery" onclick="toggleService('delivery')">Delivery</button>
+  </div>
+
+  <!-- SALÃO -->
+  <div id="salaoSection">
+    <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--step-serv);margin-bottom:16px;font-weight:500">Serviço de Salão</p>
+
+    <div class="documented-row">
+      <div>
+        <p class="documented-label">Existe um processo documentado para o serviço de salão?</p>
+        <span>Roteiro de atendimento, padrão de abordagem, fluxo de comandas.</span>
+      </div>
+      <div class="toggle-group">
+        <button class="toggle-btn yes" onclick="setDoc('salao','sim',this)">Sim</button>
+        <button class="toggle-btn no active" onclick="setDoc('salao','nao',this)">Não</button>
+      </div>
+    </div>
+
+    <div class="fields-grid">
+      <div class="field-block">
+        <label class="field-block-label">Responsável</label>
+        <textarea class="field-textarea short" id="salao_resp" placeholder="Ex: garçons, maître, o próprio dono no salão..."></textarea>
+      </div>
+      <div class="field-block">
+        <label class="field-block-label">Como é feito</label>
+        <textarea class="field-textarea short" id="salao_como" placeholder="Ex: garçom anota o pedido, leva à cozinha, serve quando pronto..."></textarea>
+      </div>
+    </div>
+
+    <div class="fields-grid">
+      <div class="field-block">
+        <label class="field-block-label">Ferramentas e equipamentos</label>
+        <textarea class="field-textarea short" id="salao_ferramentas" placeholder="Ex: sistema de comanda, tablet, bloco de papel..."></textarea>
+      </div>
+      <div class="field-block">
+        <label class="field-block-label">Problemas e gargalos observados</label>
+        <textarea class="field-textarea short" id="salao_gargalos" placeholder="Ex: pedidos errados, demora no atendimento, falta de padrão entre garçons..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELIVERY -->
+  <div id="deliverySection" style="display:none; margin-top:24px; padding-top:24px; border-top:1px solid var(--border)">
+    <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--step-serv);margin-bottom:16px;font-weight:500">Expedição para Delivery</p>
+
+    <div class="documented-row">
+      <div>
+        <p class="documented-label">Existe um processo documentado para o delivery?</p>
+        <span>Fluxo de pedidos, montagem de embalagem, checklist de conferência antes da saída.</span>
+      </div>
+      <div class="toggle-group">
+        <button class="toggle-btn yes" onclick="setDoc('delivery','sim',this)">Sim</button>
+        <button class="toggle-btn no active" onclick="setDoc('delivery','nao',this)">Não</button>
+      </div>
+    </div>
+
+    <div class="fields-grid">
+      <div class="field-block">
+        <label class="field-block-label">Responsável</label>
+        <textarea class="field-textarea short" id="delivery_resp" placeholder="Ex: cozinha monta, entregador próprio ou plataforma..."></textarea>
+      </div>
+      <div class="field-block">
+        <label class="field-block-label">Como é feito</label>
+        <textarea class="field-textarea short" id="delivery_como" placeholder="Ex: pedido chega pelo app, cozinha monta, embala e entrega ao motoboy..."></textarea>
+      </div>
+    </div>
+
+    <div class="fields-grid">
+      <div class="field-block">
+        <label class="field-block-label">Ferramentas e equipamentos</label>
+        <textarea class="field-textarea short" id="delivery_ferramentas" placeholder="Ex: tablet do iFood, embalagens, bag térmica..."></textarea>
+      </div>
+      <div class="field-block">
+        <label class="field-block-label">Problemas e gargalos observados</label>
+        <textarea class="field-textarea short" id="delivery_gargalos" placeholder="Ex: pedidos cancelados por tempo de preparo, embalagem ruim, erro na montagem..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-nav">
+    <span class="step-counter">Etapa <strong>6</strong> de 6</span>
+    <div class="nav-btns">
+      <button class="btn-nav btn-prev" onclick="prevStep(5)">Voltar</button>
+      <button class="btn-nav btn-next" onclick="showSummary()"><span>Ver resumo</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- RESUMO -->
+<div id="summaryPanel">
+  <h2 class="summary-title">Mapa de Operação</h2>
+  <p class="summary-subtitle">Visão completa do fluxo operacional do seu restaurante. Clique em cada etapa para expandir o detalhamento.</p>
+
+  <div id="summaryContent"></div>
+
+  <div class="actions">
+    <button class="btn-primary" onclick="salvarPDF()"><span>Gerar PDF</span></button>
+    <button class="btn-secondary" onclick="voltarEdicao()">Editar</button>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta D1 · Mapa de Operação</span>
+</footer>
+
+<script>
+// STATE
+let currentStep = 0;
+const totalSteps = 6;
+let servicoAtivo = { salao: true, delivery: false };
+const docStatus = {};
+
+const stepColors = ['#6b7fa3','#7a9e7e','#b97e10','#9b7ec8','#c17070','#5a9e9e'];
+const stepNames = ['Compras','Recebimento','Estoque','Pré-preparo','Produção','Serviço'];
+
+const stepFields = [
+  { id: 'compras', fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+  { id: 'recebimento', fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+  { id: 'estoque', fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+  { id: 'prepreparo', fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+  { id: 'producao', fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+  { id: 'salao', fields: ['resp','como','ferramentas','gargalos'] },
+];
+
+const fieldLabels = {
+  resp: 'Responsável', onde: 'Onde acontece', como: 'Como é feito',
+  ferramentas: 'Ferramentas', tempo: 'Tempo médio', gargalos: 'Problemas e gargalos'
+};
+
+// INIT
+document.getElementById('sessionDate').valueAsDate = new Date();
+
+// DOC STATUS
+function setDoc(etapa, val, btn) {
+  docStatus[etapa] = val;
+  const group = btn.closest('.toggle-group');
+  group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// TOGGLE SERVICE
+function toggleService(type) {
+  if (type === 'salao') {
+    servicoAtivo.salao = !servicoAtivo.salao;
+    document.getElementById('salaoSection').style.display = servicoAtivo.salao ? 'block' : 'none';
+    document.getElementById('btnSalao').classList.toggle('active', servicoAtivo.salao);
+  } else {
+    servicoAtivo.delivery = !servicoAtivo.delivery;
+    document.getElementById('deliverySection').style.display = servicoAtivo.delivery ? 'block' : 'none';
+    document.getElementById('btnDelivery').classList.toggle('active', servicoAtivo.delivery);
+  }
+}
+
+// NAVIGATION
+function goToStep(i) {
+  if (i === 6) { showSummary(); return; }
+  currentStep = i;
+  document.querySelectorAll('.step-panel').forEach((p,idx) => {
+    p.classList.toggle('active', idx === i);
+  });
+  document.querySelectorAll('.progress-step').forEach((ps, idx) => {
+    ps.classList.remove('active','complete');
+    if (idx === i) ps.classList.add('active');
+    else if (idx < i) ps.classList.add('complete');
+  });
+  document.getElementById('summaryPanel').classList.remove('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep(i) { goToStep(i + 1); }
+function prevStep(i) { goToStep(i - 1); }
+
+function showSummary() {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.progress-step').forEach((ps, idx) => {
+    ps.classList.remove('active');
+    if (idx < 6) ps.classList.add('complete');
+    if (idx === 6) ps.classList.add('active');
+  });
+  document.getElementById('summaryPanel').classList.add('active');
+  buildSummary();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function voltarEdicao() { goToStep(0); }
+
+// BUILD SUMMARY
+function buildSummary() {
+  const container = document.getElementById('summaryContent');
+  container.innerHTML = '';
+
+  const stepsToShow = [...stepFields];
+  if (servicoAtivo.delivery) {
+    stepsToShow.push({ id: 'delivery', fields: ['resp','como','ferramentas','gargalos'] });
+  }
+
+  const allSteps = [
+    { id: 'compras', name: 'Compras', color: stepColors[0], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+    { id: 'recebimento', name: 'Recebimento', color: stepColors[1], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+    { id: 'estoque', name: 'Estoque', color: stepColors[2], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+    { id: 'prepreparo', name: 'Pré-preparo', color: stepColors[3], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+    { id: 'producao', name: 'Produção', color: stepColors[4], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+  ];
+
+  if (servicoAtivo.salao) allSteps.push({ id: 'salao', name: 'Serviço: Salão', color: stepColors[5], fields: ['resp','como','ferramentas','gargalos'] });
+  if (servicoAtivo.delivery) allSteps.push({ id: 'delivery', name: 'Serviço: Delivery', color: stepColors[5], fields: ['resp','como','ferramentas','gargalos'] });
+
+  allSteps.forEach((step, i) => {
+    const doc = docStatus[step.id];
+    const docClass = doc === 'sim' ? 'yes' : doc === 'nao' ? 'no' : 'na';
+    const docText = doc === 'sim' ? 'Documentado' : doc === 'nao' ? 'Não documentado' : 'Não informado';
+
+    const div = document.createElement('div');
+    div.className = 'summary-step';
+    div.innerHTML = `
+      <div class="summary-step-hd" onclick="toggleSummaryStep(this)">
+        <div class="summary-step-color" style="background:${step.color}"></div>
+        <span class="summary-step-name">${step.name}</span>
+        <span class="summary-step-doc ${docClass}">${docText}</span>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="margin-left:8px;flex-shrink:0;transition:transform .2s"><path d="M3 5l4 4 4-4" stroke="#5d6d7c" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="summary-step-body">
+        <div class="summary-fields">
+          ${step.fields.map(f => {
+            const val = (document.getElementById(step.id + '_' + f) || {}).value || '';
+            return `<div class="sf-item">
+              <p class="sf-label">${fieldLabels[f]}</p>
+              <p class="sf-value ${val ? '' : 'empty'}">${val || 'Não preenchido'}</p>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function toggleSummaryStep(hd) {
+  const body = hd.nextElementSibling;
+  const svg = hd.querySelector('svg');
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  svg.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+// PDF
+async function salvarPDF() {
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+
+  try {
+    const restaurant = document.getElementById('restaurantName').value || 'Meu Restaurante';
+    const date = document.getElementById('sessionDate').value;
+    const dateFormatted = date
+      ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+      : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, H = 297, mg = 18, cw = W - mg * 2;
+
+    const allSteps = [
+      { id: 'compras', name: 'Compras', color: [107,127,163], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+      { id: 'recebimento', name: 'Recebimento', color: [122,158,126], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+      { id: 'estoque', name: 'Estoque', color: [193,127,42], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+      { id: 'prepreparo', name: 'Pré-preparo', color: [155,126,200], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+      { id: 'producao', name: 'Produção', color: [193,112,112], fields: ['resp','onde','como','ferramentas','tempo','gargalos'] },
+    ];
+    if (servicoAtivo.salao) allSteps.push({ id: 'salao', name: 'Serviço: Salão', color: [90,158,158], fields: ['resp','como','ferramentas','gargalos'] });
+    if (servicoAtivo.delivery) allSteps.push({ id: 'delivery', name: 'Serviço: Delivery', color: [90,158,158], fields: ['resp','como','ferramentas','gargalos'] });
+
+    // CAPA
+    pdf.setFillColor(26, 24, 20);
+    pdf.rect(0, 0, W, H, 'F');
+    pdf.setDrawColor(184, 150, 90);
+    pdf.setLineWidth(0.5);
+    pdf.line(mg, 14, W - mg, 14);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(184,150,90);
+    pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.', mg, 11);
+    pdf.text('MÓDULO D  ·  D1', W - mg, 11, { align: 'right' });
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(28);
+    pdf.setTextColor(245,240,232);
+    pdf.text('Mapa de', mg, 42);
+    pdf.setFont('helvetica','bolditalic');
+    pdf.setTextColor(212,175,122);
+    pdf.text('Operação', mg, 56);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(122,115,105);
+    pdf.text('Fluxo operacional documentado do restaurante', mg, 66);
+    pdf.setDrawColor(184,150,90);
+    pdf.setLineWidth(0.3);
+    pdf.line(mg, 74, W - mg, 74);
+    pdf.setFontSize(9);
+    pdf.setTextColor(184,150,90);
+    pdf.text(restaurant.toUpperCase(), mg, 81);
+    pdf.setTextColor(122,115,105);
+    pdf.text(dateFormatted, W - mg, 81, { align: 'right' });
+    pdf.line(mg, 85, W - mg, 85);
+
+    // STEPS
+    let pageNum = 1;
+    for (const step of allSteps) {
+      pdf.addPage();
+      pageNum++;
+      pdf.setFillColor(26,24,20);
+      pdf.rect(0,0,W,H,'F');
+      pdf.setDrawColor(184,150,90);
+      pdf.setLineWidth(0.5);
+      pdf.line(mg,14,W-mg,14);
+      pdf.setFont('helvetica','normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(184,150,90);
+      pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.', mg, 11);
+
+      // Step color bar
+      pdf.setFillColor(...step.color);
+      pdf.rect(mg, 22, 3, 20, 'F');
+
+      // Step name
+      pdf.setFont('helvetica','bold');
+      pdf.setFontSize(18);
+      pdf.setTextColor(245,240,232);
+      pdf.text(step.name, mg + 8, 34);
+
+      // Doc status
+      const doc = docStatus[step.id];
+      const docText = doc === 'sim' ? 'Processo documentado' : doc === 'nao' ? 'Sem documentação' : 'Não informado';
+      const docColor = doc === 'sim' ? [122,158,126] : doc === 'nao' ? [193,112,112] : [122,115,105];
+      pdf.setFont('helvetica','normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...docColor);
+      pdf.text(docText, mg + 8, 42);
+
+      let y = 56;
+      for (const f of step.fields) {
+        const val = (document.getElementById(step.id + '_' + f) || {}).value || '';
+        const label = fieldLabels[f];
+
+        if (y > H - 30) {
+          pdf.addPage();
+          pageNum++;
+          pdf.setFillColor(26,24,20);
+          pdf.rect(0,0,W,H,'F');
+          pdf.setDrawColor(184,150,90);
+          pdf.setLineWidth(0.5);
+          pdf.line(mg,14,W-mg,14);
+          pdf.setFont('helvetica','normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(184,150,90);
+          pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.', mg, 11);
+          y = 24;
+        }
+
+        pdf.setFont('helvetica','normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(122,115,105);
+        pdf.text(label.toUpperCase(), mg, y);
+        y += 5;
+
+        if (val) {
+          pdf.setFont('helvetica','normal');
+          pdf.setFontSize(10);
+          pdf.setTextColor(210,200,185);
+          const lines = pdf.splitTextToSize(val, cw);
+          const show = lines.slice(0,4);
+          pdf.text(show, mg, y);
+          y += show.length * 5 + 4;
+        } else {
+          pdf.setFont('helvetica','italic');
+          pdf.setFontSize(9);
+          pdf.setTextColor(80,76,70);
+          pdf.text('Não preenchido', mg, y);
+          y += 9;
+        }
+
+        pdf.setDrawColor(184,150,90,0.1);
+        pdf.setLineWidth(0.2);
+        pdf.line(mg, y, W - mg, y);
+        y += 6;
+      }
+    }
+
+    // FOOTER em todas as páginas
+    const total = pdf.internal.getNumberOfPages();
+    for (let p = 1; p <= total; p++) {
+      pdf.setPage(p);
+      pdf.setDrawColor(184,150,90);
+      pdf.setLineWidth(0.3);
+      pdf.line(mg, H-14, W-mg, H-14);
+      pdf.setFont('helvetica','normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN', mg, H-10);
+      pdf.text(`${p} / ${total}`, W-mg, H-10, { align: 'right' });
+    }
+
+    const filename = `DOSE-Mapa-Operacao-${restaurant.replace(/\s+/g,'-')}-${date||'sem-data'}.pdf`;
+    pdf.save(filename);
+
+  } catch(err) {
+    console.error(err);
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+</script>
+</body>
+</html>

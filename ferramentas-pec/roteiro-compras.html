@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Roteiro de Compras e Recebimento — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#011E34;--navy2:#062d4e;--gold:#F7B700;--gold2:#FCC740;--coral:#F25C54;--cream:#FFFEE8;--cream2:#F0EECC;--white:#ffffff;--gray:#6b7280;--gray-l:#e5e7eb;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;}
+  .header{background:var(--navy);padding:20px 32px 16px;border-bottom:3px solid var(--gold);}
+  .header-eyebrow{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+  .header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);}
+  .id-bar{background:var(--navy2);padding:12px 32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px 20px;}
+  .id-field{display:flex;flex-direction:column;gap:3px;}
+  .id-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .id-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.2);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:3px 0;outline:none;width:100%;}
+  .id-input::placeholder{color:rgba(255,255,255,.3);}
+  .id-input:focus{border-bottom-color:var(--gold);}
+  .main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+  .cats-nav{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);padding:12px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .cat-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;border:1.5px solid var(--gray-l);background:transparent;color:var(--gray);transition:all .15s;}
+  .cat-chip:hover{border-color:var(--navy);color:var(--navy);}
+  .cat-chip.ativo{background:var(--navy);border-color:var(--navy);color:white;}
+  .btn-add-cat{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px dashed var(--gold);background:transparent;color:var(--gold);cursor:pointer;transition:all .2s;}
+  .btn-add-cat:hover{background:var(--gold);color:var(--navy);}
+  .section{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);overflow:hidden;}
+  .sec-header{background:var(--navy);padding:12px 20px;}
+  .sec-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--white);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--cream2);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);padding:8px 10px;text-align:left;border-bottom:1px solid var(--gray-l);}
+  tbody tr:hover{background:#fafaf2;}
+  td{padding:7px 10px;border-bottom:1px solid var(--gray-l);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .td-num{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;color:var(--gold);text-align:center;width:40px;}
+  .cell-in{border:1px solid var(--gray-l);border-radius:3px;padding:4px 6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:var(--cream);outline:none;width:100%;}
+  .cell-in:focus{border-color:var(--gold);}
+  .cell-sel{border:1px solid var(--gray-l);border-radius:3px;padding:4px 5px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--navy);background:var(--cream);outline:none;cursor:pointer;width:100%;}
+  .btn-rem{background:transparent;border:none;color:var(--gray-l);font-size:15px;cursor:pointer;padding:0 3px;transition:color .15s;}
+  .btn-rem:hover{color:#ef4444;}
+  .btn-add-item{width:100%;padding:10px;border:1.5px dashed var(--gold);border-top:none;background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;border-radius:0 0 8px 8px;}
+  .btn-add-item:hover{background:var(--gold);color:var(--navy);}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn-acao{padding:10px 24px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+  .btn-acao.primario{background:var(--gold);color:var(--navy);}
+  .btn-acao.primario:hover{background:var(--gold2);}
+  .btn-acao.secundario{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-acao.secundario:hover{background:var(--navy);color:white;}
+  @media print{.cats-nav,.acoes,.btn-add-item,.btn-rem,.btn-add-cat{display:none;}body{background:white;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-eyebrow">RG Gastrô Educação</div>
+  <div class="header-title">Roteiro de Compras e Recebimento</div>
+</div>
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" id="estab" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Responsável pelas compras</span><input class="id-input" type="text" id="resp" placeholder="Nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" id="consultor" placeholder="Seu nome" onchange="salvar()"></div>
+</div>
+<div class="main">
+  <div class="cats-nav" id="catsNav"></div>
+  <div class="section">
+    <div class="sec-header"><span class="sec-title" id="secTitle">Todos os fornecedores</span></div>
+    <table>
+      <thead><tr>
+        <th style="width:40px">#</th>
+        <th style="width:140px">Fornecedor</th>
+        <th>Produto / Corte</th>
+        <th style="width:100px">Categoria</th>
+        <th style="width:90px">Dia de compra</th>
+        <th style="width:90px">Dia recebimento</th>
+        <th style="width:90px">Forma recebimento</th>
+        <th style="width:90px">Dia produção</th>
+        <th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <button class="btn-add-item" onclick="addItem()">+ Adicionar fornecedor / produto</button>
+  </div>
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="salvar()">Salvar</button>
+  </div>
+</div>
+<script>
+const KEY='rgGastro_roteiro_compras';
+const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo','—'];
+const FORMAS=['Congelado','Refrigerado','Seco','A temperatura ambiente','—'];
+let dados={estab:'',resp:'',consultor:'',cats:['Proteínas','Hortifrúti','Secos','Frios','Bebidas','Outros'],itens:[]};
+let catAtiva='Todos';
+
+function itemPadrao(){return{fornecedor:'',produto:'',categoria:dados.cats[0]||'',diaCompra:'Segunda',diaReceb:'Terça',formaReceb:'Refrigerado',diaProd:'—'};}
+
+try{const r=localStorage.getItem(KEY);if(r)dados=JSON.parse(r);}catch(e){}
+if(dados.itens.length===0){
+  [['Master Boi','Fraldinha','Proteínas','Segunda','Terça','Congelado','Quinta'],
+   ['Ceasa','Alho, Cebola','Hortifrúti','Terça','Terça','A temperatura ambiente','—']].forEach(([f,p,c,dc,dr,fr,dp])=>dados.itens.push({fornecedor:f,produto:p,categoria:c,diaCompra:dc,diaReceb:dr,formaReceb:fr,diaProd:dp}));
+}
+
+function render(){
+  document.getElementById('estab').value=dados.estab||'';
+  document.getElementById('resp').value=dados.resp||'';
+  document.getElementById('consultor').value=dados.consultor||'';
+  renderCats();renderTabela();
+}
+
+function renderCats(){
+  const nav=document.getElementById('catsNav');nav.innerHTML='';
+  const todos=document.createElement('button');todos.className='cat-chip'+(catAtiva==='Todos'?' ativo':'');todos.textContent='Todos';todos.onclick=()=>{catAtiva='Todos';render();};nav.appendChild(todos);
+  dados.cats.forEach(c=>{const btn=document.createElement('button');btn.className='cat-chip'+(catAtiva===c?' ativo':'');btn.textContent=c;btn.onclick=()=>{catAtiva=c;render();};nav.appendChild(btn);});
+  const add=document.createElement('button');add.className='btn-add-cat';add.textContent='+ Categoria';add.onclick=()=>{const n=prompt('Nome:');if(!n)return;dados.cats.push(n);salvar();render();};nav.appendChild(add);
+}
+
+function renderTabela(){
+  const tbody=document.getElementById('tbody');tbody.innerHTML='';
+  let itens=dados.itens;
+  if(catAtiva!=='Todos')itens=itens.filter(i=>i.categoria===catAtiva);
+  document.getElementById('secTitle').textContent=catAtiva==='Todos'?'Todos os fornecedores':catAtiva;
+  itens.forEach((item,vi)=>{
+    const ri=dados.itens.indexOf(item);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-num">${String(vi+1).padStart(2,'0')}</td>
+      <td><input class="cell-in" type="text" value="${item.fornecedor}" placeholder="Nome do fornecedor" onchange="dados.itens[${ri}].fornecedor=this.value;salvar()"></td>
+      <td><input class="cell-in" type="text" value="${item.produto}" placeholder="Produto ou corte" onchange="dados.itens[${ri}].produto=this.value;salvar()"></td>
+      <td><select class="cell-sel" onchange="dados.itens[${ri}].categoria=this.value;salvar();render()">${dados.cats.map(c=>`<option${c===item.categoria?' selected':''}>${c}</option>`).join('')}</select></td>
+      <td><select class="cell-sel" onchange="dados.itens[${ri}].diaCompra=this.value;salvar()">${DIAS.map(d=>`<option${d===item.diaCompra?' selected':''}>${d}</option>`).join('')}</select></td>
+      <td><select class="cell-sel" onchange="dados.itens[${ri}].diaReceb=this.value;salvar()">${DIAS.map(d=>`<option${d===item.diaReceb?' selected':''}>${d}</option>`).join('')}</select></td>
+      <td><select class="cell-sel" onchange="dados.itens[${ri}].formaReceb=this.value;salvar()">${FORMAS.map(f=>`<option${f===item.formaReceb?' selected':''}>${f}</option>`).join('')}</select></td>
+      <td><select class="cell-sel" onchange="dados.itens[${ri}].diaProd=this.value;salvar()">${DIAS.map(d=>`<option${d===item.diaProd?' selected':''}>${d}</option>`).join('')}</select></td>
+      <td><button class="btn-rem" onclick="removeItem(${ri})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function addItem(){dados.itens.push(itemPadrao());salvar();render();}
+function removeItem(i){if(!confirm('Remover?'))return;dados.itens.splice(i,1);salvar();render();}
+function salvar(){dados.estab=document.getElementById('estab').value;dados.resp=document.getElementById('resp').value;dados.consultor=document.getElementById('consultor').value;try{localStorage.setItem(KEY,JSON.stringify(dados));}catch(e){}}
+render();
+</script>
+</body>
+</html>

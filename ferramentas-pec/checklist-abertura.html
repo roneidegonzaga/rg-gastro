@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Checklist de Abertura por Praça — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #011E34; --navy2: #062d4e;
+    --gold: #F7B700; --gold2: #FCC740;
+    --coral: #F25C54; --cream: #FFFEE8; --cream2: #F0EECC;
+    --white: #ffffff; --gray: #6b7280; --gray-l: #e5e7eb;
+    --ok: #22c55e; --ok-l: #dcfce7; --nao: #ef4444; --nao-l: #fee2e2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--navy); min-height: 100vh; }
+
+  .header { background: var(--navy); padding: 20px 32px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 3px solid var(--gold); }
+  .header-center { flex: 1; }
+  .header-eyebrow { font-size: 9px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--white); }
+
+  .id-bar { background: var(--navy2); padding: 12px 32px; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px 20px; }
+  .id-field { display: flex; flex-direction: column; gap: 3px; }
+  .id-label { font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .id-input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,.2); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 3px 0; outline: none; width: 100%; transition: border-color .2s; }
+  .id-input::placeholder { color: rgba(255,255,255,.3); }
+  .id-input:focus { border-bottom-color: var(--gold); }
+
+  /* BARRA DE DATA E HISTÓRICO */
+  .date-bar {
+    background: var(--white); border-bottom: 2px solid var(--gray-l);
+    padding: 12px 32px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .date-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); }
+  .date-input {
+    border: 1.5px solid var(--gray-l); border-radius: 4px;
+    padding: 6px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--navy); background: var(--cream); outline: none; transition: border-color .2s;
+  }
+  .date-input:focus { border-color: var(--gold); }
+  .date-sep { flex: 1; }
+  .btn-historico { padding: 6px 14px; border-radius: 4px; border: 1.5px solid var(--navy2); background: transparent; color: var(--navy2); font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s; letter-spacing: .5px; text-transform: uppercase; }
+  .btn-historico:hover { background: var(--navy2); color: white; }
+  .btn-novo-dia { padding: 6px 14px; border-radius: 4px; border: none; background: var(--gold); color: var(--navy); font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .15s; letter-spacing: .5px; text-transform: uppercase; }
+  .btn-novo-dia:hover { background: var(--gold2); }
+
+  /* HISTÓRICO MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: 8px; width: 100%; max-width: 520px; max-height: 70vh; overflow: hidden; display: flex; flex-direction: column; }
+  .modal-header { background: var(--navy); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: var(--white); }
+  .modal-close { background: transparent; border: none; color: rgba(255,255,255,.6); font-size: 20px; cursor: pointer; padding: 0 4px; }
+  .modal-close:hover { color: white; }
+  .modal-body { overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .hist-item { padding: 10px 14px; border-radius: 6px; background: var(--cream); border-left: 3px solid var(--gold); cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: space-between; }
+  .hist-item:hover { background: var(--cream2); }
+  .hist-data { font-size: 13px; font-weight: 600; color: var(--navy); }
+  .hist-resumo { font-size: 11px; color: var(--gray); }
+  .hist-pct { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--gold); }
+  .hist-vazio { text-align: center; color: var(--gray); font-size: 13px; padding: 24px; }
+
+  /* MAIN */
+  .main { max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* PROGRESSO GERAL */
+  .progresso-geral { background: var(--white); border-radius: 8px; box-shadow: 0 1px 6px rgba(1,30,52,.08); padding: 16px 24px; display: flex; align-items: center; gap: 20px; }
+  .prog-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--gray); white-space: nowrap; }
+  .prog-track { flex: 1; height: 10px; background: var(--gray-l); border-radius: 5px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--ok)); border-radius: 5px; transition: width .3s ease; width: 0%; }
+  .prog-pct { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--navy); min-width: 52px; text-align: right; }
+
+  /* CARD PRAÇA */
+  .praca-card { background: var(--white); border-radius: 8px; box-shadow: 0 1px 6px rgba(1,30,52,.08); overflow: hidden; }
+  .praca-header { padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .praca-titulo { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: var(--white); }
+  .praca-resp-input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,.3); color: white; font-family: 'DM Sans', sans-serif; font-size: 11px; width: 140px; outline: none; padding: 1px 0; }
+  .praca-resp-input::placeholder { color: rgba(255,255,255,.4); }
+  .praca-prog { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.8); background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 10px; }
+
+  /* ITENS */
+  .item-lista { list-style: none; }
+  .item-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; border-bottom: 1px solid var(--gray-l);
+    transition: background .1s; cursor: pointer;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row:hover { background: #fafaf2; }
+  .item-row.checked { background: var(--ok-l); }
+  .item-row.nao { background: var(--nao-l); }
+
+  .check-box {
+    width: 22px; height: 22px; border-radius: 4px;
+    border: 2px solid var(--gray-l); background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all .15s; font-size: 13px;
+  }
+  .item-row.checked .check-box { background: var(--ok); border-color: var(--ok); color: white; }
+  .item-row.nao .check-box { background: var(--nao); border-color: var(--nao); color: white; }
+
+  .item-texto { flex: 1; font-size: 14px; color: var(--navy); }
+  .item-row.checked .item-texto { color: var(--gray); text-decoration: line-through; }
+
+  .item-hora { font-size: 11px; color: var(--gray); white-space: nowrap; min-width: 44px; text-align: right; }
+
+  .btn-nao { background: transparent; border: 1px solid var(--gray-l); border-radius: 4px; color: var(--gray); font-size: 10px; font-weight: 600; padding: 3px 7px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .btn-nao:hover, .item-row.nao .btn-nao { background: var(--nao-l); border-color: var(--nao); color: var(--nao); }
+
+  .btn-rem-item { background: transparent; border: none; color: var(--gray-l); font-size: 16px; cursor: pointer; padding: 0 4px; transition: color .15s; }
+  .btn-rem-item:hover { color: var(--nao); }
+
+  .btn-add-item { width: 100%; padding: 9px; border: 1.5px dashed var(--gold); border-top: none; background: transparent; color: var(--gold); font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all .2s; text-transform: uppercase; letter-spacing: 1px; border-radius: 0 0 8px 8px; }
+  .btn-add-item:hover { background: var(--gold); color: var(--navy); }
+
+  /* ADD PRAÇA */
+  .btn-add-praca { width: 100%; padding: 12px; border: 2px dashed var(--navy2); border-radius: 8px; background: transparent; color: var(--navy2); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; letter-spacing: 1px; text-transform: uppercase; }
+  .btn-add-praca:hover { background: var(--navy); color: white; border-color: var(--navy); }
+
+  /* AÇÕES */
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn-acao { padding: 10px 24px; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: none; transition: all .2s; }
+  .btn-acao.primario { background: var(--gold); color: var(--navy); }
+  .btn-acao.primario:hover { background: var(--gold2); }
+  .btn-acao.secundario { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn-acao.secundario:hover { background: var(--navy); color: white; }
+
+  @media print {
+    .date-bar, .acoes, .btn-add-item, .btn-add-praca, .btn-rem-item, .btn-nao, .modal-overlay { display: none !important; }
+    body { background: white; }
+    .item-row.checked .item-texto { text-decoration: none; color: var(--navy); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-center">
+    <div class="header-eyebrow">RG Gastrô Educação</div>
+    <div class="header-title">Checklist de Abertura por Praça</div>
+  </div>
+</div>
+
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" id="nomeEstab" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Responsável geral</span><input class="id-input" type="text" id="respGeral" placeholder="Nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" id="consultor" placeholder="Seu nome" onchange="salvar()"></div>
+</div>
+
+<div class="date-bar">
+  <span class="date-label">Data</span>
+  <input class="date-input" type="date" id="dataAtual" onchange="mudarData()">
+  <div class="date-sep"></div>
+  <button class="btn-historico" onclick="abrirHistorico()">📋 Histórico</button>
+  <button class="btn-novo-dia" onclick="novoDia()">+ Novo dia</button>
+</div>
+
+<div class="main">
+  <div class="progresso-geral">
+    <span class="prog-label">Abertura</span>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <span class="prog-pct" id="progPct">0%</span>
+  </div>
+
+  <div id="pracasContainer"></div>
+  <button class="btn-add-praca" onclick="addPraca()">+ Adicionar praça</button>
+
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="salvar()">Salvar</button>
+  </div>
+</div>
+
+<!-- MODAL HISTÓRICO -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)fecharHistorico()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Histórico de Aberturas</span>
+      <button class="modal-close" onclick="fecharHistorico()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'rgGastro_checklist_abertura';
+const CORES_PRACAS = [
+  "#011E34","#3B82F6","#F25C54","#22C55E","#A855F7","#F97316","#06B6D4"
+];
+
+let dadosGerais = { estab: '', resp: '', consultor: '' };
+let diasData = {};
+let dataAtual = hoje();
+
+function hoje() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function formatarData(d) {
+  const [y,m,dia] = d.split('-');
+  return `${dia}/${m}/${y}`;
+}
+
+function diaVazio() {
+  return {
+    pracas: [
+      { nome: 'Frituras', responsavel: '', cor: CORES_PRACAS[0], itens: itensPadrao() },
+      { nome: 'Fogão', responsavel: '', cor: CORES_PRACAS[1], itens: itensPadrao() },
+      { nome: 'Saladas', responsavel: '', cor: CORES_PRACAS[2], itens: itensPadrao() },
+    ]
+  };
+}
+
+function itensPadrao() {
+  return [
+    { texto: 'Equipamentos ligados e em funcionamento', checked: false, nao: false, hora: null },
+    { texto: 'Insumos retirados do estoque conforme requisição', checked: false, nao: false, hora: null },
+    { texto: 'Mise en place completo', checked: false, nao: false, hora: null },
+    { texto: 'Utensílios limpos e no lugar', checked: false, nao: false, hora: null },
+    { texto: 'Temperatura dos equipamentos frios verificada', checked: false, nao: false, hora: null },
+  ];
+}
+
+function getDia() {
+  if (!diasData[dataAtual]) diasData[dataAtual] = diaVazio();
+  return diasData[dataAtual];
+}
+
+// ── RENDER ────────────────────────────────────────────
+function render() {
+  document.getElementById('dataAtual').value = dataAtual;
+  document.getElementById('nomeEstab').value = dadosGerais.estab || '';
+  document.getElementById('respGeral').value = dadosGerais.resp || '';
+  document.getElementById('consultor').value = dadosGerais.consultor || '';
+
+  const dia = getDia();
+  const container = document.getElementById('pracasContainer');
+  container.innerHTML = '';
+
+  dia.pracas.forEach((praca, pi) => renderPraca(praca, pi, container));
+  atualizarProgresso();
+}
+
+function renderPraca(praca, pi, container) {
+  const dia = getDia();
+  const total = praca.itens.length;
+  const ok = praca.itens.filter(i => i.checked).length;
+  const nao = praca.itens.filter(i => i.nao).length;
+
+  const card = document.createElement('div');
+  card.className = 'praca-card';
+  card.id = `card-${pi}`;
+
+  card.innerHTML = `
+    <div class="praca-header" style="background:${praca.cor}">
+      <div>
+        <div class="praca-titulo">${praca.nome}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+          <span style="font-size:10px;color:rgba(255,255,255,.5)">Responsável:</span>
+          <input class="praca-resp-input" placeholder="nome ou função" value="${praca.responsavel}"
+            onchange="getDia().pracas[${pi}].responsavel=this.value;salvar()">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="praca-prog">${ok}/${total}</span>
+        <button onclick="removePraca(${pi})" style="background:rgba(255,255,255,.15);border:none;color:white;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:10px">✕</button>
+      </div>
+    </div>
+    <ul class="item-lista" id="lista-${pi}">
+      ${praca.itens.map((item, ii) => renderItemHTML(item, pi, ii)).join('')}
+    </ul>
+    <button class="btn-add-item" onclick="addItem(${pi})">+ Adicionar item</button>
+  `;
+  container.appendChild(card);
+}
+
+function renderItemHTML(item, pi, ii) {
+  const cls = item.checked ? 'checked' : item.nao ? 'nao' : '';
+  const icon = item.checked ? '✓' : item.nao ? '✕' : '';
+  const hora = item.hora ? `<span class="item-hora">${item.hora}</span>` : '';
+  return `
+  <li class="item-row ${cls}" onclick="toggleItem(${pi},${ii})">
+    <div class="check-box">${icon}</div>
+    <span class="item-texto">${item.texto}</span>
+    ${hora}
+    <button class="btn-nao" onclick="event.stopPropagation();marcarNao(${pi},${ii})" title="Marcar como não realizado">N/R</button>
+    <button class="btn-rem-item" onclick="event.stopPropagation();removeItem(${pi},${ii})" title="Remover item">×</button>
+  </li>`;
+}
+
+// ── AÇÕES ─────────────────────────────────────────────
+function toggleItem(pi, ii) {
+  const item = getDia().pracas[pi].itens[ii];
+  if (item.nao) { item.nao = false; item.checked = false; item.hora = null; }
+  else if (!item.checked) { item.checked = true; item.hora = horaAgora(); }
+  else { item.checked = false; item.hora = null; }
+  salvar(); render();
+}
+
+function marcarNao(pi, ii) {
+  const item = getDia().pracas[pi].itens[ii];
+  item.nao = !item.nao;
+  item.checked = false;
+  item.hora = item.nao ? horaAgora() : null;
+  salvar(); render();
+}
+
+function horaAgora() {
+  return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addItem(pi) {
+  const texto = prompt('Descrição do item:');
+  if (!texto) return;
+  getDia().pracas[pi].itens.push({ texto, checked: false, nao: false, hora: null });
+  salvar(); render();
+}
+
+function removeItem(pi, ii) {
+  const pracas = getDia().pracas;
+  if (pracas[pi].itens.length <= 1) return;
+  pracas[pi].itens.splice(ii, 1);
+  salvar(); render();
+}
+
+function addPraca() {
+  const nome = prompt('Nome da praça:');
+  if (!nome) return;
+  const pi = getDia().pracas.length;
+  getDia().pracas.push({
+    nome, responsavel: '',
+    cor: CORES_PRACAS[pi % CORES_PRACAS.length],
+    itens: itensPadrao()
+  });
+  salvar(); render();
+}
+
+function removePraca(pi) {
+  if (!confirm(`Remover a praça "${getDia().pracas[pi].nome}"?`)) return;
+  getDia().pracas.splice(pi, 1);
+  salvar(); render();
+}
+
+function atualizarProgresso() {
+  const dia = getDia();
+  const total = dia.pracas.reduce((a, p) => a + p.itens.length, 0);
+  const ok = dia.pracas.reduce((a, p) => a + p.itens.filter(i => i.checked).length, 0);
+  const pct = total > 0 ? Math.round(ok / total * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progPct').textContent = pct + '%';
+}
+
+function mudarData() {
+  dataAtual = document.getElementById('dataAtual').value;
+  render();
+}
+
+function novoDia() {
+  const novaData = hoje();
+  if (diasData[novaData] && !confirm('Já existe um checklist para hoje. Substituir?')) return;
+  dataAtual = novaData;
+  // Copiar estrutura de praças do último dia mas zerar checks
+  const ultimoDia = Object.keys(diasData).sort().pop();
+  if (ultimoDia && diasData[ultimoDia]) {
+    diasData[dataAtual] = {
+      pracas: JSON.parse(JSON.stringify(diasData[ultimoDia].pracas)).map(p => ({
+        ...p, itens: p.itens.map(i => ({ ...i, checked: false, nao: false, hora: null }))
+      }))
+    };
+  } else {
+    diasData[dataAtual] = diaVazio();
+  }
+  salvar(); render();
+}
+
+// ── HISTÓRICO ─────────────────────────────────────────
+function abrirHistorico() {
+  const body = document.getElementById('modalBody');
+  const datas = Object.keys(diasData).sort().reverse();
+  if (datas.length === 0) {
+    body.innerHTML = '<div class="hist-vazio">Nenhum histórico salvo ainda.</div>';
+  } else {
+    body.innerHTML = datas.map(d => {
+      const dia = diasData[d];
+      const total = dia.pracas.reduce((a, p) => a + p.itens.length, 0);
+      const ok = dia.pracas.reduce((a, p) => a + p.itens.filter(i => i.checked).length, 0);
+      const pct = total > 0 ? Math.round(ok / total * 100) : 0;
+      const ativo = d === dataAtual ? ' style="border-left-color:var(--ok)"' : '';
+      return `<div class="hist-item"${ativo} onclick="carregarDia('${d}')">
+        <div>
+          <div class="hist-data">${formatarData(d)}${d === hoje() ? ' <span style="font-size:10px;background:var(--gold);color:var(--navy);border-radius:3px;padding:1px 5px;font-weight:700">HOJE</span>' : ''}</div>
+          <div class="hist-resumo">${ok} de ${total} itens concluídos · ${dia.pracas.length} praças</div>
+        </div>
+        <span class="hist-pct">${pct}%</span>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function carregarDia(d) {
+  dataAtual = d;
+  fecharHistorico();
+  render();
+}
+
+function fecharHistorico() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ── PERSISTÊNCIA ──────────────────────────────────────
+function salvar() {
+  dadosGerais.estab = document.getElementById('nomeEstab').value;
+  dadosGerais.resp = document.getElementById('respGeral').value;
+  dadosGerais.consultor = document.getElementById('consultor').value;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ dadosGerais, diasData }));
+  } catch(e) { console.warn('localStorage indisponível'); }
+}
+
+function carregar() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved.dadosGerais) dadosGerais = saved.dadosGerais;
+      if (saved.diasData) diasData = saved.diasData;
+    }
+  } catch(e) {}
+}
+
+// ── INIT ──────────────────────────────────────────────
+carregar();
+if (!diasData[dataAtual]) diasData[dataAtual] = diaVazio();
+render();
+</script>
+</body>
+</html>

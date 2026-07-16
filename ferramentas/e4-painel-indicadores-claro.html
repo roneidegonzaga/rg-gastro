@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Indicadores | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(28px,4vw,48px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 10px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 14px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+.tabs-bar { display: flex; padding: 0 48px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 13px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn:hover:not(.active) { color: var(--cream); }
+
+main { max-width: 960px; margin: 0 auto; padding: 36px 48px 80px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* PAINEL DE INDICADORES */
+.painel-data { font-size: 11px; color: var(--muted); margin-bottom: 24px; letter-spacing: 1px; }
+.indicadores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+
+/* CARD DE INDICADOR */
+.ind-card { border: 1px solid var(--border); padding: 20px; transition: border-color 0.25s; position: relative; overflow: hidden; }
+.ind-card.verde { border-color: rgba(26,94,42,0.45); background: rgba(26,94,42,0.06); }
+.ind-card.amarelo { border-color: rgba(122,64,8,0.45); background: rgba(122,64,8,0.06); }
+.ind-card.vermelho { border-color: rgba(122,32,32,0.45); background: rgba(122,32,32,0.06); }
+.ind-card.neutro { border-color: var(--border); background: rgba(1,30,52,0.04); }
+.ind-status-bar { position: absolute; top: 0; left: 0; width: 3px; height: 100%; }
+.ind-card.verde .ind-status-bar { background: #4a7c59; }
+.ind-card.amarelo .ind-status-bar { background: #b97e10; }
+.ind-card.vermelho .ind-status-bar { background: #8b3a3a; }
+.ind-card.neutro .ind-status-bar { background: rgba(2,82,145,0.06); }
+.ind-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; padding-left: 10px; }
+.ind-valor { font-family: 'Manrope', sans-serif; font-size: 38px; font-weight: 300; line-height: 1; padding-left: 10px; margin-bottom: 4px; }
+.ind-card.verde .ind-valor { color: #1a5e2a; }
+.ind-card.amarelo .ind-valor { color: #7a4008; }
+.ind-card.vermelho .ind-valor { color: #7a2020; }
+.ind-card.neutro .ind-valor { color: var(--gold); }
+.ind-meta { font-size: 11px; color: var(--muted); padding-left: 10px; margin-bottom: 8px; }
+.ind-interpretacao { font-size: 11px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.6; padding: 8px 10px; border-top: 1px solid rgba(91,145,188,0.1); margin-top: 8px; }
+
+/* FORMULÁRIO DE ATUALIZAÇÃO */
+.form-atualizar { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 24px 28px; margin-bottom: 32px; display: none; }
+.form-atualizar.open { display: block; }
+.form-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold-light); margin-bottom: 20px; }
+.ind-form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.fb { display: flex; flex-direction: column; gap: 7px; }
+.fb-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+.fb-hint { font-size: 11px; color: rgba(1,30,52,0.4); margin-top: -4px; line-height: 1.5; }
+.inp-wrap { position: relative; }
+.inp-prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
+.inp-suffix { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
+input[type="number"].f {
+  font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 10px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px;
+}
+input[type="number"].f.com-rs { padding-left: 32px; }
+input[type="number"].f.com-pct { padding-right: 28px; }
+input[type="number"].f::placeholder { color: rgba(1,30,52,0.4); }
+input[type="number"].f:focus { border-color: var(--gold); }
+input[type="text"].f {
+  font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 10px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px;
+}
+input[type="text"].f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="text"].f:focus { border-color: var(--gold); }
+
+.form-actions { display: flex; gap: 10px; }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 12px 28px; cursor: pointer; transition: all 0.25s; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; position: relative; overflow: hidden; }
+.btn-gold::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-gold:hover::after { transform: translateX(0); }
+.btn-gold span { position: relative; z-index: 1; }
+.btn-gold:hover span { color: var(--gold); }
+.btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+.btn-red-sm { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); font-size: 10px; padding: 5px 10px; }
+.btn-red-sm:hover { background: rgba(122,32,32,0.25); }
+.toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+
+/* LEITURA GERAL */
+.leitura-geral { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 22px 26px; margin-bottom: 32px; }
+.lg-titulo { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold-light); margin-bottom: 10px; }
+.lg-texto { font-size: 13px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.8; }
+.lg-texto strong { font-weight: 500; color: var(--cream); }
+
+/* HISTÓRICO */
+.hist-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--border); font-weight: 400; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid rgba(91,145,188,0.06); }
+tbody tr:hover { background: rgba(1,30,52,0.04); }
+td { padding: 10px 12px; vertical-align: middle; }
+.td-data { font-weight: 500; color: var(--cream); }
+.td-num { font-family: 'Manrope', sans-serif; font-size: 16px; color: var(--gold-light); }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
+.dot-verde { background: #4a7c59; }
+.dot-amarelo { background: #b97e10; }
+.dot-vermelho { background: #8b3a3a; }
+
+/* METAS */
+.meta-card { border: 1px solid var(--border); padding: 18px 20px; margin-bottom: 12px; }
+.meta-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.meta-nome { font-size: 13px; font-weight: 500; color: var(--cream); }
+.meta-vals { display: flex; gap: 20px; flex-wrap: wrap; }
+.meta-val-item { display: flex; flex-direction: column; gap: 2px; }
+.mv-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.mv-val { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold); }
+.meta-barra { margin-top: 8px; }
+.mb-track { height: 5px; background: rgba(1,30,52,0.04); border-radius: 3px; overflow: hidden; }
+.mb-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.mb-label { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+.empty-state { text-align: center; padding: 44px 20px; color: var(--muted); }
+.empty-icon { font-size: 34px; margin-bottom: 12px; opacity: 0.35; }
+.empty-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; line-height: 1.7; }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, .tabs-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .indicadores-grid { grid-template-columns: 1fr 1fr; }
+  .ind-form-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.periodo-selects { display: flex; gap: 8px; align-items: center; }
+.periodo-selects select.fi { flex: 1; min-width: 100px; font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; outline: none; color-scheme: light; cursor: pointer; }
+.periodo-selects select.f { flex: 1; }
+
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Painel de<br><em>Indicadores</em></h1>
+    <p class="hsub">Os números que dizem se o negócio está nos trilhos. Atualize uma vez por semana e delegue a execução sabendo que vai ver o resultado.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo E · E4</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+  <div class="fg" style="gap:8px;align-items:center">
+    <span class="fl">Período</span>
+    <div class="periodo-selects">
+      <div style="position:relative">
+        <select class="fi" id="sel_mes" onchange="syncPeriodo()" style="appearance:none;padding-right:16px">
+          <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+          <option value="03">Março</option><option value="04">Abril</option>
+          <option value="05">Maio</option><option value="06">Junho</option>
+          <option value="07">Julho</option><option value="08">Agosto</option>
+          <option value="09">Setembro</option><option value="10">Outubro</option>
+          <option value="11">Novembro</option><option value="12">Dezembro</option>
+        </select><span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:9px">▾</span>
+      </div>
+      <div style="position:relative">
+        <select class="fi" id="sel_ano" onchange="syncPeriodo()" style="appearance:none;padding-right:16px"></select>
+        <span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:9px">▾</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="ativarTab('painel',this)">Painel</button>
+  <button class="tab-btn" onclick="ativarTab('atualizar',this)">Atualizar</button>
+  <button class="tab-btn" onclick="ativarTab('metas',this)">Metas</button>
+  <button class="tab-btn" onclick="ativarTab('historico',this)">Histórico</button>
+</div>
+
+<main>
+
+  <!-- PAINEL -->
+  <div class="tab-panel active" id="tab-painel">
+    <div id="painelContent"></div>
+    <div class="empty-state" id="emptyPainel" style="display:none">
+      <div class="empty-icon">📊</div>
+      <p class="empty-title">Nenhum dado registrado</p>
+      <p class="empty-sub">Vá para "Atualizar" e preencha os indicadores do período atual.</p>
+    </div>
+  </div>
+
+  <!-- ATUALIZAR -->
+  <div class="tab-panel" id="tab-atualizar">
+    <p style="font-size:12px;font-weight:300;color:var(--muted);line-height:1.7;margin-bottom:24px">Preencha os indicadores do período. Não precisa preencher todos de uma vez. Os que ficarem em branco não aparecerão no painel.</p>
+
+    <div style="margin-bottom:20px">
+      <p style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:8px">Período de referência</p>
+      <div style="display:flex;gap:8px;align-items:center;max-width:320px">
+        <div style="flex:1;position:relative">
+          <select class="f" id="upd_mes" onchange="syncUpdPeriodo()" style="appearance:none;padding-right:20px;color-scheme:light">
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Março</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option>
+            <option value="09">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+          <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▾</span>
+        </div>
+        <div style="flex:1;position:relative">
+          <select class="f" id="upd_ano" onchange="syncUpdPeriodo()" style="appearance:none;padding-right:20px;color-scheme:light"></select>
+          <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▾</span>
+        </div>
+      </div>
+      <input type="hidden" id="upd_periodo">
+    </div>
+
+    <p style="font-family:'Manrope',serif;font-size:18px;font-weight:300;color:var(--gold-light);margin-bottom:14px">Financeiro</p>
+    <div class="ind-form-grid" style="margin-bottom:24px">
+      <div class="fb">
+        <label class="fb-label">Faturamento do período (R$)</label>
+        <div class="inp-wrap"><span class="inp-prefix">R$</span><input type="number" class="f com-rs" id="upd_fat" placeholder="0,00" min="0" step="0.01"></div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Custo de insumos / CMV (R$)</label>
+        <div class="inp-wrap"><span class="inp-prefix">R$</span><input type="number" class="f com-rs" id="upd_cmv" placeholder="0,00" min="0" step="0.01"></div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Resultado (lucro ou prejuízo) (R$)</label>
+        <div class="inp-wrap"><span class="inp-prefix">R$</span><input type="number" class="f com-rs" id="upd_resultado" placeholder="0,00" step="0.01"></div>
+      </div>
+    </div>
+
+    <p style="font-family:'Manrope',serif;font-size:18px;font-weight:300;color:var(--gold-light);margin-bottom:14px">Operacional</p>
+    <div class="ind-form-grid" style="margin-bottom:24px">
+      <div class="fb">
+        <label class="fb-label">Ticket médio (R$)</label>
+        <div class="inp-wrap"><span class="inp-prefix">R$</span><input type="number" class="f com-rs" id="upd_ticket" placeholder="0,00" min="0" step="0.01"></div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Clientes atendidos</label>
+        <input type="number" class="f" id="upd_clientes" placeholder="Ex: 320" min="0" step="1">
+      </div>
+      <div class="fb">
+        <label class="fb-label">Dias trabalhados</label>
+        <input type="number" class="f" id="upd_dias" placeholder="Ex: 6" min="0" max="7" step="1">
+      </div>
+    </div>
+
+    <p style="font-family:'Manrope',serif;font-size:18px;font-weight:300;color:var(--gold-light);margin-bottom:14px">Equipe e estoque</p>
+    <div class="ind-form-grid" style="margin-bottom:24px">
+      <div class="fb">
+        <label class="fb-label">Faltas na equipe (qtd. no período)</label>
+        <input type="number" class="f" id="upd_faltas" placeholder="Ex: 2" min="0" step="1">
+      </div>
+      <div class="fb">
+        <label class="fb-label">Itens em alerta de estoque</label>
+        <p class="fb-hint">Itens abaixo do mínimo no O5</p>
+        <input type="number" class="f" id="upd_estoque_alerta" placeholder="Ex: 3" min="0" step="1">
+      </div>
+      <div class="fb">
+        <label class="fb-label">Observação do período</label>
+        <input type="text" class="f" id="upd_obs" placeholder="Contexto relevante...">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-gold" onclick="salvarPeriodo()"><span>Salvar período</span></button>
+      <button class="btn btn-outline" onclick="limparForm()">Limpar</button>
+    </div>
+    <div id="updFeedback" style="display:none;margin-top:14px;padding:12px 14px;font-size:12px;font-weight:300;border:1px solid;border-radius:1px"></div>
+  </div>
+
+  <!-- METAS -->
+  <div class="tab-panel" id="tab-metas">
+    <p style="font-size:12px;font-weight:300;color:var(--muted);line-height:1.7;margin-bottom:24px">Defina as metas para cada indicador. O painel mostrará automaticamente se você está dentro ou fora do esperado.</p>
+    <div class="ind-form-grid" style="margin-bottom:20px">
+      <div class="fb">
+        <label class="fb-label">Meta de faturamento mensal (R$)</label>
+        <div class="inp-wrap"><span class="inp-prefix">R$</span><input type="number" class="f com-rs" id="meta_fat" placeholder="0,00" min="0" step="100"></div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">CMV máximo aceitável (%)</label>
+        <div class="inp-wrap"><input type="number" class="f com-pct" id="meta_cmv" placeholder="Ex: 35" min="0" max="100" step="0.5"><span class="inp-suffix">%</span></div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Margem mínima desejada (%)</label>
+        <div class="inp-wrap"><input type="number" class="f com-pct" id="meta_margem" placeholder="Ex: 15" min="0" max="100" step="0.5"><span class="inp-suffix">%</span></div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Ticket médio mínimo (R$)</label>
+        <div class="inp-wrap"><span class="inp-prefix">R$</span><input type="number" class="f com-rs" id="meta_ticket" placeholder="0,00" min="0" step="0.50"></div>
+      </div>
+      <div class="fb">
+        <label class="fb-label">Máximo de faltas por semana</label>
+        <input type="number" class="f" id="meta_faltas" placeholder="Ex: 2" min="0" step="1">
+      </div>
+      <div class="fb">
+        <label class="fb-label">Máximo de itens em alerta de estoque</label>
+        <input type="number" class="f" id="meta_estoque" placeholder="Ex: 3" min="0" step="1">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gold" onclick="salvarMetas()"><span>Salvar metas</span></button>
+    </div>
+    <div id="metaFeedback" style="display:none;margin-top:14px;padding:12px 14px;font-size:12px;font-weight:300;border:1px solid rgba(26,94,42,0.3);background:rgba(26,94,42,0.1);color:#1a5e2a;border-radius:1px">Metas salvas.</div>
+
+    <div id="metaVisual" style="margin-top:32px"></div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="tab-panel" id="tab-historico">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+      <button class="btn btn-outline btn-sm" onclick="limparHistorico()">Limpar histórico</button>
+    </div>
+    <div class="hist-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Faturamento</th>
+            <th>CMV</th>
+            <th>Resultado</th>
+            <th>Ticket médio</th>
+            <th>Faltas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyHist"></tbody>
+      </table>
+      <div class="empty-state" id="emptyHist" style="display:none">
+        <div class="empty-icon">📈</div>
+        <p class="empty-title">Nenhum período registrado</p>
+        <p class="empty-sub">Atualize os indicadores para começar o histórico.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta E4 · Painel de Indicadores</span>
+</footer>
+
+<script>
+
+
+const MESES_LABELS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function popularAnosE4(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const anoAtual = new Date().getFullYear();
+  sel.innerHTML = '';
+  for (let a = anoAtual + 1; a >= anoAtual - 5; a--) {
+    const opt = document.createElement('option');
+    opt.value = a; opt.textContent = a;
+    if (a === anoAtual) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+function getPeriodoE4(mesId, anoId) {
+  const mes = document.getElementById(mesId);
+  const ano = document.getElementById(anoId);
+  if (!mes || !ano) return '';
+  return MESES_LABELS[parseInt(mes.value) - 1] + ' ' + ano.value;
+}
+function setMesAnoAtualE4(mesId, anoId) {
+  const agora = new Date();
+  const mes = document.getElementById(mesId);
+  const ano = document.getElementById(anoId);
+  if (mes) mes.value = String(agora.getMonth() + 1).padStart(2, '0');
+  if (ano) ano.value = agora.getFullYear();
+}
+function syncPeriodo() {
+  const val = getPeriodoE4('sel_mes', 'sel_ano');
+  document.getElementById('upd_periodo').value = val;
+}
+function syncUpdPeriodo() {
+  document.getElementById('upd_periodo').value = getPeriodoE4('upd_mes', 'upd_ano');
+}
+
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatBRLNum(valor, casas) {
+  if (valor === null || valor === undefined || isNaN(valor)) return '--';
+  casas = casas !== undefined ? casas : 2;
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+}
+
+let periodos = JSON.parse(localStorage.getItem('dose-indicadores') || '[]');
+popularAnosE4('sel_ano');
+setMesAnoAtualE4('sel_mes', 'sel_ano');
+syncPeriodo();
+popularAnosE4('upd_ano');
+setMesAnoAtualE4('upd_mes', 'upd_ano');
+syncUpdPeriodo();
+let metas = JSON.parse(localStorage.getItem('dose-indicadores-metas') || '{}');
+
+document.getElementById('rname').value = localStorage.getItem('dose-ind-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-ind-rname', e.target.value));
+// Período agora é controlado pelos selects sel_mes e sel_ano
+
+carregarMetas();
+renderPainel();
+
+function salvar() {
+  localStorage.setItem('dose-indicadores', JSON.stringify(periodos));
+}
+
+function ativarTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'historico') renderHistorico();
+  if (id === 'metas') renderMetaVisual();
+}
+
+function fmt(v) { return 'R$ ' + formatBRL(v||0); }
+function fmtPct(v) { return formatBRLNum(v||0, 1) + '%'; }
+
+// SALVAR PERÍODO
+function salvarPeriodo() {
+  const periodo = getPeriodoE4('upd_mes', 'upd_ano');
+  const fat = parseFloat(document.getElementById('upd_fat').value) || null;
+  const cmvVal = parseFloat(document.getElementById('upd_cmv').value) || null;
+  const resultado = parseFloat(document.getElementById('upd_resultado').value) || null;
+  const ticket = parseFloat(document.getElementById('upd_ticket').value) || null;
+  const clientes = parseFloat(document.getElementById('upd_clientes').value) || null;
+  const dias = parseFloat(document.getElementById('upd_dias').value) || null;
+  const faltas = parseFloat(document.getElementById('upd_faltas').value) ?? null;
+  const estoqueAlerta = parseFloat(document.getElementById('upd_estoque_alerta').value) ?? null;
+  const obs = document.getElementById('upd_obs').value.trim();
+  const fb = document.getElementById('updFeedback');
+
+  if (!periodo) {
+    fb.style.display = 'block';
+    fb.style.background = 'rgba(122,32,32,0.1)'; fb.style.borderColor = 'rgba(122,32,32,0.3)'; fb.style.color = '#c07070';
+    fb.textContent = 'Informe o período de referência.';
+    return;
+  }
+
+  const cmvPct = fat && cmvVal ? (cmvVal / fat) * 100 : null;
+  const margem = fat && resultado !== null ? (resultado / fat) * 100 : null;
+
+  const registro = { id: Date.now(), periodo, fat, cmvVal, cmvPct, resultado, margem, ticket, clientes, dias, faltas, estoqueAlerta, obs, data: new Date().toLocaleDateString('pt-BR') };
+  periodos.unshift(registro);
+  salvar();
+
+  fb.style.display = 'block';
+  fb.style.background = 'rgba(26,94,42,0.1)'; fb.style.borderColor = 'rgba(26,94,42,0.3)'; fb.style.color = '#1a5e2a';
+  fb.textContent = `Período "${periodo}" salvo com sucesso.`;
+  setTimeout(() => fb.style.display = 'none', 3000);
+
+  document.getElementById('periodo').value = periodo;
+  renderPainel();
+}
+
+function limparForm() {
+  ['upd_fat','upd_cmv','upd_resultado','upd_ticket','upd_clientes','upd_dias','upd_faltas','upd_estoque_alerta','upd_obs'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
+// STATUS
+function status(valor, meta, modoMin) {
+  if (valor === null || valor === undefined) return 'neutro';
+  if (!meta) return 'neutro';
+  if (modoMin) return valor >= meta ? 'verde' : valor >= meta * 0.9 ? 'amarelo' : 'vermelho';
+  return valor <= meta ? 'verde' : valor <= meta * 1.1 ? 'amarelo' : 'vermelho';
+}
+
+function interpretacao(campo, valor, meta, ultimo) {
+  if (valor === null) return '';
+  const prev = ultimo ? ultimo[campo] : null;
+  const tendencia = prev !== null && prev !== undefined ? (valor > prev ? 'subiu' : valor < prev ? 'caiu' : 'estável') : null;
+  const tendTxt = tendencia ? ` ${tendencia === 'subiu' ? '(subindo)' : tendencia === 'caiu' ? '(caindo)' : '(estável)'}` : '';
+  if (campo === 'cmvPct') {
+    return meta ? `Meta: até ${fmtPct(meta)}. Atual: ${fmtPct(valor)}${tendTxt}.` + (valor <= meta ? ' Dentro do ideal.' : ` ${fmtPct(valor - meta)} acima da meta.`) : `CMV atual: ${fmtPct(valor)}${tendTxt}.`;
+  }
+  if (campo === 'margem') {
+    return meta ? `Meta: acima de ${fmtPct(meta)}. Atual: ${fmtPct(valor)}${tendTxt}.` + (valor >= meta ? ' Dentro do esperado.' : ` ${fmtPct(meta - valor)} abaixo da meta.`) : `Margem atual: ${fmtPct(valor)}${tendTxt}.`;
+  }
+  if (campo === 'fat') {
+    return meta ? `Meta: ${fmt(meta)}. Atual: ${fmt(valor)}${tendTxt}.` + (valor >= meta ? ' Meta atingida.' : ` Faltam ${fmt(meta - valor)}.`) : `Faturamento: ${fmt(valor)}${tendTxt}.`;
+  }
+  if (campo === 'ticket') {
+    return meta ? `Meta: acima de ${fmt(meta)}.${tendTxt}` + (valor >= meta ? ' Meta atingida.' : ` ${fmt(meta - valor)} abaixo da meta.`) : `Ticket médio: ${fmt(valor)}${tendTxt}.`;
+  }
+  if (campo === 'faltas') {
+    return meta !== null ? `Limite: ${meta} por período. Atual: ${valor}.` + (valor <= meta ? ' Dentro do aceitável.' : ` ${valor - meta} acima do limite.`) : `Faltas no período: ${valor}.`;
+  }
+  if (campo === 'estoqueAlerta') {
+    return meta !== null ? `Limite: ${meta} itens em alerta. Atual: ${valor}.` + (valor <= meta ? ' Estoque sob controle.' : ` ${valor - meta} acima do tolerado.`) : `Itens em alerta: ${valor}.`;
+  }
+  return '';
+}
+
+// RENDER PAINEL
+function renderPainel() {
+  const el = document.getElementById('painelContent');
+  const empty = document.getElementById('emptyPainel');
+
+  if (periodos.length === 0) { el.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  const atual = periodos[0];
+  const anterior = periodos[1] || null;
+
+  const indicadores = [
+    { campo: 'fat', label: 'Faturamento', valor: atual.fat, formatado: atual.fat !== null ? fmt(atual.fat) : null, meta: metas.fat, modoMin: true },
+    { campo: 'cmvPct', label: 'CMV', valor: atual.cmvPct, formatado: atual.cmvPct !== null ? fmtPct(atual.cmvPct) : null, meta: metas.cmv, modoMin: false },
+    { campo: 'margem', label: 'Margem', valor: atual.margem, formatado: atual.margem !== null ? fmtPct(atual.margem) : null, meta: metas.margem, modoMin: true },
+    { campo: 'ticket', label: 'Ticket médio', valor: atual.ticket, formatado: atual.ticket !== null ? fmt(atual.ticket) : null, meta: metas.ticket, modoMin: true },
+    { campo: 'faltas', label: 'Faltas na equipe', valor: atual.faltas, formatado: atual.faltas !== null ? String(atual.faltas) : null, meta: metas.faltas, modoMin: false },
+    { campo: 'estoqueAlerta', label: 'Itens em alerta de estoque', valor: atual.estoqueAlerta, formatado: atual.estoqueAlerta !== null ? String(atual.estoqueAlerta) : null, meta: metas.estoque, modoMin: false },
+  ].filter(i => i.valor !== null && i.valor !== undefined);
+
+  if (indicadores.length === 0) { el.innerHTML = `<div class="empty-state"><p class="empty-sub">Nenhum indicador foi preenchido neste período.</p></div>`; return; }
+
+  const cardsHtml = indicadores.map(ind => {
+    const st = status(ind.valor, ind.meta, ind.modoMin);
+    const interp = interpretacao(ind.campo, ind.valor, ind.meta, anterior);
+    return `<div class="ind-card ${st}">
+      <div class="ind-status-bar"></div>
+      <p class="ind-label">${ind.label}</p>
+      <p class="ind-valor">${ind.formatado}</p>
+      ${ind.meta !== undefined && ind.meta !== null ? `<p class="ind-meta">Meta: ${ind.campo==='fat'||ind.campo==='ticket'?fmt(ind.meta):ind.campo==='faltas'||ind.campo==='estoqueAlerta'?ind.meta:fmtPct(ind.meta)}</p>` : ''}
+      ${interp ? `<p class="ind-interpretacao">${interp}</p>` : ''}
+    </div>`;
+  }).join('');
+
+  // Leitura geral
+  const verdes = indicadores.filter(i => status(i.valor, i.meta, i.modoMin) === 'verde').length;
+  const vermelhos = indicadores.filter(i => status(i.valor, i.meta, i.modoMin) === 'vermelho').length;
+  const total = indicadores.filter(i => i.meta !== undefined && i.meta !== null).length;
+
+  let leituraTexto = '';
+  if (total === 0) {
+    leituraTexto = `Você tem <strong>${indicadores.length} indicador(es)</strong> registrado(s) para o período <strong>"${atual.periodo}"</strong>. Defina metas na aba "Metas" para ver o status de cada indicador em verde, amarelo ou vermelho.`;
+  } else if (vermelhos === 0) {
+    leituraTexto = `Período <strong>"${atual.periodo}"</strong>: todos os ${total} indicadores com meta estão dentro do esperado. ${verdes === total ? 'Negócio nos trilhos.' : 'Alguns ainda em atenção.'}`;
+  } else {
+    leituraTexto = `Período <strong>"${atual.periodo}"</strong>: ${verdes} de ${total} indicadores dentro da meta. <strong>${vermelhos} indicador(es) precisam de atenção.</strong> Revise os cartões em vermelho acima para entender o que está fora do esperado.`;
+  }
+
+  if (atual.obs) leituraTexto += ` Observação do período: "${atual.obs}".`;
+
+  el.innerHTML = `
+    <p class="painel-data">Período atual: ${atual.periodo} · Atualizado em ${atual.data}</p>
+    <div class="leitura-geral">
+      <p class="lg-titulo">Leitura do período</p>
+      <p class="lg-texto">${leituraTexto}</p>
+    </div>
+    <div class="indicadores-grid">${cardsHtml}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="ativarTab('atualizar',document.querySelectorAll('.tab-btn')[1])">Atualizar indicadores</button>
+      ${periodos.length > 1 ? `<button class="btn btn-outline btn-sm" onclick="ativarTab('historico',document.querySelectorAll('.tab-btn')[3])">Ver histórico</button>` : ''}
+    </div>`;
+}
+
+// METAS
+function salvarMetas() {
+  metas = {
+    fat: parseFloat(document.getElementById('meta_fat').value) || null,
+    cmv: parseFloat(document.getElementById('meta_cmv').value) || null,
+    margem: parseFloat(document.getElementById('meta_margem').value) || null,
+    ticket: parseFloat(document.getElementById('meta_ticket').value) || null,
+    faltas: parseFloat(document.getElementById('meta_faltas').value) ?? null,
+    estoque: parseFloat(document.getElementById('meta_estoque').value) ?? null,
+  };
+  localStorage.setItem('dose-indicadores-metas', JSON.stringify(metas));
+  document.getElementById('metaFeedback').style.display = 'block';
+  setTimeout(() => document.getElementById('metaFeedback').style.display = 'none', 2000);
+  renderPainel();
+  renderMetaVisual();
+}
+
+function carregarMetas() {
+  if (metas.fat) document.getElementById('meta_fat').value = metas.fat;
+  if (metas.cmv) document.getElementById('meta_cmv').value = metas.cmv;
+  if (metas.margem) document.getElementById('meta_margem').value = metas.margem;
+  if (metas.ticket) document.getElementById('meta_ticket').value = metas.ticket;
+  if (metas.faltas !== undefined && metas.faltas !== null) document.getElementById('meta_faltas').value = metas.faltas;
+  if (metas.estoque !== undefined && metas.estoque !== null) document.getElementById('meta_estoque').value = metas.estoque;
+}
+
+function renderMetaVisual() {
+  const el = document.getElementById('metaVisual');
+  if (periodos.length === 0 || Object.values(metas).every(v => v === null || v === undefined)) { el.innerHTML = ''; return; }
+  const atual = periodos[0];
+  const items = [
+    { label: 'Faturamento', atual: atual.fat, meta: metas.fat, fmt: fmt, modoMin: true },
+    { label: 'CMV', atual: atual.cmvPct, meta: metas.cmv, fmt: fmtPct, modoMin: false, inverso: true },
+    { label: 'Margem', atual: atual.margem, meta: metas.margem, fmt: fmtPct, modoMin: true },
+    { label: 'Ticket médio', atual: atual.ticket, meta: metas.ticket, fmt: fmt, modoMin: true },
+  ].filter(i => i.atual !== null && i.atual !== undefined && i.meta !== null && i.meta !== undefined);
+
+  if (items.length === 0) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `<p style="font-family:'Manrope',serif;font-size:18px;font-weight:300;color:var(--gold-light);margin-bottom:16px">Progresso em relação às metas</p>` +
+    items.map(item => {
+      const pct = item.modoMin ? Math.min((item.atual / item.meta) * 100, 120) : Math.max(0, 100 - ((item.atual - item.meta) / item.meta) * 100);
+      const cor = status(item.atual, item.meta, item.modoMin);
+      const corHex = cor === 'verde' ? '#4a7c59' : cor === 'amarelo' ? '#b97e10' : '#8b3a3a';
+      return `<div class="meta-card">
+        <div class="meta-header">
+          <span class="meta-nome">${item.label}</span>
+        </div>
+        <div class="meta-vals">
+          <div class="meta-val-item"><p class="mv-label">Atual</p><p class="mv-val">${item.fmt(item.atual)}</p></div>
+          <div class="meta-val-item"><p class="mv-label">Meta</p><p class="mv-val" style="color:var(--muted)">${item.fmt(item.meta)}</p></div>
+        </div>
+        <div class="meta-barra">
+          <div class="mb-track"><div class="mb-fill" style="width:${Math.min(pct,100)}%;background:${corHex}"></div></div>
+          <p class="mb-label">${Math.round(pct)}% da meta atingida</p>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// HISTÓRICO
+function renderHistorico() {
+  const tbody = document.getElementById('tbodyHist');
+  const empty = document.getElementById('emptyHist');
+  if (periodos.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = periodos.map(p => {
+    const cmvSt = p.cmvPct !== null ? status(p.cmvPct, metas.cmv, false) : 'neutro';
+    const resSt = p.margem !== null ? status(p.margem, metas.margem, true) : 'neutro';
+    return `<tr>
+      <td class="td-data">${p.periodo}<br><span style="font-size:10px;color:var(--muted);font-weight:300">${p.data}</span></td>
+      <td class="td-num">${p.fat !== null ? fmt(p.fat) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td>${p.cmvPct !== null ? `<span class="dot dot-${cmvSt}"></span>${fmtPct(p.cmvPct)}` : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td>${p.resultado !== null ? `<span class="dot dot-${resSt}"></span><span style="color:${p.resultado>=0?'#1a5e2a':'#7a2020'}">${fmt(p.resultado)}</span>` : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td class="td-num">${p.ticket !== null ? fmt(p.ticket) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td>${p.faltas !== null ? p.faltas : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td><button class="btn-red-sm" onclick="removerPeriodo(${p.id})">Remover</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function removerPeriodo(id) {
+  if (!confirm('Remover este período?')) return;
+  periodos = periodos.filter(p => p.id !== id);
+  salvar(); renderHistorico(); renderPainel();
+}
+
+function limparHistorico() {
+  if (!confirm('Remover todo o histórico de indicadores?')) return;
+  periodos = [];
+  salvar(); renderHistorico(); renderPainel();
+}
+</script>
+</body>
+</html>

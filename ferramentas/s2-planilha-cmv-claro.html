@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planilha de CMV | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+.tabs-bar { display: flex; padding: 0 48px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 13px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn:hover:not(.active) { color: var(--cream); }
+
+main { max-width: 1060px; margin: 0 auto; padding: 32px 48px 80px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* CARDS DE RESUMO */
+.resumo-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.rc { border: 1px solid var(--border); padding: 18px 16px; background: rgba(1,30,52,0.04); }
+.rc-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.rc-val { font-family: 'Manrope', sans-serif; font-size: 32px; font-weight: 300; line-height: 1; color: var(--gold); }
+.rc-val.verde { color: #1a5e2a; }
+.rc-val.amarelo { color: #7a4008; }
+.rc-val.vermelho { color: #7a2020; }
+.rc-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* FORMS */
+.form-card { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 22px 26px; margin-bottom: 24px; display: none; }
+.form-card.open { display: block; }
+.form-title { font-family: 'Manrope', sans-serif; font-size: 19px; font-weight: 300; color: var(--gold-light); margin-bottom: 14px; }
+.fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.fg4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.fb { display: flex; flex-direction: column; gap: 6px; }
+.fb-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+.fb-hint { font-size: 11px; color: rgba(1,30,52,0.4); margin-top: -3px; }
+input[type="number"].f, input[type="text"].f, select.f {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 9px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="number"].f::placeholder, input[type="text"].f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="number"].f:focus, input[type="text"].f:focus, select.f:focus { border-color: var(--gold); }
+select.f { cursor: pointer; color-scheme: light; }
+select.f option { background: #f9e8d7; color: #011e34; }
+.sw { position: relative; }
+.sa { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+.form-actions { display: flex; gap: 10px; }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 18px; cursor: pointer; transition: all 0.2s; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-green { background: rgba(26,94,42,0.15); color: #1a5e2a; border: 1px solid rgba(26,94,42,0.35); }
+.btn-green:hover { background: rgba(26,94,42,0.25); }
+.btn-red-sm { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); font-size: 10px; padding: 5px 10px; }
+.btn-red-sm:hover { background: rgba(122,32,32,0.25); }
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+.toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.search-wrap { flex: 1; min-width: 160px; position: relative; }
+.search-input { font-family: 'Manrope', sans-serif; font-size: 12px; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); width: 100%; padding: 9px 34px 9px 13px; outline: none; transition: border-color 0.25s; border-radius: 1px; }
+.search-input::placeholder { color: rgba(1,30,52,0.4); }
+.search-input:focus { border-color: var(--gold); }
+.si { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+
+/* TABELAS */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 400; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid rgba(91,145,188,0.06); transition: background 0.15s; }
+tbody tr:hover { background: rgba(1,30,52,0.04); }
+td { padding: 11px 12px; vertical-align: middle; }
+.td-nome { font-weight: 500; color: var(--cream); }
+.td-muted { color: var(--muted); font-size: 11px; }
+.td-num { font-family: 'Manrope', sans-serif; font-size: 17px; color: var(--gold-light); }
+.td-cmv { font-family: 'Manrope', sans-serif; font-size: 17px; }
+.cmv-ok { color: #1a5e2a; }
+.cmv-warn { color: #7a4008; }
+.cmv-bad { color: #7a2020; }
+
+/* BARRA DE CMV */
+.cmv-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.cmv-bar-track { flex: 1; height: 4px; background: rgba(1,30,52,0.04); border-radius: 2px; overflow: hidden; min-width: 60px; }
+.cmv-bar-fill { height: 100%; border-radius: 2px; }
+
+/* BENCHMARK */
+.benchmark-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+.bm-card { border: 1px solid var(--border); padding: 16px 18px; }
+.bm-tipo { font-size: 12px; font-weight: 500; color: var(--cream); margin-bottom: 6px; }
+.bm-range { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 300; color: var(--gold); line-height: 1; }
+.bm-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+/* SIMULADOR */
+.simulador-box { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 24px 28px; }
+.sim-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: var(--gold-light); margin-bottom: 16px; }
+.sim-resultado { border: 1px solid var(--border); padding: 18px 20px; margin-top: 16px; }
+.sim-linha { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.sim-linha:last-child { margin-bottom: 0; }
+.sim-label { font-size: 12px; color: var(--muted); }
+.sim-val { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 300; color: var(--gold); }
+.sim-val.verde { color: #1a5e2a; }
+.sim-val.vermelho { color: #7a2020; }
+
+/* GRÁFICO MINI */
+.mini-chart { margin-top: 20px; border: 1px solid var(--border); padding: 16px 16px 10px; }
+.mc-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 44px 20px; color: var(--muted); }
+.empty-icon { font-size: 34px; margin-bottom: 12px; opacity: 0.35; }
+.empty-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; line-height: 1.7; }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 768px) {
+  header, .session-bar, .tabs-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .resumo-cards, .benchmark-grid { grid-template-columns: 1fr 1fr; }
+  .fg2, .fg3, .fg4 { grid-template-columns: 1fr 1fr; }
+}
+
+.periodo-selects { display: flex; gap: 8px; align-items: center; }
+.periodo-selects select.f { flex: 1; }
+
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Planilha de<br><em>CMV</em></h1>
+    <p class="hsub">Calcule e analise o Custo de Mercadoria Vendida do seu restaurante por período, por categoria e por prato. Simule o impacto de mudanças de preço antes que elas aconteçam.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo S · S2</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+  <div class="fg"><span class="fl">Tipo de negócio</span>
+    <div style="position:relative">
+      <select class="fi" style="width:200px;border:none;border-bottom:1px solid var(--border);background:var(--charcoal);color:var(--cream);padding:4px 24px 4px 0;appearance:none;color-scheme:light;outline:none;font-family:'Manrope',sans-serif;font-size:12px" id="tipo_neg" onchange="calcTudo()">
+        <option value="" style="background:#fff6ec;color:#011e34">Selecione</option>
+        <option value="alacarte" style="background:#f9e8d7;color:#011e34">Restaurante a la carte</option>
+        <option value="kilo" style="background:#f9e8d7;color:#011e34">Restaurante por quilo</option>
+        <option value="lanchonete" style="background:#f9e8d7;color:#011e34">Lanchonete / Fast food</option>
+        <option value="delivery" style="background:#f9e8d7;color:#011e34">Delivery</option>
+        <option value="cafe" style="background:#f9e8d7;color:#011e34">Café e confeitaria</option>
+        <option value="pizzaria" style="background:#f9e8d7;color:#011e34">Pizzaria</option>
+        <option value="bar" style="background:#f9e8d7;color:#011e34">Bar e petiscaria</option>
+      </select>
+      <span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▾</span>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="ativarTab('periodo',this)">Por período</button>
+  <button class="tab-btn" onclick="ativarTab('categoria',this)">Por categoria</button>
+  <button class="tab-btn" onclick="ativarTab('prato',this)">Por prato</button>
+  <button class="tab-btn" onclick="ativarTab('benchmark',this)">Benchmark</button>
+  <button class="tab-btn" onclick="ativarTab('simulador',this)">Simulador de impacto</button>
+</div>
+
+<main>
+
+  <!-- ABA: PERÍODO -->
+  <div class="tab-panel active" id="tab-periodo">
+    <div id="resumoCards"></div>
+    <div class="toolbar">
+      <button class="btn btn-gold" onclick="toggleForm('formPeriodo')">+ Registrar período</button>
+      <button class="btn btn-green" onclick="exportarExcel()">Exportar Excel</button>
+    </div>
+    <div class="form-card" id="formPeriodo">
+      <p class="form-title">Novo registro de período</p>
+      <div class="fg3">
+        <div class="fb">
+          <label class="fb-label">Período</label>
+          <div class="periodo-selects">
+            <div class="sw" style="flex:1;position:relative">
+              <select class="f" id="p_mes">
+                <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                <option value="03">Março</option><option value="04">Abril</option>
+                <option value="05">Maio</option><option value="06">Junho</option>
+                <option value="07">Julho</option><option value="08">Agosto</option>
+                <option value="09">Setembro</option><option value="10">Outubro</option>
+                <option value="11">Novembro</option><option value="12">Dezembro</option>
+              </select><span class="sa">▾</span>
+            </div>
+            <div class="sw" style="flex:1;position:relative">
+              <select class="f" id="p_ano"></select><span class="sa">▾</span>
+            </div>
+          </div>
+        </div>
+        <div class="fb">
+          <label class="fb-label">Faturamento bruto (R$)</label>
+          <input type="number" class="f" id="p_fat" placeholder="0,00" min="0" step="0.01" oninput="prevCMV()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Total gasto em insumos (R$)</label>
+          <p class="fb-hint">Tudo comprado para produção no período</p>
+          <input type="number" class="f" id="p_insumos" placeholder="0,00" min="0" step="0.01" oninput="prevCMV()">
+        </div>
+      </div>
+      <div id="p_cmv_prev" style="display:none;padding:12px 14px;background:rgba(91,145,188,0.08);border:1px solid var(--border);margin-bottom:12px;font-size:13px;color:var(--gold-light)"></div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="salvarPeriodo()">Salvar</button>
+        <button class="btn btn-outline" onclick="toggleForm('formPeriodo')">Cancelar</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Faturamento</th>
+            <th>Custo de insumos</th>
+            <th>CMV (%)</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyPeriodo"></tbody>
+      </table>
+      <div class="empty-state" id="emptyPeriodo">
+        <div class="empty-icon">📅</div>
+        <p class="empty-title">Nenhum período registrado</p>
+        <p class="empty-sub">Registre o primeiro mês para começar a acompanhar o CMV ao longo do tempo.</p>
+      </div>
+    </div>
+    <div class="mini-chart" id="graficoPeriodo" style="display:none">
+      <p class="mc-title">Evolução do CMV</p>
+      <canvas id="cEvol" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- ABA: CATEGORIA -->
+  <div class="tab-panel" id="tab-categoria">
+    <div class="toolbar">
+      <button class="btn btn-gold" onclick="toggleForm('formCat')">+ Adicionar categoria</button>
+    </div>
+    <div class="form-card" id="formCat">
+      <p class="form-title">Custo por categoria de insumo</p>
+      <div class="fg3">
+        <div class="fb">
+          <label class="fb-label">Categoria</label>
+          <div class="sw">
+            <select class="f" id="c_cat">
+              <option value="">Selecione</option>
+              <option>Carnes e proteínas</option><option>Hortifrútti</option>
+              <option>Laticínios</option><option>Grãos e secos</option>
+              <option>Bebidas</option><option>Embalagens</option>
+              <option>Higiene e limpeza</option><option>Outros</option>
+            </select><span class="sa">▾</span>
+          </div>
+        </div>
+        <div class="fb">
+          <label class="fb-label">Gasto no período (R$)</label>
+          <input type="number" class="f" id="c_gasto" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Período de referência</label>
+          <div class="periodo-selects">
+            <div class="sw" style="flex:1;position:relative">
+              <select class="f" id="c_mes">
+                <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                <option value="03">Março</option><option value="04">Abril</option>
+                <option value="05">Maio</option><option value="06">Junho</option>
+                <option value="07">Julho</option><option value="08">Agosto</option>
+                <option value="09">Setembro</option><option value="10">Outubro</option>
+                <option value="11">Novembro</option><option value="12">Dezembro</option>
+              </select><span class="sa">▾</span>
+            </div>
+            <div class="sw" style="flex:1;position:relative">
+              <select class="f" id="c_ano"></select><span class="sa">▾</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="salvarCategoria()">Salvar</button>
+        <button class="btn btn-outline" onclick="toggleForm('formCat')">Cancelar</button>
+      </div>
+    </div>
+    <div id="catContent"></div>
+  </div>
+
+  <!-- ABA: PRATO -->
+  <div class="tab-panel" id="tab-prato">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="searchPrato" placeholder="Buscar prato..." oninput="renderPratos()">
+        <span class="si">⌕</span>
+      </div>
+      <button class="btn btn-gold" onclick="toggleForm('formPrato')">+ Adicionar prato</button>
+    </div>
+    <div class="form-card" id="formPrato">
+      <p class="form-title">CMV por prato</p>
+      <div class="fg4">
+        <div class="fb">
+          <label class="fb-label">Prato</label>
+          <p class="fb-hint">Selecionado da Ficha Técnica (O2). Custo preenchido automaticamente.</p>
+          <div class="sw" style="position:relative">
+            <select class="f" id="pr_nome" onchange="onPratoSelect(this.value)">
+              <option value="">Selecione ou digite abaixo</option>
+            </select><span class="sa">▾</span>
+          </div>
+          <input type="text" class="f" id="pr_nome_manual" placeholder="Ou digite o nome manualmente..." style="margin-top:6px" oninput="onPratoManual()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Custo de insumos (R$)</label>
+          <p class="fb-hint">Preenchido automaticamente pela O2 ou informe manualmente.</p>
+          <input type="number" class="f" id="pr_custo" placeholder="0,00" min="0" step="0.01" oninput="prevPratoCMV()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Preço de venda (R$)</label>
+          <input type="number" class="f" id="pr_preco" placeholder="0,00" min="0" step="0.01" oninput="prevPratoCMV()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Vendas mensais (unid.)</label>
+          <input type="number" class="f" id="pr_vendas" placeholder="Ex: 80" min="0" step="1">
+        </div>
+      </div>
+      <div class="fg2">
+        <div class="fb">
+          <label class="fb-label">Categoria do cardápio</label>
+          <div class="sw">
+            <select class="f" id="pr_cat">
+              <option value="">Selecione</option>
+              <option>Entrada</option><option>Prato principal</option>
+              <option>Sobremesa</option><option>Bebida</option>
+              <option>Acompanhamento</option><option>Lanche</option><option>Outro</option>
+            </select><span class="sa">▾</span>
+          </div>
+        </div>
+        <div id="prato_cmv_prev" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(91,145,188,0.06);border:1px solid var(--border);align-self:flex-end">
+          <span style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">CMV calculado</span>
+          <span style="font-family:'Manrope',serif;font-size:28px;font-weight:300;color:var(--gold)" id="prato_cmv_val">--%</span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="salvarPrato()">Salvar</button>
+        <button class="btn btn-outline" onclick="toggleForm('formPrato')">Cancelar</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Prato</th>
+            <th>Categoria</th>
+            <th>Custo insumos</th>
+            <th>Preço de venda</th>
+            <th>CMV do prato</th>
+            <th>Receita mensal est.</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyPrato"></tbody>
+      </table>
+      <div class="empty-state" id="emptyPrato">
+        <div class="empty-icon">🍽️</div>
+        <p class="empty-title">Nenhum prato cadastrado</p>
+        <p class="empty-sub">Adicione os pratos com custo e preço de venda para ver o CMV de cada um. Use os dados da Ficha Técnica Gerencial (O2).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA: BENCHMARK -->
+  <div class="tab-panel" id="tab-benchmark">
+    <div id="benchmarkContent"></div>
+  </div>
+
+  <!-- ABA: SIMULADOR -->
+  <div class="tab-panel" id="tab-simulador">
+    <div class="simulador-box">
+      <p class="sim-title">Simulador de impacto de preço de insumo</p>
+      <p style="font-size:12px;font-weight:300;color:var(--muted);margin-bottom:20px;line-height:1.7">Simule o que acontece com o CMV quando o preço de um insumo muda. Descubra quanto precisa repassar ao preço de venda ou reduzir no consumo para manter o CMV.</p>
+      <div class="fg3">
+        <div class="fb">
+          <label class="fb-label">Faturamento mensal atual (R$)</label>
+          <input type="number" class="f" id="sim_fat" placeholder="0,00" min="0" step="0.01" oninput="calcSimulador()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Total de insumos atual (R$)</label>
+          <input type="number" class="f" id="sim_ins" placeholder="0,00" min="0" step="0.01" oninput="calcSimulador()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">CMV atual</label>
+          <div style="padding:9px 0">
+            <span style="font-family:'Manrope',serif;font-size:28px;font-weight:300;color:var(--gold)" id="sim_cmv_atual">--%</span>
+          </div>
+        </div>
+      </div>
+      <div class="fg3" style="margin-top:4px">
+        <div class="fb">
+          <label class="fb-label">Nome do insumo afetado</label>
+          <input type="text" class="f" id="sim_ins_nome" placeholder="Ex: Filé mignon">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Custo atual deste insumo (R$)</label>
+          <input type="number" class="f" id="sim_ins_atual" placeholder="0,00" min="0" step="0.01" oninput="calcSimulador()">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Novo custo após reajuste (R$)</label>
+          <input type="number" class="f" id="sim_ins_novo" placeholder="0,00" min="0" step="0.01" oninput="calcSimulador()">
+        </div>
+      </div>
+      <div class="sim-resultado" id="simResultado" style="display:none">
+        <div class="sim-linha">
+          <span class="sim-label">CMV atual</span>
+          <span class="sim-val" id="sr_cmv_atual">--%</span>
+        </div>
+        <div class="sim-linha">
+          <span class="sim-label">CMV após reajuste do insumo</span>
+          <span class="sim-val" id="sr_cmv_novo">--%</span>
+        </div>
+        <div class="sim-linha">
+          <span class="sim-label">Variação do CMV</span>
+          <span class="sim-val" id="sr_cmv_diff">--</span>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+          <div class="sim-linha">
+            <span class="sim-label">Para manter o CMV atual, repassar ao preço de venda</span>
+            <span class="sim-val verde" id="sr_repasse">R$ --</span>
+          </div>
+          <div class="sim-linha">
+            <span class="sim-label">Ou reduzir o consumo deste insumo em</span>
+            <span class="sim-val amarelo" id="sr_reducao">--%</span>
+          </div>
+        </div>
+        <p style="font-size:12px;font-weight:300;color:rgba(1,30,52,0.6);line-height:1.7;margin-top:12px;border-top:1px solid var(--border);padding-top:10px" id="sr_mensagem"></p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta S2 · Planilha de CMV</span>
+</footer>
+
+<script>
+
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ── SELETORES DE PERÍODO ──
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function popularAnos(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const anoAtual = new Date().getFullYear();
+  sel.innerHTML = '';
+  for (let a = anoAtual + 1; a >= anoAtual - 5; a--) {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = a;
+    if (a === anoAtual) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+function getPeriodoStr(mesId, anoId) {
+  const mes = document.getElementById(mesId);
+  const ano = document.getElementById(anoId);
+  if (!mes || !ano) return '';
+  return MESES[parseInt(mes.value) - 1] + ' ' + ano.value;
+}
+function setMesAnoAtual(mesId, anoId) {
+  const agora = new Date();
+  const mes = document.getElementById(mesId);
+  const ano = document.getElementById(anoId);
+  if (mes) mes.value = String(agora.getMonth() + 1).padStart(2, '0');
+  if (ano) ano.value = agora.getFullYear();
+}
+
+// ── PICKLIST DE PRATOS (linka com dose-fichas do O2) ──
+function popularPiclistPratos() {
+  const fichas = JSON.parse(localStorage.getItem('dose-fichas') || '[]');
+  const sel = document.getElementById('pr_nome');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione da Ficha Técnica (O2)...</option>';
+  if (fichas.length === 0) {
+    const opt = document.createElement('option');
+    opt.disabled = true;
+    opt.textContent = 'Nenhuma ficha técnica encontrada no O2';
+    sel.appendChild(opt);
+    return;
+  }
+  fichas.filter(f => f.nome).forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.nome;
+    opt.dataset.custo = f.custoTotal || '';
+    opt.dataset.preco = '';
+    opt.textContent = f.nome + (f.custoTotal ? ' - R$ ' + formatBRL(f.custoTotal) : '');
+    sel.appendChild(opt);
+  });
+}
+function onPratoSelect(val) {
+  const sel = document.getElementById('pr_nome');
+  const manual = document.getElementById('pr_nome_manual');
+  if (!val) { if (manual) manual.value = ''; return; }
+  const opt = sel.options[sel.selectedIndex];
+  if (manual) manual.value = '';
+  const custo = opt.dataset.custo;
+  if (custo) {
+    document.getElementById('pr_custo').value = parseFloat(custo).toFixed(2);
+    prevPratoCMV();
+  }
+}
+function onPratoManual() {
+  const sel = document.getElementById('pr_nome');
+  if (sel) sel.value = '';
+}
+function getNomePrato() {
+  const sel = document.getElementById('pr_nome');
+  const manual = document.getElementById('pr_nome_manual');
+  if (sel && sel.value) return sel.value;
+  if (manual && manual.value.trim()) return manual.value.trim();
+  return '';
+}
+
+function formatBRLNum(valor, casas) {
+  if (valor === null || valor === undefined || isNaN(valor)) return '--';
+  casas = casas !== undefined ? casas : 2;
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+}
+
+// ESTADO
+let periodos = JSON.parse(localStorage.getItem('dose-cmv-periodos') || '[]');
+let categorias = JSON.parse(localStorage.getItem('dose-cmv-cats') || '[]');
+let pratos = JSON.parse(localStorage.getItem('dose-cmv-pratos') || '[]');
+
+const BENCHMARKS = {
+  alacarte:    { label: 'Restaurante a la carte',    min: 28, max: 35, note: 'Culinária elaborada com maior complexidade de preparo permite CMV mais controlado.' },
+  kilo:        { label: 'Restaurante por quilo',      min: 30, max: 40, note: 'Diversidade de pratos e desperdício por sobra de buffet tendem a elevar o CMV.' },
+  lanchonete:  { label: 'Lanchonete / Fast food',     min: 25, max: 32, note: 'Cardápio simplificado e alto volume permitem bom controle de insumos.' },
+  delivery:    { label: 'Delivery',                   min: 25, max: 33, note: 'Atenção especial às embalagens e taxas de plataforma que impactam o custo variável.' },
+  cafe:        { label: 'Café e confeitaria',          min: 22, max: 32, note: 'Produtos com alto valor agregado e baixo custo de insumo quando bem gerenciados.' },
+  pizzaria:    { label: 'Pizzaria',                   min: 28, max: 38, note: 'Custo de queijo e farinha são os maiores drivers. Controle de porcionamento é crítico.' },
+  bar:         { label: 'Bar e petiscaria',            min: 24, max: 35, note: 'Bebidas têm CMV baixo; a média depende muito do mix entre petiscos e bebidas.' },
+};
+
+// INIT
+document.getElementById('rname').value = localStorage.getItem('dose-cmv-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-cmv-rname', e.target.value));
+// Inicializar seletores de período
+popularAnos('p_ano'); popularAnos('c_ano');
+setMesAnoAtual('p_mes', 'p_ano'); setMesAnoAtual('c_mes', 'c_ano');
+// Inicializar picklist de pratos
+popularPiclistPratos();
+calcTudo();
+
+function salvarStorage() {
+  localStorage.setItem('dose-cmv-periodos', JSON.stringify(periodos));
+  localStorage.setItem('dose-cmv-cats', JSON.stringify(categorias));
+  localStorage.setItem('dose-cmv-pratos', JSON.stringify(pratos));
+}
+
+function ativarTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'benchmark') renderBenchmark();
+}
+
+function toggleForm(id) {
+  const form = document.getElementById(id);
+  form.classList.toggle('open');
+}
+
+function fmt(v) { return 'R$ ' + formatBRL(v||0); }
+function fmtPct(v) { return formatBRLNum(v||0, 1) + '%'; }
+function cmvCor(v) { return v <= 35 ? 'cmv-ok' : v <= 42 ? 'cmv-warn' : 'cmv-bad'; }
+function cmvCorHex(v) { return v <= 35 ? '#4a7c59' : v <= 42 ? '#b97e10' : '#8b3a3a'; }
+function statusLabel(v) { return v <= 35 ? 'Ideal' : v <= 42 ? 'Atenção' : 'Crítico'; }
+
+function calcCMV(insumos, fat) { return fat > 0 ? (insumos / fat) * 100 : 0; }
+
+function calcTudo() { renderResumoCards(); renderPeriodos(); renderCategorias(); renderPratos(); }
+
+// RESUMO CARDS
+function renderResumoCards() {
+  const el = document.getElementById('resumoCards');
+  if (periodos.length === 0) { el.innerHTML = ''; return; }
+  const cmvs = periodos.map(p => calcCMV(p.insumos, p.fat));
+  const cmvMedio = cmvs.reduce((a, v) => a + v, 0) / cmvs.length;
+  const ultimo = periodos[periodos.length - 1];
+  const cmvUltimo = calcCMV(ultimo.insumos, ultimo.fat);
+  const tipo = document.getElementById('tipo_neg').value;
+  const bench = BENCHMARKS[tipo];
+  const dentroIdeal = periodos.filter(p => calcCMV(p.insumos, p.fat) <= (bench ? bench.max : 35)).length;
+
+  el.innerHTML = `<div class="resumo-cards">
+    <div class="rc">
+      <p class="rc-label">CMV médio do período</p>
+      <p class="rc-val ${cmvMedio <= 35 ? 'verde' : cmvMedio <= 42 ? 'amarelo' : 'vermelho'}">${fmtPct(cmvMedio)}</p>
+      <p class="rc-note">${periodos.length} período(s) analisado(s)</p>
+    </div>
+    <div class="rc">
+      <p class="rc-label">CMV mais recente</p>
+      <p class="rc-val ${cmvUltimo <= 35 ? 'verde' : cmvUltimo <= 42 ? 'amarelo' : 'vermelho'}">${fmtPct(cmvUltimo)}</p>
+      <p class="rc-note">${ultimo.periodo}</p>
+    </div>
+    <div class="rc">
+      <p class="rc-label">Períodos dentro do ideal</p>
+      <p class="rc-val ${dentroIdeal === periodos.length ? 'verde' : dentroIdeal >= periodos.length * 0.6 ? 'amarelo' : 'vermelho'}">${dentroIdeal} / ${periodos.length}</p>
+      <p class="rc-note">${bench ? 'Ideal para ' + bench.label + ': até ' + bench.max + '%' : 'Ideal geral: até 35%'}</p>
+    </div>
+    <div class="rc">
+      <p class="rc-label">Custo total em insumos</p>
+      <p class="rc-val">${fmt(periodos.reduce((a, p) => a + p.insumos, 0))}</p>
+      <p class="rc-note">Total acumulado nos períodos</p>
+    </div>
+  </div>`;
+}
+
+// PERÍODO
+function prevCMV() {
+  const fat = parseFloat(document.getElementById('p_fat').value) || 0;
+  const ins = parseFloat(document.getElementById('p_insumos').value) || 0;
+  const el = document.getElementById('p_cmv_prev');
+  if (fat > 0 && ins > 0) {
+    const cmv = calcCMV(ins, fat);
+    el.style.display = 'block';
+    el.innerHTML = `CMV calculado: <strong style="font-size:18px;color:${cmvCorHex(cmv)}">${fmtPct(cmv)}</strong> &nbsp; <span style="font-size:11px;color:var(--muted)">${statusLabel(cmv)}</span>`;
+  } else { el.style.display = 'none'; }
+}
+
+function salvarPeriodo() {
+  const periodo = getPeriodoStr('p_mes', 'p_ano');
+  const fat = parseFloat(document.getElementById('p_fat').value) || 0;
+  const insumos = parseFloat(document.getElementById('p_insumos').value) || 0;
+  if (!periodo || !fat) return;
+  const idx = periodos.findIndex(p => p.periodo === periodo);
+  if (idx !== -1) periodos[idx] = { periodo, fat, insumos };
+  else periodos.push({ id: Date.now(), periodo, fat, insumos });
+  salvarStorage();
+  setMesAnoAtual('p_mes', 'p_ano');
+  document.getElementById('p_fat').value = '';
+  document.getElementById('p_insumos').value = '';
+  document.getElementById('p_cmv_prev').style.display = 'none';
+  document.getElementById('formPeriodo').classList.remove('open');
+  calcTudo();
+  renderGraficoPeriodo();
+}
+
+function removerPeriodo(id) {
+  periodos = periodos.filter(p => p.id !== id);
+  salvarStorage(); calcTudo(); renderGraficoPeriodo();
+}
+
+function renderPeriodos() {
+  const tbody = document.getElementById('tbodyPeriodo');
+  const empty = document.getElementById('emptyPeriodo');
+  if (periodos.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = periodos.map(p => {
+    const cmv = calcCMV(p.insumos, p.fat);
+    const pct = Math.min(cmv / 60 * 100, 100);
+    return `<tr>
+      <td class="td-nome">${p.periodo}</td>
+      <td class="td-num">${fmt(p.fat)}</td>
+      <td class="td-num">${fmt(p.insumos)}</td>
+      <td><div class="cmv-bar-wrap">
+        <span class="td-cmv ${cmvCor(cmv)}">${fmtPct(cmv)}</span>
+        <div class="cmv-bar-track"><div class="cmv-bar-fill" style="width:${pct}%;background:${cmvCorHex(cmv)}"></div></div>
+      </div></td>
+      <td><span style="font-size:10px;padding:3px 9px;border-radius:20px;background:${cmv<=35?'rgba(26,94,42,0.15)':cmv<=42?'rgba(122,64,8,0.15)':'rgba(122,32,32,0.15)'};color:${cmvCorHex(cmv)}">${statusLabel(cmv)}</span></td>
+      <td><button class="btn-red-sm" onclick="removerPeriodo(${p.id})">Remover</button></td>
+    </tr>`;
+  }).join('');
+  renderGraficoPeriodo();
+}
+
+function renderGraficoPeriodo() {
+  const graf = document.getElementById('graficoPeriodo');
+  if (periodos.length < 2) { graf.style.display = 'none'; return; }
+  graf.style.display = 'block';
+  setTimeout(() => {
+    const canvas = document.getElementById('cEvol');
+    const W = canvas.parentElement.offsetWidth || 600;
+    canvas.width = W; canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+    const pad = { top: 16, right: 16, bottom: 28, left: 48 };
+    const w = W - pad.left - pad.right, h = canvas.height - pad.top - pad.bottom;
+    const cmvs = periodos.map(p => calcCMV(p.insumos, p.fat));
+    const max = Math.max(...cmvs, 50) * 1.1;
+    ctx.clearRect(0, 0, W, canvas.height);
+    ctx.fillStyle = '#fff6ec'; ctx.fillRect(0, 0, W, canvas.height);
+    // Linhas de referência
+    [25, 35, 42].forEach(ref => {
+      const y = pad.top + h - (ref / max) * h;
+      ctx.strokeStyle = ref === 35 ? 'rgba(26,94,42,0.4)' : ref === 42 ? 'rgba(122,64,8,0.3)' : 'rgba(91,145,188,0.1)';
+      ctx.setLineDash(ref === 35 || ref === 42 ? [5,3] : []); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = ref === 35 ? '#4a7c59' : ref === 42 ? '#b97e10' : '#5d6d7c';
+      ctx.font = '9px Manrope'; ctx.textAlign = 'right';
+      ctx.fillText(ref + '%', pad.left - 4, y + 3);
+    });
+    const xStep = w / (periodos.length - 1 || 1);
+    ctx.beginPath();
+    cmvs.forEach((v, i) => {
+      const x = pad.left + i * xStep;
+      const y = pad.top + h - (v / max) * h;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#5b91bc'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+    cmvs.forEach((v, i) => {
+      const x = pad.left + i * xStep;
+      const y = pad.top + h - (v / max) * h;
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = cmvCorHex(v); ctx.fill();
+    });
+    ctx.fillStyle = '#5d6d7c'; ctx.font = '9px Manrope'; ctx.textAlign = 'center';
+    periodos.forEach((p, i) => ctx.fillText(p.periodo, pad.left + i * xStep, canvas.height - 6));
+  }, 30);
+}
+
+// CATEGORIAS
+function salvarCategoria() {
+  const cat = document.getElementById('c_cat').value;
+  const gasto = parseFloat(document.getElementById('c_gasto').value) || 0;
+  const periodo = getPeriodoStr('c_mes', 'c_ano');
+  if (!cat || !gasto) return;
+  categorias.push({ id: Date.now(), cat, gasto, periodo });
+  salvarStorage();
+  ['c_cat','c_gasto'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); setMesAnoAtual('c_mes', 'c_ano');
+  document.getElementById('formCat').classList.remove('open');
+  renderCategorias();
+}
+
+function removerCategoria(id) {
+  categorias = categorias.filter(c => c.id !== id);
+  salvarStorage(); renderCategorias();
+}
+
+function renderCategorias() {
+  const el = document.getElementById('catContent');
+  if (categorias.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><p class="empty-title">Nenhuma categoria registrada</p><p class="empty-sub">Adicione o gasto por categoria para entender de onde vem o custo de insumos.</p></div>`;
+    return;
+  }
+  const totalGasto = categorias.reduce((a, c) => a + c.gasto, 0);
+  const porCat = {};
+  categorias.forEach(c => { if (!porCat[c.cat]) porCat[c.cat] = 0; porCat[c.cat] += c.gasto; });
+  const ordenado = Object.entries(porCat).sort((a, b) => b[1] - a[1]);
+
+  el.innerHTML = `
+    <div style="margin-bottom:20px">
+      ${ordenado.map(([cat, total]) => {
+        const pct = totalGasto > 0 ? (total / totalGasto) * 100 : 0;
+        return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="font-size:12px;font-weight:500;color:var(--cream);width:180px;flex-shrink:0">${cat}</span>
+          <div style="flex:1;height:6px;background:rgba(1,30,52,0.06);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--gold);border-radius:3px"></div>
+          </div>
+          <span style="font-family:'Manrope',serif;font-size:16px;color:var(--gold-light);width:80px;text-align:right">${fmt(total)}</span>
+          <span style="font-size:11px;color:var(--muted);width:40px;text-align:right">${fmtPct(pct)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Registros individuais</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoria</th><th>Período</th><th>Gasto</th><th></th></tr></thead>
+        <tbody>${categorias.map(c => `<tr>
+          <td class="td-nome">${c.cat}</td>
+          <td class="td-muted">${c.periodo||''}</td>
+          <td class="td-num">${fmt(c.gasto)}</td>
+          <td><button class="btn-red-sm" onclick="removerCategoria(${c.id})">Remover</button></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+// PRATOS
+function prevPratoCMV() {
+  const custo = parseFloat(document.getElementById('pr_custo').value) || 0;
+  const preco = parseFloat(document.getElementById('pr_preco').value) || 0;
+  const el = document.getElementById('prato_cmv_val');
+  const cmv = calcCMV(custo, preco);
+  el.textContent = custo > 0 && preco > 0 ? fmtPct(cmv) : '--%';
+  el.style.color = cmv === 0 ? 'var(--gold)' : cmvCorHex(cmv);
+}
+
+function salvarPrato() {
+  const nome = getNomePrato();
+  const custo = parseFloat(document.getElementById('pr_custo').value) || 0;
+  const preco = parseFloat(document.getElementById('pr_preco').value) || 0;
+  const vendas = parseFloat(document.getElementById('pr_vendas').value) || 0;
+  const cat = document.getElementById('pr_cat').value;
+  if (!nome) return;
+  pratos.push({ id: Date.now(), nome, custo, preco, vendas, cat });
+  salvarStorage();
+  ['pr_nome','pr_custo','pr_preco','pr_vendas','pr_cat'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('prato_cmv_val').textContent = '--%';
+  document.getElementById('formPrato').classList.remove('open');
+  document.getElementById('pr_nome').value = ''; document.getElementById('pr_nome_manual').value = '';
+  renderPratos();
+}
+
+function removerPrato(id) {
+  pratos = pratos.filter(p => p.id !== id);
+  salvarStorage(); renderPratos();
+}
+
+function renderPratos() {
+  const busca = (document.getElementById('searchPrato').value || '').toLowerCase();
+  const lista = pratos.filter(p => !busca || p.nome.toLowerCase().includes(busca));
+  const tbody = document.getElementById('tbodyPrato');
+  const empty = document.getElementById('emptyPrato');
+  if (lista.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(p => {
+    const cmv = calcCMV(p.custo, p.preco);
+    const receitaMes = p.preco > 0 && p.vendas > 0 ? p.preco * p.vendas : 0;
+    const pct = Math.min(cmv / 60 * 100, 100);
+    return `<tr>
+      <td class="td-nome">${p.nome}</td>
+      <td class="td-muted">${p.cat||''}</td>
+      <td class="td-num">${p.custo > 0 ? fmt(p.custo) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td class="td-num">${p.preco > 0 ? fmt(p.preco) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td><div class="cmv-bar-wrap">
+        ${p.custo > 0 && p.preco > 0 ? `<span class="td-cmv ${cmvCor(cmv)}">${fmtPct(cmv)}</span>
+        <div class="cmv-bar-track"><div class="cmv-bar-fill" style="width:${pct}%;background:${cmvCorHex(cmv)}"></div></div>` : '<span style="color:var(--muted);font-size:11px">Sem dados</span>'}
+      </div></td>
+      <td class="td-num">${receitaMes > 0 ? fmt(receitaMes) : '<span style="color:var(--muted)">N/C</span>'}</td>
+      <td>${p.custo > 0 && p.preco > 0 ? `<span style="font-size:10px;padding:3px 9px;border-radius:20px;background:${cmv<=35?'rgba(26,94,42,0.15)':cmv<=42?'rgba(122,64,8,0.15)':'rgba(122,32,32,0.15)'};color:${cmvCorHex(cmv)}">${statusLabel(cmv)}</span>` : ''}</td>
+      <td><button class="btn-red-sm" onclick="removerPrato(${p.id})">Remover</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// BENCHMARK
+function renderBenchmark() {
+  const tipo = document.getElementById('tipo_neg').value;
+  const bench = tipo ? BENCHMARKS[tipo] : null;
+  const cmvPeriodos = periodos.length > 0 ? periodos.reduce((a, p) => a + calcCMV(p.insumos, p.fat), 0) / periodos.length : null;
+
+  const el = document.getElementById('benchmarkContent');
+  el.innerHTML = `
+    ${bench && cmvPeriodos !== null ? `
+    <div style="border:1px solid ${cmvPeriodos <= bench.max ? 'rgba(26,94,42,0.4)' : 'rgba(122,32,32,0.4)'};background:${cmvPeriodos <= bench.max ? 'rgba(26,94,42,0.08)' : 'rgba(122,32,32,0.08)'};padding:20px 24px;margin-bottom:24px">
+      <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Seu CMV médio vs benchmark</p>
+      <div style="display:flex;align-items:baseline;gap:16px">
+        <span style="font-family:'Manrope',serif;font-size:44px;font-weight:300;color:${cmvCorHex(cmvPeriodos)}">${fmtPct(cmvPeriodos)}</span>
+        <span style="font-size:13px;color:var(--muted)">Ideal para ${bench.label}: ${bench.min}% a ${bench.max}%</span>
+      </div>
+      <p style="font-size:12px;font-weight:300;color:rgba(1,30,52,0.65);margin-top:10px;line-height:1.7">
+        ${cmvPeriodos <= bench.max
+          ? `Seu CMV está dentro do benchmark para ${bench.label}. Mantenha o controle de fichas técnicas e estoque para preservar esse resultado.`
+          : `Seu CMV está ${fmtPct(cmvPeriodos - bench.max)} acima do limite ideal para ${bench.label}. Cada ponto percentual reduzido representa ${periodos.length > 0 ? fmt(periodos[periodos.length-1].fat * 0.01) : 'economia'} mensal a mais no resultado.`}
+      </p>
+    </div>` : ''}
+
+    <p style="font-family:'Manrope',serif;font-size:22px;font-weight:300;margin-bottom:16px">Benchmarks por tipo de negócio</p>
+    <div class="benchmark-grid">
+      ${Object.entries(BENCHMARKS).map(([key, b]) => `
+        <div class="bm-card ${tipo === key ? 'border-gold' : ''}" style="${tipo === key ? 'border-color:rgba(91,145,188,0.5);background:rgba(91,145,188,0.06)' : ''}">
+          <p class="bm-tipo">${b.label} ${tipo === key ? '(seu negócio)' : ''}</p>
+          <p class="bm-range">${b.min}% a ${b.max}%</p>
+          <p class="bm-note">${b.note}</p>
+        </div>`).join('')}
+    </div>
+
+    <div style="margin-top:24px;border:1px solid var(--border);padding:18px 20px">
+      <p style="font-size:13px;font-weight:500;color:var(--cream);margin-bottom:8px">Por que o CMV varia entre tipos de negócio?</p>
+      <p style="font-size:12px;font-weight:300;color:rgba(1,30,52,0.65);line-height:1.8">O benchmark de CMV reflete a estrutura de cada negócio. Restaurantes com cardápio elaborado e alta agregação de valor cobram mais pelo mesmo insumo, diluindo o CMV. Já negócios com alto volume e baixo ticket precisam de CMV muito controlado para sobreviver. Use o benchmark como referência, não como meta rígida. O que importa é entender seu padrão e melhorá-lo continuamente.</p>
+    </div>`;
+}
+
+// SIMULADOR
+function calcSimulador() {
+  const fat = parseFloat(document.getElementById('sim_fat').value) || 0;
+  const ins = parseFloat(document.getElementById('sim_ins').value) || 0;
+  const insAtual = parseFloat(document.getElementById('sim_ins_atual').value) || 0;
+  const insNovo = parseFloat(document.getElementById('sim_ins_novo').value) || 0;
+  const cmvAtual = calcCMV(ins, fat);
+  const el = document.getElementById('sim_cmv_atual');
+  el.textContent = fat > 0 && ins > 0 ? fmtPct(cmvAtual) : '--%';
+  el.style.color = cmvAtual === 0 ? 'var(--gold)' : cmvCorHex(cmvAtual);
+
+  const res = document.getElementById('simResultado');
+  if (!fat || !ins || !insAtual || !insNovo) { res.style.display = 'none'; return; }
+  res.style.display = 'block';
+
+  const diff = insNovo - insAtual;
+  const novoTotalIns = ins + diff;
+  const novoCMV = calcCMV(novoTotalIns, fat);
+  const diffCMV = novoCMV - cmvAtual;
+  const repasse = fat > 0 ? diff : 0;
+  const reducaoPct = insAtual > 0 ? (diff / insAtual) * 100 : 0;
+
+  document.getElementById('sr_cmv_atual').textContent = fmtPct(cmvAtual);
+  document.getElementById('sr_cmv_atual').className = 'sim-val ' + (cmvAtual <= 35 ? 'verde' : cmvAtual <= 42 ? '' : 'vermelho');
+  document.getElementById('sr_cmv_novo').textContent = fmtPct(novoCMV);
+  document.getElementById('sr_cmv_novo').className = 'sim-val ' + (novoCMV <= 35 ? 'verde' : novoCMV <= 42 ? '' : 'vermelho');
+  const diffEl = document.getElementById('sr_cmv_diff');
+  diffEl.textContent = (diffCMV >= 0 ? '+' : '') + fmtPct(diffCMV);
+  diffEl.className = 'sim-val ' + (diffCMV <= 0 ? 'verde' : diffCMV <= 3 ? 'amarelo' : 'vermelho');
+  document.getElementById('sr_repasse').textContent = fmt(Math.abs(diff));
+  document.getElementById('sr_reducao').textContent = fmtPct(Math.abs(reducaoPct));
+
+  let msg = '';
+  if (diff > 0) {
+    msg = `O reajuste de ${fmt(insAtual)} para ${fmt(insNovo)} eleva o custo total de insumos em ${fmt(diff)} por mês. Para manter o CMV em ${fmtPct(cmvAtual)}, você pode repassar esse valor ao preço de venda (${fmt(diff / (fat > 0 ? fat / (fat / 100) / 100 : 1))} por unidade em média) ou reduzir o consumo deste insumo em ${fmtPct(reducaoPct)}.`;
+    if (novoCMV > 42) msg += ` Atenção: o CMV resultante de ${fmtPct(novoCMV)} está acima do limite ideal. Ação imediata recomendada.`;
+  } else if (diff < 0) {
+    msg = `Redução de preço no insumo. O CMV cairia de ${fmtPct(cmvAtual)} para ${fmtPct(novoCMV)}, liberando ${fmt(Math.abs(diff))} mensais. Use essa economia para melhorar a margem ou absorver reajustes em outros insumos.`;
+  }
+  document.getElementById('sr_mensagem').textContent = msg;
+}
+
+// EXPORTAR EXCEL
+function exportarExcel() {
+  const wb = XLSX.utils.book_new();
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const C = { ouro:'B8965A', ouroClr:'D4AF7A', escuro:'1A1814', meiTom:'2A2620', creme:'F5F0E8', muteado:'7A7369', verde:'4A7C59', amarelo:'C17F2A', vermelho:'8B3A3A', faixaA:'222018', faixaB:'1E1C18' };
+  const cel = (v,bold=false,sz=10,color=C.creme,bg=C.escuro,align='left') => ({
+    v:v===null||v===undefined?'':v,t:typeof v==='number'?'n':'s',
+    s:{font:{bold,sz,color:{rgb:color},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:align,vertical:'center'}}
+  });
+
+  // Períodos
+  if (periodos.length > 0) {
+    const rows = [
+      [cel('CMV POR PERÍODO',true,13,C.ouro,C.meiTom),...Array(3).fill(cel('',false,10,C.creme,C.meiTom))],
+      [cel(nome,false,9,C.muteado,C.meiTom),...Array(2).fill(cel('',false,9,C.muteado,C.meiTom)),cel(hoje,false,9,C.muteado,C.meiTom,'right')],
+      Array(4).fill(cel('',false,10,C.creme,C.escuro)),
+      ['PERÍODO','FATURAMENTO','CUSTO INSUMOS','CMV (%)'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+      ...periodos.map((p,i)=>{
+        const cmv=calcCMV(p.insumos,p.fat);
+        const bg=i%2===0?C.faixaA:C.faixaB;
+        const cmvCor=cmv<=35?C.verde:cmv<=42?C.amarelo:C.vermelho;
+        return [cel(p.periodo,true,10,C.creme,bg),{v:p.fat,t:'n',s:{font:{bold:false,sz:10,color:{rgb:C.ouroClr},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},{v:p.insumos,t:'n',s:{font:{bold:false,sz:10,color:{rgb:C.ouroClr},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},{v:parseFloat(cmv.toFixed(2)),t:'n',s:{font:{bold:true,sz:11,color:{rgb:cmvCor},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}}];
+      }),
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:18},{wch:18},{wch:18},{wch:12}];
+    ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}];
+    XLSX.utils.book_append_sheet(wb, ws, 'CMV por Período');
+  }
+
+  // Pratos
+  if (pratos.length > 0) {
+    const rows = [
+      ['PRATO','CATEGORIA','CUSTO INSUMOS','PREÇO VENDA','CMV (%)','VENDAS/MÊS'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+      ...pratos.map((p,i)=>{
+        const cmv=calcCMV(p.custo,p.preco);
+        const bg=i%2===0?C.faixaA:C.faixaB;
+        const cmvCor=p.custo>0&&p.preco>0?(cmv<=35?C.verde:cmv<=42?C.amarelo:C.vermelho):C.muteado;
+        const mk=(v,c=C.creme,b=false)=>({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}});
+        return [mk(p.nome,C.creme,true),mk(p.cat),{v:p.custo||'',t:p.custo?'n':'s',s:{font:{bold:false,sz:10,color:{rgb:C.ouroClr},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},{v:p.preco||'',t:p.preco?'n':'s',s:{font:{bold:false,sz:10,color:{rgb:C.ouroClr},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},{v:p.custo&&p.preco?parseFloat(cmv.toFixed(2)):'',t:p.custo&&p.preco?'n':'s',s:{font:{bold:true,sz:11,color:{rgb:cmvCor},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},mk(p.vendas?String(p.vendas):'',C.muteado)];
+      }),
+    ];
+    const ws2 = XLSX.utils.aoa_to_sheet(rows);
+    ws2['!cols'] = [{wch:28},{wch:18},{wch:16},{wch:16},{wch:12},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'CMV por Prato');
+  }
+
+  XLSX.writeFile(wb, `CMV-${nome.replace(/\s+/g,'-')}-${hoje.replace(/\//g,'-')}.xlsx`);
+}
+</script>
+</body>
+</html>

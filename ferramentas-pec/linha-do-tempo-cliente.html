@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linha do Tempo da Consultoria — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #011E34;
+    --navy2: #062d4e;
+    --gold: #F7B700;
+    --gold2: #FCC740;
+    --coral: #F25C54;
+    --cream: #FFFEE8;
+    --cream2: #F5F4D8;
+    --white: #ffffff;
+    --gray: #6b7280;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* HEADER */
+  .header {
+    position: relative;
+    z-index: 1;
+    padding: 56px 60px 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(247,183,0,0.2);
+  }
+
+  .header-left {}
+
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+
+  .header-title em {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .header-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 10px;
+    font-weight: 300;
+  }
+
+  .header-right {
+    text-align: right;
+  }
+
+  .client-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .client-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .client-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(247,183,0,0.3);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 4px 0;
+    text-align: right;
+    outline: none;
+    width: 220px;
+    transition: border-color 0.2s;
+  }
+  .client-input::placeholder { color: rgba(255,255,255,0.2); }
+  .client-input:focus { border-bottom-color: var(--gold); }
+
+  /* INTRO */
+  .intro {
+    position: relative;
+    z-index: 1;
+    padding: 40px 60px;
+    max-width: 680px;
+  }
+
+  .intro p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.6);
+    font-weight: 300;
+  }
+
+  /* TIMELINE */
+  .timeline-wrap {
+    position: relative;
+    z-index: 1;
+    padding: 20px 60px 80px;
+  }
+
+  /* linha central */
+  .timeline-wrap::before {
+    content: '';
+    position: absolute;
+    left: 60px;
+    top: 20px;
+    bottom: 80px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--gold), rgba(247,183,0,0.1));
+  }
+
+  .etapa {
+    position: relative;
+    padding-left: 56px;
+    margin-bottom: 56px;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  .etapa:nth-child(1) { animation-delay: 0.1s; }
+  .etapa:nth-child(2) { animation-delay: 0.2s; }
+  .etapa:nth-child(3) { animation-delay: 0.3s; }
+  .etapa:nth-child(4) { animation-delay: 0.4s; }
+  .etapa:nth-child(5) { animation-delay: 0.5s; }
+  .etapa:nth-child(6) { animation-delay: 0.6s; }
+  .etapa:nth-child(7) { animation-delay: 0.7s; }
+  .etapa:nth-child(8) { animation-delay: 0.8s; }
+
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* MARCADOR */
+  .etapa-marker {
+    position: absolute;
+    left: -9px;
+    top: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--navy);
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .etapa-marker-inner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    transition: all 0.2s;
+  }
+
+  .etapa:hover .etapa-marker {
+    border-color: var(--gold2);
+    transform: scale(1.2);
+  }
+
+  .etapa:hover .etapa-marker-inner {
+    background: var(--gold2);
+    transform: scale(1.1);
+  }
+
+  /* CONTEÚDO DA ETAPA */
+  .etapa-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .etapa-titulo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  .etapa-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.55);
+    font-weight: 300;
+    max-width: 600px;
+    margin-bottom: 14px;
+  }
+
+  /* TAGS DE ENTREGÁVEL */
+  .etapa-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(247,183,0,0.25);
+    color: rgba(247,183,0,0.7);
+    background: rgba(247,183,0,0.05);
+  }
+
+  /* DIVISOR ESPECIAL */
+  .etapa-divider {
+    position: absolute;
+    left: -1px;
+    top: 6px;
+    width: 4px;
+    height: 20px;
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  /* RODAPÉ */
+  .footer {
+    position: relative;
+    z-index: 1;
+    padding: 32px 60px;
+    border-top: 1px solid rgba(247,183,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1px;
+  }
+
+  .footer-brand span {
+    color: var(--gold);
+  }
+
+  .btn-print {
+    padding: 10px 24px;
+    background: transparent;
+    border: 1px solid rgba(247,183,0,0.4);
+    color: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .btn-print:hover {
+    background: var(--gold);
+    color: var(--navy);
+    border-color: var(--gold);
+  }
+
+  @media print {
+    body { background: white; color: #011E34; }
+    body::before { display: none; }
+    .btn-print { display: none; }
+    .header-title { color: #011E34; }
+    .header-title em { color: #F7B700; }
+    .etapa-titulo { color: #011E34; }
+    .eyebrow { color: #F7B700; }
+    .etapa-num { color: #F7B700; }
+    .etapa-desc { color: #444; }
+    .header-sub { color: #888; }
+    .footer-brand { color: #888; }
+    .timeline-wrap::before { background: #F7B700; }
+    .etapa { opacity: 1; transform: none; animation: none; }
+    .client-input { color: #011E34; border-bottom-color: #F7B700; }
+    .client-label { color: #888; }
+    .tag { color: #c49200; border-color: #e6c200; background: #fffbe6; }
+  }
+
+  @media (max-width: 600px) {
+    .header { padding: 32px 24px 28px; }
+    .header-title { font-size: 28px; }
+    .intro { padding: 24px 24px; }
+    .timeline-wrap { padding: 20px 24px 60px; }
+    .timeline-wrap::before { left: 24px; }
+    .footer { padding: 24px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="eyebrow">RG Gastrô Educação</span>
+    <h1 class="header-title">Linha do Tempo<br>da <em>Consultoria</em></h1>
+    <p class="header-sub">Consultoria de Gestão para Restaurantes na Prática</p>
+  </div>
+  <div class="header-right">
+    <div class="client-block">
+      <span class="client-label">Estabelecimento</span>
+      <input class="client-input" type="text" placeholder="Nome do cliente">
+      <span class="client-label" style="margin-top:8px">Consultor(a)</span>
+      <input class="client-input" type="text" placeholder="Seu nome">
+    </div>
+  </div>
+</div>
+
+<div class="intro">
+  <p>Este documento apresenta as etapas do nosso projeto de consultoria. Cada fase só começa quando a anterior estiver concluída — isso garante que as decisões sejam tomadas com base em dados reais, não em suposições.</p>
+</div>
+
+<div class="timeline-wrap">
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 01</span>
+    <div class="etapa-titulo">Pré-diagnóstico</div>
+    <p class="etapa-desc">Antes de qualquer visita, você recebe um formulário com perguntas sobre o seu negócio. Isso permite que o consultor chegue preparado — com os pontos críticos já mapeados e o tempo de visita focado no que mais importa.</p>
+    <div class="etapa-tags">
+      <span class="tag">Formulário pré-visita</span>
+      <span class="tag">Leitura e análise</span>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 02</span>
+    <div class="etapa-titulo">Diagnóstico operacional</div>
+    <p class="etapa-desc">Visita presencial ao estabelecimento. O consultor observa a operação de cozinha, o fluxo de compras, o controle de estoque e conversa com o dono e a equipe. O objetivo é ver a realidade — não a versão que o dono acha que existe.</p>
+    <div class="etapa-tags">
+      <span class="tag">Visita presencial</span>
+      <span class="tag">Roteiro de diagnóstico</span>
+      <span class="tag">Registro fotográfico</span>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 03</span>
+    <div class="etapa-titulo">Apresentação dos achados</div>
+    <p class="etapa-desc">Com base no diagnóstico, o consultor apresenta os achados de forma clara: o que está funcionando, o que está faltando e quais são as prioridades. Nesta etapa também é alinhado o escopo completo do projeto.</p>
+    <div class="etapa-tags">
+      <span class="tag">Relatório de diagnóstico</span>
+      <span class="tag">Prioridades definidas</span>
+      <span class="tag">Escopo alinhado</span>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 04</span>
+    <div class="etapa-titulo">Implantação de processos de cozinha</div>
+    <p class="etapa-desc">Setorização da cozinha, definição de praças, mise en place documentado, controle de produção, troca de turno e checklists de abertura. A cozinha passa a funcionar por processos — não por pessoas.</p>
+    <div class="etapa-tags">
+      <span class="tag">Mapa de setorização</span>
+      <span class="tag">Controle de produção</span>
+      <span class="tag">Checklist de abertura</span>
+      <span class="tag">Troca de turno</span>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 05</span>
+    <div class="etapa-titulo">Implantação de compras e estoque</div>
+    <p class="etapa-desc">Inventário de insumos e louças, definição de estoque mínimo, sistema de requisição de mercadoria e roteiro de compras por fornecedor. O dinheiro que some no estoque começa a ser visto e controlado.</p>
+    <div class="etapa-tags">
+      <span class="tag">Inventário</span>
+      <span class="tag">Estoque mínimo</span>
+      <span class="tag">Requisição</span>
+      <span class="tag">Roteiro de compras</span>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 06</span>
+    <div class="etapa-titulo">Implantação de controles operacionais</div>
+    <p class="etapa-desc">Registro de desperdício, controle de quebra de utensílios e análise de vendas por item de cardápio. Com os processos no lugar, o negócio passa a gerar dados reais para tomar decisões.</p>
+    <div class="etapa-tags">
+      <span class="tag">Controle de desperdício</span>
+      <span class="tag">Quebra de utensílios</span>
+      <span class="tag">Análise de vendas</span>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 07</span>
+    <div class="etapa-titulo">Treinamento da equipe</div>
+    <p class="etapa-desc">Apresentação dos processos implantados para a equipe. O objetivo não é criar dependência do consultor — é garantir que o negócio funcione bem mesmo depois que o projeto terminar.</p>
+    <div class="etapa-tags">
+      <span class="tag">Manual de processos</span>
+      <span class="tag">Treinamento prático</span>
+      <span class="tag">Autonomia da equipe</span>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <div class="etapa-marker"><div class="etapa-marker-inner"></div></div>
+    <span class="etapa-num">Etapa 08</span>
+    <div class="etapa-titulo">Encerramento e entrega</div>
+    <p class="etapa-desc">Relatório final com tudo que foi implantado, plano de acompanhamento para os próximos 30 dias e alinhamento sobre continuidade. O projeto termina — mas o processo de melhoria continua.</p>
+    <div class="etapa-tags">
+      <span class="tag">Relatório de encerramento</span>
+      <span class="tag">Plano de 30 dias</span>
+      <span class="tag">Proposta de continuidade</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-brand">RG <span>Gastrô</span> Educação</div>
+  <button class="btn-print" onclick="window.print()">Salvar como PDF</button>
+</div>
+
+</body>
+</html>

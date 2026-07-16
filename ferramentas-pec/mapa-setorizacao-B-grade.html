@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mapa de Setorização — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #011E34;
+    --navy2: #062d4e;
+    --gold: #F7B700;
+    --gold2: #FCC740;
+    --coral: #F25C54;
+    --cream: #FFFEE8;
+    --cream2: #F0EECC;
+    --white: #ffffff;
+    --gray: #6b7280;
+    --gray-l: #e5e7eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--navy); }
+
+  .header {
+    background: var(--navy); padding: 20px 32px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    border-bottom: 3px solid var(--gold);
+  }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--white); }
+  .header-eyebrow { font-size: 9px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 2px; }
+  .badge { background: var(--coral); color: white; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; }
+
+  .id-bar {
+    background: var(--navy2); padding: 12px 32px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px 20px;
+  }
+  .id-field { display: flex; flex-direction: column; gap: 3px; }
+  .id-label { font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .id-input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,.2); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 3px 0; outline: none; width: 100%; transition: border-color .2s; }
+  .id-input::placeholder { color: rgba(255,255,255,.3); }
+  .id-input:focus { border-bottom-color: var(--gold); }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; display: flex; flex-direction: column; gap: 24px; }
+
+  /* PALETA DE PRAÇAS */
+  .palette-section { background: var(--white); border-radius: 8px; box-shadow: 0 1px 6px rgba(1,30,52,.1); overflow: hidden; }
+  .sec-header { background: var(--navy2); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .sec-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .sec-hint { font-size: 10px; color: rgba(255,255,255,.4); }
+
+  .palette-body { padding: 14px 20px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  .praca-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 4px;
+    border: 2px solid transparent;
+    cursor: pointer; transition: all .15s;
+    font-size: 12px; font-weight: 600;
+    user-select: none;
+  }
+  .praca-chip.ativa { border-color: var(--navy); box-shadow: 0 0 0 2px rgba(1,30,52,.2); }
+  .praca-chip .chip-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .praca-chip .chip-edit { font-size: 10px; opacity: .5; cursor: text; }
+
+  .btn-add-chip {
+    padding: 6px 12px; border-radius: 4px;
+    border: 1.5px dashed var(--gold);
+    background: transparent; color: var(--gold);
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .btn-add-chip:hover { background: var(--gold); color: var(--navy); }
+
+  /* GRID */
+  .grid-section { background: var(--white); border-radius: 8px; box-shadow: 0 1px 6px rgba(1,30,52,.1); overflow: hidden; }
+  .grid-controls { padding: 10px 20px; background: var(--cream2); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grid-ctrl-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray); }
+  .grid-ctrl-btn { padding: 4px 12px; border-radius: 3px; border: 1px solid var(--gray-l); background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--navy); cursor: pointer; transition: all .15s; }
+  .grid-ctrl-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+  .grid-sep { flex: 1; }
+
+  .grid-wrap { padding: 20px; overflow-x: auto; }
+  .grid-table { border-collapse: collapse; margin: 0 auto; }
+  .grid-cell {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(1,30,52,.12);
+    cursor: pointer;
+    transition: all .1s;
+    position: relative;
+    user-select: none;
+  }
+  .grid-cell:hover { border-color: var(--gold); z-index: 1; }
+  .grid-cell.selecionada { border: 2px solid rgba(0,0,0,.25); }
+  .grid-cell .cell-label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700;
+    color: rgba(0,0,0,.5);
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    line-height: 1.1;
+    text-align: center;
+    padding: 2px;
+  }
+
+  /* LEGENDA */
+  .legenda { padding: 12px 20px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--gray); }
+  .leg-dot { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .leg-vazio { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--gray-l); background: white; }
+
+  /* DETALHES PRAÇAS */
+  .detalhes-section { background: var(--white); border-radius: 8px; box-shadow: 0 1px 6px rgba(1,30,52,.1); overflow: hidden; }
+  .detalhes-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .detalhe-row {
+    display: grid; grid-template-columns: auto 1fr 1fr 1fr;
+    gap: 10px; align-items: start;
+    padding: 10px 12px; border-radius: 6px;
+  }
+  .detalhe-cor { width: 16px; height: 16px; border-radius: 3px; margin-top: 22px; flex-shrink: 0; }
+  .detalhe-field { display: flex; flex-direction: column; gap: 3px; }
+  .detalhe-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray); }
+  .detalhe-input { border: 1px solid var(--gray-l); border-radius: 4px; padding: 6px 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--navy); background: var(--cream); outline: none; transition: border-color .2s; width: 100%; }
+  .detalhe-input:focus { border-color: var(--gold); }
+
+  /* OBS */
+  .obs-section { background: var(--white); border-radius: 8px; box-shadow: 0 1px 6px rgba(1,30,52,.1); overflow: hidden; }
+  .obs-body { padding: 16px 20px; }
+  .obs-textarea { width: 100%; border: 1px solid var(--gray-l); border-radius: 4px; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--navy); background: var(--cream); resize: vertical; min-height: 80px; outline: none; transition: border-color .2s; }
+  .obs-textarea:focus { border-color: var(--gold); }
+
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn-acao { padding: 10px 24px; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: none; transition: all .2s; }
+  .btn-acao.primario { background: var(--gold); color: var(--navy); }
+  .btn-acao.primario:hover { background: var(--gold2); }
+  .btn-acao.secundario { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn-acao.secundario:hover { background: var(--navy); color: white; }
+
+  @media (max-width: 600px) {
+    .detalhe-row { grid-template-columns: auto 1fr; }
+    .detalhe-row > :nth-child(4) { grid-column: 2; }
+  }
+  @media print {
+    .acoes, .btn-add-chip, .grid-ctrl-btn { display: none; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-eyebrow">RG Gastrô Educação</div>
+    <div class="header-title">Mapa de Setorização e Praças</div>
+  </div>
+  <span class="badge">Versão B · Grade</span>
+</div>
+
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" placeholder="Seu nome"></div>
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" placeholder="Nome do cliente"></div>
+  <div class="id-field"><span class="id-label">Tipo de negócio</span><input class="id-input" type="text" placeholder="À la carte, self-service..."></div>
+  <div class="id-field"><span class="id-label">Data</span><input class="id-input" type="date"></div>
+  <div class="id-field"><span class="id-label">Responsável presente</span><input class="id-input" type="text" placeholder="Nome"></div>
+</div>
+
+<div class="main">
+
+  <!-- PALETA -->
+  <div class="palette-section">
+    <div class="sec-header">
+      <span class="sec-title">Praças disponíveis</span>
+      <span class="sec-hint">Selecione uma praça e clique nas células do grid para marcá-las</span>
+    </div>
+    <div class="palette-body" id="paletteBody">
+      <!-- gerado por JS -->
+    </div>
+  </div>
+
+  <!-- GRID -->
+  <div class="grid-section">
+    <div class="sec-header">
+      <span class="sec-title">Layout da Cozinha</span>
+    </div>
+    <div class="grid-controls">
+      <span class="grid-ctrl-label">Colunas</span>
+      <button class="grid-ctrl-btn" onclick="ajustarGrid(-1,0)">−</button>
+      <span id="lblCols" style="font-size:12px;font-weight:600;min-width:20px;text-align:center">12</span>
+      <button class="grid-ctrl-btn" onclick="ajustarGrid(1,0)">+</button>
+      <span class="grid-ctrl-label" style="margin-left:12px">Linhas</span>
+      <button class="grid-ctrl-btn" onclick="ajustarGrid(0,-1)">−</button>
+      <span id="lblRows" style="font-size:12px;font-weight:600;min-width:20px;text-align:center">8</span>
+      <button class="grid-ctrl-btn" onclick="ajustarGrid(0,1)">+</button>
+      <div class="grid-sep"></div>
+      <button class="grid-ctrl-btn" onclick="limparGrid()">Limpar grid</button>
+    </div>
+    <div class="grid-wrap">
+      <table class="grid-table" id="gridTable"></table>
+    </div>
+    <div class="legenda" id="legenda"></div>
+  </div>
+
+  <!-- DETALHES DAS PRAÇAS -->
+  <div class="detalhes-section">
+    <div class="sec-header"><span class="sec-title">Detalhes das praças</span></div>
+    <div class="detalhes-body" id="detalhesBody"></div>
+  </div>
+
+  <!-- OBSERVAÇÕES -->
+  <div class="obs-section">
+    <div class="sec-header"><span class="sec-title">Observações gerais da cozinha</span></div>
+    <div class="obs-body">
+      <textarea class="obs-textarea" placeholder="Impressões gerais sobre o espaço físico, fluxo de movimentação, pontos críticos de layout, oportunidades de melhoria..."></textarea>
+    </div>
+  </div>
+
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="alert('Para salvar: use Imprimir → Salvar como PDF')">Salvar PDF</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────
+const CORES_PADRAO = [
+  { nome: 'Frituras',   cor: '#F25C54', fundo: '#FEE2E2' },
+  { nome: 'Fogão',      cor: '#3b82f6', fundo: '#DBEAFE' },
+  { nome: 'Saladas',    cor: '#22c55e', fundo: '#DCFCE7' },
+  { nome: 'Sobremesas', cor: '#a855f7', fundo: '#F3E8FF' },
+  { nome: 'Grelha',     cor: '#f97316', fundo: '#FFEDD5' },
+  { nome: 'Frios',      cor: '#06b6d4', fundo: '#CFFAFE' },
+];
+
+let pracas = CORES_PADRAO.map((p, i) => ({ id: i+1, ...p }));
+let pracaAtiva = 1;
+let gridCols = 12;
+let gridRows = 8;
+let gridData = {}; // key: "r-c", value: praça id
+let paintando = false;
+
+// ── PRAÇAS ───────────────────────────────────────────
+function renderPalette() {
+  const body = document.getElementById('paletteBody');
+  body.innerHTML = '';
+  pracas.forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = 'praca-chip' + (p.id === pracaAtiva ? ' ativa' : '');
+    chip.style.background = p.fundo;
+    chip.style.color = p.cor;
+    chip.style.display = 'inline-flex';
+    chip.style.alignItems = 'center';
+    chip.style.gap = '6px';
+
+    const dot = document.createElement('div');
+    dot.className = 'chip-dot';
+    dot.style.background = p.cor;
+
+    const label = document.createElement('span');
+    label.textContent = p.nome;
+    label.onclick = () => { pracaAtiva = p.id; renderPalette(); };
+
+    const remover = document.createElement('span');
+    remover.textContent = '×';
+    remover.style.opacity = '.6';
+    remover.style.fontWeight = '700';
+    remover.style.cursor = 'pointer';
+    remover.title = 'Remover praça';
+    remover.onclick = (e) => { e.stopPropagation(); removePraca(p.id); };
+
+    chip.appendChild(dot);
+    chip.appendChild(label);
+    chip.appendChild(remover);
+    body.appendChild(chip);
+  });
+
+  // Botão apagar
+  const apagar = document.createElement('div');
+  apagar.className = 'praca-chip' + (pracaAtiva === 0 ? ' ativa' : '');
+  apagar.style.background = '#f3f4f6';
+  apagar.style.color = '#6b7280';
+  apagar.onclick = () => { pracaAtiva = 0; renderPalette(); };
+  apagar.innerHTML = `<div class="chip-dot" style="background:#9ca3af"></div><span>Apagar</span>`;
+  body.appendChild(apagar);
+
+  const btn = document.createElement('button');
+  btn.className = 'btn-add-chip';
+  btn.textContent = '+ Praça';
+  btn.onclick = addPraca;
+  body.appendChild(btn);
+}
+
+function addPraca() {
+  const nome = prompt('Nome da praça:') || `Praça ${pracas.length + 1}`;
+  const cores = ['#8b5cf6','#ec4899','#14b8a6','#84cc16','#f59e0b','#64748b'];
+  const cor = cores[pracas.length % cores.length];
+  pracas.push({ id: Date.now(), nome, cor, fundo: cor + '22' });
+  renderPalette();
+  renderDetalhes();
+  renderLegenda();
+}
+
+function removePraca(id) {
+  const p = pracas.find(x => x.id === id);
+  if (!p) return;
+  const celulas = Object.values(gridData).filter(v => v === id).length;
+  const msg = celulas > 0 ? `A praça "${p.nome}" está pintada em ${celulas} célula(s) do mapa. Remover vai limpar essas células. Continuar?` : `Remover a praça "${p.nome}"?`;
+  if (!confirm(msg)) return;
+  pracas = pracas.filter(x => x.id !== id);
+  Object.keys(gridData).forEach(k => { if (gridData[k] === id) delete gridData[k]; });
+  if (pracaAtiva === id) pracaAtiva = 0;
+  renderPalette();
+  renderGrid();
+  renderDetalhes();
+  renderLegenda();
+}
+
+// ── GRID ─────────────────────────────────────────────
+function renderGrid() {
+  const table = document.getElementById('gridTable');
+  table.innerHTML = '';
+  for (let r = 0; r < gridRows; r++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < gridCols; c++) {
+      const td = document.createElement('td');
+      td.className = 'grid-cell';
+      td.dataset.r = r;
+      td.dataset.c = c;
+      td.addEventListener('mousedown', e => { e.preventDefault(); paintando = true; pintar(r, c); });
+      td.addEventListener('mouseover', () => { if (paintando) pintar(r, c); });
+      td.addEventListener('touchstart', e => { e.preventDefault(); paintando = true; pintar(r, c); }, { passive: false });
+      td.addEventListener('touchmove', e => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (el?.dataset.r !== undefined) pintar(+el.dataset.r, +el.dataset.c);
+      }, { passive: false });
+      aplicarCorCelula(td, r, c);
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+  document.addEventListener('mouseup', () => { paintando = false; });
+  document.addEventListener('touchend', () => { paintando = false; });
+}
+
+function pintar(r, c) {
+  const key = `${r}-${c}`;
+  if (pracaAtiva === 0) { delete gridData[key]; }
+  else { gridData[key] = pracaAtiva; }
+  const td = document.querySelector(`td[data-r="${r}"][data-c="${c}"]`);
+  if (td) aplicarCorCelula(td, r, c);
+}
+
+function aplicarCorCelula(td, r, c) {
+  const key = `${r}-${c}`;
+  const pid = gridData[key];
+  if (pid) {
+    const p = pracas.find(x => x.id === pid);
+    if (p) {
+      td.style.background = p.fundo;
+      td.style.borderColor = p.cor + '88';
+      td.classList.add('selecionada');
+      td.innerHTML = `<div class="cell-label" style="color:${p.cor}">${p.nome.split(' ')[0]}</div>`;
+      return;
+    }
+  }
+  td.style.background = '';
+  td.style.borderColor = '';
+  td.classList.remove('selecionada');
+  td.innerHTML = '';
+}
+
+function ajustarGrid(dc, dr) {
+  gridCols = Math.max(4, Math.min(20, gridCols + dc));
+  gridRows = Math.max(3, Math.min(16, gridRows + dr));
+  document.getElementById('lblCols').textContent = gridCols;
+  document.getElementById('lblRows').textContent = gridRows;
+  renderGrid();
+}
+
+function limparGrid() {
+  if (!confirm('Limpar o mapa?')) return;
+  gridData = {};
+  renderGrid();
+}
+
+// ── LEGENDA ──────────────────────────────────────────
+function renderLegenda() {
+  const leg = document.getElementById('legenda');
+  leg.innerHTML = '';
+  const vazio = document.createElement('div');
+  vazio.className = 'leg-item';
+  vazio.innerHTML = `<div class="leg-vazio"></div><span>Sem praça definida</span>`;
+  leg.appendChild(vazio);
+  pracas.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'leg-item';
+    item.innerHTML = `<div class="leg-dot" style="background:${p.fundo};border:1.5px solid ${p.cor}"></div><span>${p.nome}</span>`;
+    leg.appendChild(item);
+  });
+}
+
+// ── DETALHES ─────────────────────────────────────────
+function renderDetalhes() {
+  const body = document.getElementById('detalhesBody');
+  body.innerHTML = '';
+  pracas.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'detalhe-row';
+    row.style.background = p.fundo;
+    row.innerHTML = `
+      <div class="detalhe-cor" style="background:${p.cor}"></div>
+      <div class="detalhe-field">
+        <span class="detalhe-label">Nome da praça</span>
+        <input class="detalhe-input" type="text" value="${p.nome}" onchange="p.nome=''+this.value; renderPalette(); renderLegenda(); renderGrid();">
+      </div>
+      <div class="detalhe-field">
+        <span class="detalhe-label">Responsável</span>
+        <input class="detalhe-input" type="text" placeholder="Nome ou função">
+      </div>
+      <div class="detalhe-field">
+        <span class="detalhe-label">Equipamentos principais</span>
+        <input class="detalhe-input" type="text" placeholder="Fritadeira, fogão...">
+      </div>
+    `;
+    body.appendChild(row);
+  });
+}
+
+// ── INIT ─────────────────────────────────────────────
+renderPalette();
+renderGrid();
+renderLegenda();
+renderDetalhes();
+</script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Controle de Produção Diária — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #011E34;
+    --navy2: #062d4e;
+    --gold: #F7B700;
+    --gold2: #FCC740;
+    --coral: #F25C54;
+    --cream: #FFFEE8;
+    --cream2: #F0EECC;
+    --white: #ffffff;
+    --gray: #6b7280;
+    --gray-l: #e5e7eb;
+    --ok: #22c55e;
+    --ok-l: #dcfce7;
+    --warn: #f59e0b;
+    --warn-l: #fef3c7;
+    --nao: #ef4444;
+    --nao-l: #fee2e2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--navy); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: var(--navy); padding: 20px 32px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    border-bottom: 3px solid var(--gold);
+  }
+  .header-center { flex: 1; }
+  .header-eyebrow { font-size: 9px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--white); }
+
+  /* IDENTIFICAÇÃO */
+  .id-bar {
+    background: var(--navy2); padding: 12px 32px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px 20px;
+  }
+  .id-field { display: flex; flex-direction: column; gap: 3px; }
+  .id-label { font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .id-input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,.2); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 3px 0; outline: none; width: 100%; transition: border-color .2s; }
+  .id-input::placeholder { color: rgba(255,255,255,.3); }
+  .id-input:focus { border-bottom-color: var(--gold); }
+
+  /* SEMANA NAV */
+  .semana-nav {
+    background: var(--white);
+    border-bottom: 2px solid var(--gray-l);
+    padding: 0 24px;
+    display: flex; gap: 0; overflow-x: auto;
+  }
+  .dia-tab {
+    padding: 14px 20px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    color: var(--gray); cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all .15s; white-space: nowrap;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .dia-tab:hover { color: var(--navy); border-bottom-color: var(--gold2); }
+  .dia-tab.ativo { color: var(--navy); border-bottom-color: var(--gold); font-weight: 700; }
+  .dia-tab .tab-data { font-size: 10px; font-weight: 400; color: var(--gray); }
+  .dia-tab.ativo .tab-data { color: var(--gold); }
+  .dia-tab .tab-badge { font-size: 9px; background: var(--ok); color: white; border-radius: 8px; padding: 1px 5px; }
+  .dia-tab .tab-badge.parcial { background: var(--warn); }
+
+  /* MAIN */
+  .main { max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* PAINEL DIA */
+  .dia-panel { display: none; }
+  .dia-panel.ativo { display: block; }
+
+  /* CARD PRAÇA */
+  .praca-card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(1,30,52,.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .praca-card-header {
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .praca-card-titulo { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: var(--white); }
+  .praca-card-resp { font-size: 11px; color: rgba(255,255,255,.5); }
+
+  /* TABELA DE ITENS */
+  .prod-table { width: 100%; border-collapse: collapse; }
+  .prod-table th {
+    background: var(--cream2);
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gray); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--gray-l);
+  }
+  .prod-table th.num { text-align: center; width: 44px; }
+  .prod-table th.qtd { text-align: center; width: 90px; }
+  .prod-table th.status { text-align: center; width: 80px; }
+  .prod-table th.rem { width: 36px; }
+
+  .prod-row td { padding: 8px 12px; border-bottom: 1px solid var(--gray-l); vertical-align: middle; }
+  .prod-row:last-child td { border-bottom: none; }
+  .prod-row:hover { background: #fafaf2; }
+
+  .td-num { text-align: center; font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 600; color: var(--gold); width: 44px; }
+  .td-produto input, .td-qtd input {
+    border: 1px solid var(--gray-l); border-radius: 4px;
+    padding: 5px 8px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--navy); background: var(--cream); outline: none;
+    transition: border-color .2s; width: 100%;
+  }
+  .td-produto input:focus, .td-qtd input:focus { border-color: var(--gold); }
+  .td-qtd input { text-align: center; width: 80px; }
+  .td-qtd { width: 90px; }
+
+  .td-status { text-align: center; width: 80px; }
+  .btn-status-mini {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--gray-l); background: transparent;
+    font-size: 13px; cursor: pointer; transition: all .15s;
+  }
+  .btn-status-mini:hover { transform: scale(1.15); }
+  .btn-status-mini.ok { background: var(--ok-l); border-color: var(--ok); }
+  .btn-status-mini.parcial { background: var(--warn-l); border-color: var(--warn); }
+  .btn-status-mini.nao { background: var(--nao-l); border-color: var(--nao); }
+
+  .td-rem { text-align: center; width: 36px; }
+  .btn-rem { background: transparent; border: none; color: var(--gray); cursor: pointer; font-size: 14px; border-radius: 3px; padding: 3px 5px; transition: all .15s; }
+  .btn-rem:hover { background: var(--nao-l); color: var(--nao); }
+
+  .btn-add-item {
+    width: 100%; padding: 10px;
+    border: 1.5px dashed var(--gold); border-top: none;
+    background: transparent; color: var(--gold);
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+    letter-spacing: 1px; text-transform: uppercase;
+    border-radius: 0 0 8px 8px;
+  }
+  .btn-add-item:hover { background: var(--gold); color: var(--navy); }
+
+  /* OBS DO DIA */
+  .obs-dia {
+    background: var(--white); border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(1,30,52,.08);
+    overflow: hidden; margin-bottom: 20px;
+  }
+  .obs-dia-header { background: var(--navy2); padding: 10px 20px; }
+  .obs-dia-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .obs-dia-body { padding: 14px 20px; }
+  .obs-textarea { width: 100%; border: 1px solid var(--gray-l); border-radius: 4px; padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--navy); background: var(--cream); resize: vertical; min-height: 64px; outline: none; transition: border-color .2s; }
+  .obs-textarea:focus { border-color: var(--gold); }
+
+  /* ADICIONAR PRAÇA */
+  .btn-add-praca {
+    width: 100%; padding: 12px;
+    border: 2px dashed var(--navy2); border-radius: 8px;
+    background: transparent; color: var(--navy2);
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all .2s; letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .btn-add-praca:hover { background: var(--navy); color: white; border-color: var(--navy); }
+
+  /* AÇÕES */
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 8px; }
+  .btn-acao { padding: 10px 24px; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: none; transition: all .2s; }
+  .btn-acao.primario { background: var(--gold); color: var(--navy); }
+  .btn-acao.primario:hover { background: var(--gold2); }
+  .btn-acao.secundario { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn-acao.secundario:hover { background: var(--navy); color: white; }
+
+  @media print {
+    .semana-nav, .btn-add-item, .btn-add-praca, .btn-rem, .acoes { display: none; }
+    .dia-panel { display: block !important; page-break-before: auto; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-center">
+    <div class="header-eyebrow">RG Gastrô Educação</div>
+    <div class="header-title">Controle de Produção Diária</div>
+  </div>
+</div>
+
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" placeholder="Nome do cliente" id="nomeEstab"></div>
+  <div class="id-field"><span class="id-label">Semana</span><input class="id-input" type="text" placeholder="Ex: 02/06 a 08/06" id="semana"></div>
+  <div class="id-field"><span class="id-label">Responsável geral</span><input class="id-input" type="text" placeholder="Nome"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" placeholder="Seu nome"></div>
+</div>
+
+<!-- ABAS DOS DIAS -->
+<div class="semana-nav" id="semanaNav"></div>
+
+<div class="main">
+  <!-- painéis gerados por JS -->
+  <div id="paineis"></div>
+
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir semana</button>
+    <button class="btn-acao primario" onclick="copiarParaSemana()">Copiar praças para todos os dias</button>
+  </div>
+</div>
+
+<script>
+const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+const CORES_PRACAS = [
+  { cor: "#011E34", bg: "#E8EFF5" },
+  { cor: "#3B82F6", bg: "#DBEAFE" },
+  { cor: "#F25C54", bg: "#FEE2E2" },
+  { cor: "#22C55E", bg: "#DCFCE7" },
+  { cor: "#A855F7", bg: "#F3E8FF" },
+  { cor: "#F97316", bg: "#FFEDD5" },
+  { cor: "#06B6D4", bg: "#CFFAFE" },
+];
+
+// Estado global
+let estado = {};
+DIAS.forEach(d => {
+  estado[d] = {
+    pracas: [],
+    obs: ""
+  };
+});
+
+let pracasBase = [
+  { nome: "Frituras", responsavel: "" },
+  { nome: "Fogão", responsavel: "" },
+  { nome: "Saladas", responsavel: "" },
+];
+
+function initEstado() {
+  DIAS.forEach(d => {
+    estado[d].pracas = pracasBase.map(p => ({
+      nome: p.nome, responsavel: p.responsavel,
+      itens: [{ produto: "", minimo: "", responsavel: "", status: null }]
+    }));
+  });
+}
+
+// ── RENDER TABS ──────────────────────────────────────
+function renderTabs(diaAtivo) {
+  const nav = document.getElementById('semanaNav');
+  nav.innerHTML = '';
+  DIAS.forEach(dia => {
+    const tab = document.createElement('div');
+    tab.className = 'dia-tab' + (dia === diaAtivo ? ' ativo' : '');
+    tab.onclick = () => mudarDia(dia);
+
+    const concluidos = contarConcluidos(dia);
+    const total = contarTotal(dia);
+    let badgeHTML = '';
+    if (total > 0) {
+      const cls = concluidos === total ? '' : ' parcial';
+      badgeHTML = `<span class="tab-badge${cls}">${concluidos}/${total}</span>`;
+    }
+
+    tab.innerHTML = `<span>${dia}</span>${badgeHTML}`;
+    nav.appendChild(tab);
+  });
+}
+
+function contarTotal(dia) {
+  return estado[dia].pracas.reduce((acc, p) => acc + p.itens.filter(i => i.produto.trim()).length, 0);
+}
+
+function contarConcluidos(dia) {
+  return estado[dia].pracas.reduce((acc, p) => acc + p.itens.filter(i => i.produto.trim() && i.status === 'ok').length, 0);
+}
+
+// ── RENDER PAINEL ────────────────────────────────────
+function renderPainel(dia) {
+  const container = document.getElementById('paineis');
+  let panel = document.getElementById(`panel-${dia}`);
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.className = 'dia-panel';
+    panel.id = `panel-${dia}`;
+    container.appendChild(panel);
+  }
+
+  const data = estado[dia];
+  let html = '';
+
+  data.pracas.forEach((praca, pi) => {
+    const cor = CORES_PRACAS[pi % CORES_PRACAS.length];
+    html += `
+    <div class="praca-card" id="card-${dia}-${pi}">
+      <div class="praca-card-header" style="background:${cor.cor}">
+        <div>
+          <div class="praca-card-titulo">${praca.nome}</div>
+          <div class="praca-card-resp">Responsável: <input
+            style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.3);color:white;font-family:'DM Sans',sans-serif;font-size:11px;width:140px;outline:none;padding:1px 0;"
+            placeholder="nome ou função"
+            value="${praca.responsavel}"
+            onchange="estado['${dia}'].pracas[${pi}].responsavel=this.value"
+          ></div>
+        </div>
+        <button onclick="removePraca('${dia}',${pi})" style="background:rgba(255,255,255,.15);border:none;color:white;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;">✕ Remover praça</button>
+      </div>
+      <table class="prod-table">
+        <thead><tr>
+          <th class="num">#</th>
+          <th>Item a Produzir</th>
+          <th class="qtd">Qtd Mínima</th>
+          <th class="qtd">Qtd Produzida</th>
+          <th class="status">Status</th>
+          <th class="rem"></th>
+        </tr></thead>
+        <tbody id="tbody-${dia}-${pi}">
+          ${renderItens(dia, pi)}
+        </tbody>
+      </table>
+      <button class="btn-add-item" onclick="addItem('${dia}',${pi})">+ Adicionar item</button>
+    </div>`;
+  });
+
+  html += `
+  <button class="btn-add-praca" onclick="addPraca('${dia}')">+ Adicionar praça neste dia</button>
+  <div class="obs-dia">
+    <div class="obs-dia-header"><span class="obs-dia-title">Observações de ${dia}</span></div>
+    <div class="obs-dia-body">
+      <textarea class="obs-textarea" placeholder="Ocorrências, ajustes de quantidade, problemas na produção..."
+        onchange="estado['${dia}'].obs=this.value">${data.obs}</textarea>
+    </div>
+  </div>`;
+
+  panel.innerHTML = html;
+}
+
+function renderItens(dia, pi) {
+  return estado[dia].pracas[pi].itens.map((item, ii) => {
+    const statusOk = item.status === 'ok' ? 'ok' : '';
+    const statusPar = item.status === 'parcial' ? 'parcial' : '';
+    const statusNao = item.status === 'nao' ? 'nao' : '';
+    return `
+    <tr class="prod-row">
+      <td class="td-num">${String(ii+1).padStart(2,'0')}</td>
+      <td class="td-produto"><input type="text" placeholder="Nome do item..." value="${item.produto}"
+        onchange="estado['${dia}'].pracas[${pi}].itens[${ii}].produto=this.value; atualizarTabs()"></td>
+      <td class="td-qtd"><input type="text" placeholder="—" value="${item.minimo}"
+        onchange="estado['${dia}'].pracas[${pi}].itens[${ii}].minimo=this.value" style="width:70px"></td>
+      <td class="td-qtd"><input type="text" placeholder="—" value="${item.produzido}"
+        onchange="estado['${dia}'].pracas[${pi}].itens[${ii}].produzido=this.value" style="width:70px"></td>
+      <td class="td-status">
+        <button class="btn-status-mini ${statusOk}" onclick="setStatus('${dia}',${pi},${ii},'ok',this)" title="Produzido">✓</button>
+        <button class="btn-status-mini ${statusPar}" onclick="setStatus('${dia}',${pi},${ii},'parcial',this)" title="Parcial">~</button>
+        <button class="btn-status-mini ${statusNao}" onclick="setStatus('${dia}',${pi},${ii},'nao',this)" title="Não produzido">✕</button>
+      </td>
+      <td class="td-rem"><button class="btn-rem" onclick="removeItem('${dia}',${pi},${ii})">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── AÇÕES ────────────────────────────────────────────
+function setStatus(dia, pi, ii, status, btn) {
+  const atual = estado[dia].pracas[pi].itens[ii].status;
+  estado[dia].pracas[pi].itens[ii].status = atual === status ? null : status;
+  renderPainel(dia);
+  atualizarTabs();
+}
+
+function addItem(dia, pi) {
+  estado[dia].pracas[pi].itens.push({ produto: '', minimo: '', produzido: '', status: null });
+  renderPainel(dia);
+}
+
+function removeItem(dia, pi, ii) {
+  if (estado[dia].pracas[pi].itens.length <= 1) return;
+  estado[dia].pracas[pi].itens.splice(ii, 1);
+  renderPainel(dia);
+}
+
+function addPraca(dia) {
+  const nome = prompt('Nome da praça:') || `Praça ${estado[dia].pracas.length + 1}`;
+  estado[dia].pracas.push({ nome, responsavel: '', itens: [{ produto: '', minimo: '', produzido: '', status: null }] });
+  renderPainel(dia);
+}
+
+function removePraca(dia, pi) {
+  if (!confirm(`Remover a praça "${estado[dia].pracas[pi].nome}" deste dia?`)) return;
+  estado[dia].pracas.splice(pi, 1);
+  renderPainel(dia);
+}
+
+function copiarParaSemana() {
+  const base = estado[DIAS[0]];
+  if (!confirm('Copiar as praças e itens de Segunda para todos os outros dias? Os dados existentes nos outros dias serão substituídos.')) return;
+  DIAS.forEach((d, i) => {
+    if (i === 0) return;
+    estado[d].pracas = JSON.parse(JSON.stringify(base.pracas)).map(p => ({
+      ...p, itens: p.itens.map(item => ({ ...item, produzido: '', status: null }))
+    }));
+  });
+  mudarDia(DIAS[0]);
+}
+
+function mudarDia(dia) {
+  diaAtivo = dia;
+  document.querySelectorAll('.dia-panel').forEach(p => p.classList.remove('ativo'));
+  const panel = document.getElementById(`panel-${dia}`);
+  if (panel) panel.classList.add('ativo');
+  renderTabs(dia);
+}
+
+function atualizarTabs() {
+  renderTabs(diaAtivo);
+}
+
+// ── INIT ─────────────────────────────────────────────
+let diaAtivo = DIAS[0];
+initEstado();
+DIAS.forEach(d => renderPainel(d));
+mudarDia(diaAtivo);
+</script>
+</body>
+</html>

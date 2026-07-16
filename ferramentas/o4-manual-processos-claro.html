@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Processos | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+/* PROGRESS */
+.progress-bar { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border); padding: 0 48px; gap: 0; }
+.ps { flex-shrink: 0; padding: 13px 16px; display: flex; align-items: center; gap: 7px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.ps:hover { background: rgba(1,30,52,0.04); }
+.ps.active { border-bottom-color: var(--gold); }
+.ps.done { border-bottom-color: rgba(91,145,188,0.35); }
+.ps-dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--muted); flex-shrink: 0; transition: all 0.2s; }
+.ps.active .ps-dot { background: var(--gold); border-color: var(--gold); }
+.ps.done .ps-dot { background: rgba(2,82,145,0.06); border-color: rgba(91,145,188,0.5); }
+.ps-name { font-size: 11px; font-weight: 500; color: var(--muted); }
+.ps.active .ps-name { color: var(--gold); }
+.ps.done .ps-name { color: rgba(91,145,188,0.7); }
+
+main { max-width: 860px; margin: 0 auto; padding: 40px 48px 80px; }
+
+/* AREA PANEL */
+.area-panel { display: none; }
+.area-panel.active { display: block; }
+
+.area-header { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 18px; }
+.area-num { font-family: 'Manrope', sans-serif; font-size: 64px; font-weight: 300; line-height: 1; opacity: 0.12; flex-shrink: 0; margin-top: -8px; }
+.area-header-content { flex: 1; }
+.area-eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; font-weight: 500; }
+.area-title { font-family: 'Manrope', sans-serif; font-size: 30px; font-weight: 300; line-height: 1.1; margin-bottom: 7px; }
+.area-desc { font-size: 12px; font-weight: 300; color: var(--muted); line-height: 1.7; max-width: 480px; }
+
+/* STATUS TOGGLE */
+.status-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid var(--border); background: rgba(1,30,52,0.04); margin-bottom: 20px; gap: 16px; }
+.status-label { font-size: 12px; font-weight: 400; color: rgba(1,30,52,0.7); flex: 1; }
+.status-label small { display: block; font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 2px; }
+.status-btns { display: flex; gap: 4px; }
+.status-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 13px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.status-btn.sim.active { background: rgba(26,94,42,0.15); border-color: var(--green); color: #1a5e2a; }
+.status-btn.nao.active { background: rgba(122,32,32,0.12); border-color: #c17070; color: #c07070; }
+.status-btn.parc.active { background: rgba(193,127,42,0.12); border-color: #b97e10; color: #fcc740; }
+.status-btn:hover:not(.active) { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+
+/* PERGUNTAS */
+.perguntas { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+.pergunta-item { display: flex; flex-direction: column; gap: 7px; }
+.pergunta-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.pergunta-hint { font-size: 11px; color: rgba(1,30,52,0.4); line-height: 1.5; margin-top: -4px; }
+
+input[type="text"].pf, textarea.pf {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 10px 13px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px;
+}
+input[type="text"].pf::placeholder, textarea.pf::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="text"].pf:focus, textarea.pf:focus { border-color: var(--gold); }
+textarea.pf { resize: vertical; min-height: 80px; line-height: 1.7; }
+textarea.pf.tall { min-height: 120px; }
+
+/* CAMPO LIVRE */
+.campo-livre-title { font-family: 'Manrope', sans-serif; font-size: 17px; font-weight: 300; color: var(--gold-light); margin-bottom: 10px; padding-top: 16px; border-top: 1px solid var(--border); }
+.campo-livre-hint { font-size: 11px; font-weight: 300; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+
+/* NAV */
+.step-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+.step-counter { font-size: 11px; letter-spacing: 1px; color: var(--muted); }
+.step-counter strong { color: var(--gold); font-weight: 500; }
+.nav-btns { display: flex; gap: 10px; }
+.btn-nav { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 12px 26px; cursor: pointer; transition: all 0.25s; border-radius: 1px; }
+.btn-prev { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-prev:hover { border-color: var(--gold); color: var(--gold); }
+.btn-next { background: var(--gold); color: var(--charcoal); border: none; position: relative; overflow: hidden; }
+.btn-next::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-next:hover::after { transform: translateX(0); }
+.btn-next span { position: relative; z-index: 1; }
+.btn-next:hover span { color: var(--gold); }
+
+/* RESUMO */
+#resumoPanel { display: none; }
+#resumoPanel.active { display: block; }
+.resumo-title { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; margin-bottom: 6px; }
+.resumo-sub { font-size: 12px; font-weight: 300; color: var(--muted); margin-bottom: 32px; }
+
+.resumo-area { border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
+.resumo-area-hd { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; background: rgba(1,30,52,0.04); transition: background 0.2s; user-select: none; }
+.resumo-area-hd:hover { background: rgba(1,30,52,0.04); }
+.resumo-area-bar { width: 3px; height: 22px; border-radius: 2px; flex-shrink: 0; }
+.resumo-area-nome { font-size: 13px; font-weight: 500; color: var(--cream); flex: 1; }
+.resumo-status-tag { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border: 1px solid; border-radius: 1px; flex-shrink: 0; }
+.tag-sim { color: #1a5e2a; border-color: rgba(26,94,42,0.4); }
+.tag-nao { color: #c07070; border-color: rgba(193,112,112,0.4); }
+.tag-parc { color: #fcc740; border-color: rgba(193,127,42,0.4); }
+.tag-vazio { color: var(--muted); border-color: var(--border); }
+.resumo-chev { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+.resumo-chev.open { transform: rotate(180deg); }
+.resumo-area-body { display: none; padding: 14px 18px 18px; border-top: 1px solid var(--border); }
+.resumo-area-body.open { display: block; }
+.resumo-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rf-item {}
+.rf-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.rf-value { font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.6; }
+.rf-value.empty { color: rgba(1,30,52,0.4); font-style: italic; }
+
+.resumo-actions { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.btn-primary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: var(--gold); color: var(--charcoal); border: none; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+.btn-primary::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-primary:hover::after { transform: translateX(0); }
+.btn-primary span { position: relative; z-index: 1; }
+.btn-primary:hover span { color: var(--gold); }
+.btn-secondary { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 32px; background: transparent; color: var(--muted); border: 1px solid var(--border); cursor: pointer; transition: all 0.25s; }
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+/* PDF OVERLAY */
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, .progress-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .resumo-fields { grid-template-columns: 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando PDF</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Manual de<br><em>Processos</em></h1>
+    <p class="hsub">Documente como o seu restaurante funciona em cada área. Processo documentado é processo que pode ser ensinado, delegado e melhorado.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo O · O4</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<main>
+  <div id="areasContainer"></div>
+
+  <!-- RESUMO -->
+  <div id="resumoPanel">
+    <h2 class="resumo-title">Manual de Processos</h2>
+    <p class="resumo-sub">Visão consolidada de todas as áreas documentadas. Clique em cada área para expandir.</p>
+    <div id="resumoContent"></div>
+    <div class="resumo-actions">
+      <button class="btn-primary" onclick="gerarPDF()"><span>Gerar PDF do manual</span></button>
+      <button class="btn-secondary" onclick="voltarEdicao()">Editar</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta O4 · Manual de Processos</span>
+</footer>
+
+<script>
+// AREAS DO MANUAL
+const AREAS = [
+  {
+    id: 'abertura',
+    nome: 'Abertura e fechamento',
+    cor: '#6b7fa3',
+    desc: 'Rotinas de início e encerramento do dia. O que precisa estar pronto antes de abrir e o que deve ser verificado antes de fechar.',
+    statusLabel: 'Existe uma rotina documentada de abertura e fechamento?',
+    statusHint: 'Checklist, sequência de tarefas ou responsável definido para cada turno.',
+    perguntas: [
+      { id: 'resp_abertura', label: 'Responsável pela abertura', hint: 'Quem executa ou supervisa a abertura', placeholder: 'Ex: gerente do turno, o próprio dono...' },
+      { id: 'horario_abertura', label: 'Horário de chegada antes da abertura', placeholder: 'Ex: 1 hora antes, 30 minutos antes...' },
+      { id: 'tarefas_abertura', label: 'Principais tarefas de abertura', placeholder: 'Ex: ligar equipamentos, conferir estoque do dia, montar mise en place, checar limpeza...', tall: true },
+      { id: 'resp_fechamento', label: 'Responsável pelo fechamento', placeholder: 'Ex: gerente do turno, cozinheiro chefe...' },
+      { id: 'tarefas_fechamento', label: 'Principais tarefas de fechamento', placeholder: 'Ex: guardar estoque, limpeza geral, fechar caixa, desligar equipamentos...', tall: true },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Especificidades do seu estabelecimento, pontos de atenção, variações por dia da semana.',
+    livreId: 'livre_abertura',
+  },
+  {
+    id: 'recebimento',
+    nome: 'Recebimento de mercadoria',
+    cor: '#7a9e7e',
+    desc: 'O que acontece quando a entrega chega. Como conferir, o que verificar e o que fazer com produtos fora do padrão.',
+    statusLabel: 'Existe um processo documentado para recebimento?',
+    statusHint: 'Checklist de conferência, critérios de qualidade ou protocolo para devoluções.',
+    perguntas: [
+      { id: 'resp_receb', label: 'Responsável pelo recebimento', placeholder: 'Ex: gerente, cozinheiro chefe, qualquer um disponível...' },
+      { id: 'confere_peso', label: 'O que é conferido na chegada', placeholder: 'Ex: peso na balança, validade, temperatura, estado das embalagens, nota fiscal...' },
+      { id: 'problema_receb', label: 'O que fazer quando o produto chega fora do padrão', placeholder: 'Ex: recusar e devolver ao entregador, registrar na nota, acionar o fornecedor...' },
+      { id: 'armazenamento', label: 'Para onde o produto vai após ser recebido', placeholder: 'Ex: câmara fria, despensa, prateleira por categoria...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Fornecedores com atenção especial, horários de entrega, particularidades do seu espaço.',
+    livreId: 'livre_recebimento',
+  },
+  {
+    id: 'estoque',
+    nome: 'Organização e controle de estoque',
+    cor: '#b97e10',
+    desc: 'Como os insumos são armazenados, organizados e controlados. Quem tem acesso e como as entradas e saídas são registradas.',
+    statusLabel: 'Existe um processo documentado de controle de estoque?',
+    statusHint: 'Planilha de entradas e saídas, inventário periódico, sistema de etiquetagem.',
+    perguntas: [
+      { id: 'resp_estoque', label: 'Responsável pelo estoque', placeholder: 'Ex: gerente, cozinheiro chefe, acesso controlado...' },
+      { id: 'organizacao', label: 'Como o estoque é organizado', placeholder: 'Ex: por categoria, por ordem de validade (PEPS), por fornecedor...' },
+      { id: 'freq_inventario', label: 'Frequência do inventário', placeholder: 'Ex: semanal, quinzenal, antes de cada compra...' },
+      { id: 'registro_saida', label: 'Como as saídas são registradas', placeholder: 'Ex: planilha, caderno, sistema, não são registradas...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Produtos que precisam de atenção especial, sazonalidade, itens críticos.',
+    livreId: 'livre_estoque',
+  },
+  {
+    id: 'prepreparo',
+    nome: 'Pré-preparo (mise en place)',
+    cor: '#9b7ec8',
+    desc: 'O que é feito antes do serviço começar. Cortes, porcionamentos, marinadas, bases e preparações antecipadas.',
+    statusLabel: 'Existe uma rotina documentada de pré-preparo?',
+    statusHint: 'Receitas de base, porcionamentos padronizados, lista do que preparar por dia.',
+    perguntas: [
+      { id: 'resp_pp', label: 'Responsável pelo pré-preparo', placeholder: 'Ex: equipe de cozinha no turno da manhã...' },
+      { id: 'horario_pp', label: 'Horário de início e duração estimada', placeholder: 'Ex: começa às 9h, dura em torno de 2 horas...' },
+      { id: 'lista_pp', label: 'O que é preparado antecipadamente', placeholder: 'Ex: caldos, molhos base, cortes de carnes, saladas bases, massas pré-cozidas...' },
+      { id: 'criterio_qtd_pp', label: 'Como a quantidade é definida', placeholder: 'Ex: com base na reserva do dia, pela média histórica, o cozinheiro decide na hora...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Preparações críticas, tempo de validade dos itens pré-preparados, variações por dia.',
+    livreId: 'livre_prepreparo',
+  },
+  {
+    id: 'producao',
+    nome: 'Produção durante o serviço',
+    cor: '#c17070',
+    desc: 'Como a cozinha opera durante o atendimento. Fluxo de comandas, comunicação entre estações e controle de qualidade na saída.',
+    statusLabel: 'Existe um processo documentado para a produção durante o serviço?',
+    statusHint: 'Fichas técnicas, roteiros de montagem, tempo de preparo por prato, padrão de saída.',
+    perguntas: [
+      { id: 'fluxo_comanda', label: 'Como a comanda chega à cozinha', placeholder: 'Ex: sistema digital, papel, tablet, oral pelo garçom...' },
+      { id: 'estacoes', label: 'Como a cozinha está organizada por estações', placeholder: 'Ex: grelha, praça fria, fritadeira, montagem... quem é responsável por cada uma...' },
+      { id: 'tempo_medio', label: 'Tempo médio de preparo por prato', placeholder: 'Ex: lanches em 10 min, pratos quentes em 20 min, variam por tipo...' },
+      { id: 'controle_saida', label: 'Como a qualidade é verificada antes da saída', placeholder: 'Ex: cozinheiro chefe confere, não há verificação, garçom verifica na retirada...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Gargalos conhecidos, horários de pico, procedimentos em caso de erro ou devolução.',
+    livreId: 'livre_producao',
+  },
+  {
+    id: 'salao',
+    nome: 'Atendimento no salão',
+    cor: '#5a9e9e',
+    desc: 'Como o cliente é recebido, atendido e despedido. Padrão de abordagem, fluxo do pedido e gestão das mesas.',
+    statusLabel: 'Existe um processo documentado para o atendimento no salão?',
+    statusHint: 'Roteiro de abordagem, padrão de fardamento, script de apresentação do cardápio.',
+    perguntas: [
+      { id: 'recepcao', label: 'Como o cliente é recebido', placeholder: 'Ex: anfitrião na entrada, garçom disponível, o primeiro que vir...' },
+      { id: 'pedido_fluxo', label: 'Fluxo do pedido até a entrega', placeholder: 'Ex: cliente chama garçom, garçom anota, lança no sistema, retira na cozinha e serve...' },
+      { id: 'padrao_atend', label: 'Padrão de atendimento definido', placeholder: 'Ex: apresentar o cardápio com sugestão do dia, perguntar sobre restrições alimentares...' },
+      { id: 'conta', label: 'Como a conta é apresentada e fechada', placeholder: 'Ex: cliente solicita, garçom traz em até 5 min, aceita cartão e dinheiro...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Tratamento de reclamações, situações especiais, protocolo para reservas e eventos.',
+    livreId: 'livre_salao',
+  },
+  {
+    id: 'delivery',
+    nome: 'Operação de delivery',
+    cor: '#7a8ea3',
+    desc: 'Fluxo completo do pedido de delivery. Da entrada do pedido até a saída do entregador.',
+    statusLabel: 'Existe um processo documentado para o delivery?',
+    statusHint: 'Fluxo de pedidos, montagem de embalagem, checklist de conferência antes da saída.',
+    perguntas: [
+      { id: 'plataformas', label: 'Plataformas e canais de pedido', placeholder: 'Ex: iFood, WhatsApp, telefone, site próprio...' },
+      { id: 'fluxo_delivery', label: 'Fluxo do pedido na operação', placeholder: 'Ex: pedido chega no tablet, cozinha monta, embala, confere e entrega ao motoboy...' },
+      { id: 'embalagem', label: 'Padrão de embalagem', placeholder: 'Ex: embalagem por categoria de produto, itens que precisam ser separados, lacre de segurança...' },
+      { id: 'entrega', label: 'Como é feita a entrega', placeholder: 'Ex: motoboy próprio, plataforma, raio de entrega definido, tempo prometido...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Procedimento para pedidos errados ou cancelados, horário de operação delivery, pico de pedidos.',
+    livreId: 'livre_delivery',
+  },
+  {
+    id: 'higiene',
+    nome: 'Higiene e limpeza',
+    cor: '#7a9e8a',
+    desc: 'Rotinas de limpeza e higienização de superfícies, equipamentos e área de manipulação de alimentos.',
+    statusLabel: 'Existe um processo documentado de higiene e limpeza?',
+    statusHint: 'Escala de limpeza, produtos utilizados, frequência por área.',
+    perguntas: [
+      { id: 'resp_higiene', label: 'Responsável pela limpeza', placeholder: 'Ex: equipe de copa, todos os funcionários por escala, empresa terceirizada...' },
+      { id: 'freq_limpeza', label: 'Frequência de limpeza por área', placeholder: 'Ex: bancadas após cada uso, piso do salão 2x ao dia, câmara fria semanalmente...' },
+      { id: 'produtos', label: 'Produtos e equipamentos utilizados', placeholder: 'Ex: desinfetante concentrado X, pano de microfibra por área, esponja de aço proibida...' },
+      { id: 'controle_pragas', label: 'Controle de pragas e vigilância sanitária', placeholder: 'Ex: dedetização trimestral pela empresa X, alvará em dia, última vistoria em...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Normas específicas do estabelecimento, treinamentos realizados com a equipe, pontos críticos.',
+    livreId: 'livre_higiene',
+  },
+  {
+    id: 'equipe',
+    nome: 'Gestão de equipe',
+    cor: '#8a7e9e',
+    desc: 'Como a equipe é organizada, orientada e acompanhada. Escala, briefing, comunicação interna e feedback.',
+    statusLabel: 'Existe um processo documentado para gestão de equipe?',
+    statusHint: 'Escala semanal, reunião de abertura, processo de integração de novos funcionários.',
+    perguntas: [
+      { id: 'escala', label: 'Como a escala é organizada e comunicada', placeholder: 'Ex: escala semanal enviada pelo WhatsApp toda sexta, planilha compartilhada...' },
+      { id: 'briefing', label: 'Briefing antes do serviço', placeholder: 'Ex: reunião rápida de 10 min antes de abrir, alinhamento do cardápio do dia, metas...' },
+      { id: 'integracao', label: 'Integração de novos funcionários', placeholder: 'Ex: acompanhamento por 1 semana com funcionário experiente, manual entregue...' },
+      { id: 'feedback', label: 'Como o feedback é dado à equipe', placeholder: 'Ex: conversa individual mensal, feedback em tempo real, reunião quinzenal de equipe...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Benefícios oferecidos, cultura do estabelecimento, situações de conflito e absenteísmo.',
+    livreId: 'livre_equipe',
+  },
+  {
+    id: 'caixa',
+    nome: 'Caixa e fechamento financeiro',
+    cor: '#5b91bc',
+    desc: 'Como o dinheiro é controlado ao longo do dia. Abertura de caixa, sangrias, fechamento e conciliação.',
+    statusLabel: 'Existe um processo documentado para caixa e fechamento financeiro?',
+    statusHint: 'Fluxo do dinheiro, responsável pelo caixa, processo de fechamento diário.',
+    perguntas: [
+      { id: 'resp_caixa', label: 'Responsável pelo caixa', placeholder: 'Ex: gerente, caixa exclusivo, o próprio dono...' },
+      { id: 'abertura_caixa', label: 'Como o caixa é aberto', placeholder: 'Ex: fundo de caixa de R$ X, contado e conferido pelo responsável antes de abrir...' },
+      { id: 'sangria', label: 'Processo de sangria', placeholder: 'Ex: sangria a cada R$ 500, no meio do turno, registrada em sistema...' },
+      { id: 'fechamento_caixa', label: 'Como o caixa é fechado ao final do dia', placeholder: 'Ex: conferência de valores, conciliação com sistema, depósito bancário, registro de divergências...' },
+    ],
+    livreLabel: 'Observações e detalhes adicionais',
+    livreHint: 'Formas de pagamento aceitas, protocolo para divergências, conciliação com delivery.',
+    livreId: 'livre_caixa',
+  },
+];
+
+// STATE
+let currentArea = 0;
+const statusState = {};
+const dados = {};
+
+// INIT
+document.getElementById('rname').value = localStorage.getItem('dose-manual-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-manual-rname', e.target.value));
+carregarLocal();
+renderProgress();
+renderAreas();
+ativarArea(0);
+
+function carregarLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem('dose-manual') || '{}');
+    Object.assign(dados, d.dados || {});
+    Object.assign(statusState, d.status || {});
+  } catch(e) {}
+}
+
+function salvarLocal() {
+  localStorage.setItem('dose-manual', JSON.stringify({ dados, status: statusState }));
+}
+
+// PROGRESS BAR
+function renderProgress() {
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = AREAS.map((a, i) => `
+    <div class="ps ${i===currentArea?'active':''}" id="ps${i}" onclick="ativarArea(${i})">
+      <div class="ps-dot"></div>
+      <span class="ps-name">${a.nome}</span>
+    </div>`).join('') +
+    `<div class="ps ${currentArea===AREAS.length?'active':''}" id="ps${AREAS.length}" onclick="mostrarResumo()">
+      <div class="ps-dot"></div>
+      <span class="ps-name">Resumo</span>
+    </div>`;
+}
+
+function atualizarProgress() {
+  AREAS.forEach((a, i) => {
+    const el = document.getElementById('ps' + i);
+    if (!el) return;
+    el.className = 'ps';
+    if (i === currentArea) el.classList.add('active');
+    else if (statusState[a.id] || Object.keys(dados).some(k => k.startsWith(a.id) && dados[k])) el.classList.add('done');
+  });
+  const elR = document.getElementById('ps' + AREAS.length);
+  if (elR) elR.className = 'ps' + (currentArea === AREAS.length ? ' active' : '');
+}
+
+// RENDER AREAS
+function renderAreas() {
+  const container = document.getElementById('areasContainer');
+  container.innerHTML = AREAS.map((a, i) => {
+    const pergsHtml = a.perguntas.map(p => `
+      <div class="pergunta-item">
+        <label class="pergunta-label">${p.label}</label>
+        ${p.hint ? `<p class="pergunta-hint">${p.hint}</p>` : ''}
+        <${p.tall ? 'textarea class="pf tall"' : 'input type="text" class="pf"'}
+          id="${a.id}_${p.id}"
+          placeholder="${p.placeholder}"
+          oninput="onInput('${a.id}_${p.id}',this.value)"
+          ${p.tall ? '' : '/'}>${p.tall ? (dados[a.id + '_' + p.id] || '') + '</textarea>' : ''}
+      </div>`).join('');
+
+    return `
+    <div class="area-panel" id="area${i}">
+      <div class="area-header">
+        <span class="area-num" style="color:${a.cor}">${String(i+1).padStart(2,'0')}</span>
+        <div class="area-header-content">
+          <p class="area-eyebrow" style="color:${a.cor}">Área ${i+1} de ${AREAS.length}</p>
+          <h2 class="area-title">${a.nome}</h2>
+          <p class="area-desc">${a.desc}</p>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <div class="status-label">${a.statusLabel}<small>${a.statusHint}</small></div>
+        <div class="status-btns">
+          <button class="status-btn sim ${statusState[a.id]==='sim'?'active':''}" onclick="setStatus('${a.id}','sim',this)">Sim</button>
+          <button class="status-btn parc ${statusState[a.id]==='parc'?'active':''}" onclick="setStatus('${a.id}','parc',this)">Parcial</button>
+          <button class="status-btn nao ${statusState[a.id]==='nao'?'active':''}" onclick="setStatus('${a.id}','nao',this)">Não</button>
+        </div>
+      </div>
+
+      <div class="perguntas">${pergsHtml}</div>
+
+      <div>
+        <p class="campo-livre-title">${a.livreLabel}</p>
+        <p class="campo-livre-hint">${a.livreHint}</p>
+        <textarea class="pf tall" id="${a.livreId}" placeholder="Escreva aqui qualquer informação adicional sobre esta área que não coube nas perguntas acima..." oninput="onInput('${a.livreId}',this.value)">${dados[a.livreId]||''}</textarea>
+      </div>
+
+      <div class="step-nav">
+        <span class="step-counter">Área <strong>${i+1}</strong> de ${AREAS.length}</span>
+        <div class="nav-btns">
+          ${i > 0 ? `<button class="btn-nav btn-prev" onclick="ativarArea(${i-1})">Voltar</button>` : ''}
+          ${i < AREAS.length-1
+            ? `<button class="btn-nav btn-next" onclick="ativarArea(${i+1})"><span>Próxima área</span></button>`
+            : `<button class="btn-nav btn-next" onclick="mostrarResumo()"><span>Ver resumo</span></button>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Restaurar valores dos inputs de texto (não textarea, pois já foi inserido no HTML)
+  AREAS.forEach(a => {
+    a.perguntas.forEach(p => {
+      if (!p.tall) {
+        const el = document.getElementById(a.id + '_' + p.id);
+        if (el && dados[a.id + '_' + p.id]) el.value = dados[a.id + '_' + p.id];
+      }
+    });
+  });
+}
+
+function onInput(id, val) {
+  dados[id] = val;
+  salvarLocal();
+}
+
+function setStatus(areaId, val, btn) {
+  statusState[areaId] = val;
+  const group = btn.closest('.status-btns');
+  group.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  salvarLocal();
+  atualizarProgress();
+}
+
+function ativarArea(i) {
+  currentArea = i;
+  document.querySelectorAll('.area-panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('area' + i)?.classList.add('active');
+  document.getElementById('resumoPanel').classList.remove('active');
+  atualizarProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function mostrarResumo() {
+  currentArea = AREAS.length;
+  document.querySelectorAll('.area-panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('resumoPanel').classList.add('active');
+  buildResumo();
+  atualizarProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function voltarEdicao() { ativarArea(0); }
+
+function buildResumo() {
+  const container = document.getElementById('resumoContent');
+  container.innerHTML = AREAS.map(a => {
+    const st = statusState[a.id];
+    const tagCls = st === 'sim' ? 'tag-sim' : st === 'nao' ? 'tag-nao' : st === 'parc' ? 'tag-parc' : 'tag-vazio';
+    const tagTxt = st === 'sim' ? 'Documentado' : st === 'nao' ? 'Não documentado' : st === 'parc' ? 'Parcial' : 'Não informado';
+
+    const fieldsHtml = `<div class="resumo-fields">
+      ${a.perguntas.map(p => {
+        const v = dados[a.id + '_' + p.id] || '';
+        return `<div class="rf-item"><p class="rf-label">${p.label}</p><p class="rf-value ${v?'':'empty'}">${v||'Não preenchido'}</p></div>`;
+      }).join('')}
+      ${dados[a.livreId] ? `<div class="rf-item" style="grid-column:1/-1"><p class="rf-label">${a.livreLabel}</p><p class="rf-value">${dados[a.livreId]}</p></div>` : ''}
+    </div>`;
+
+    return `<div class="resumo-area">
+      <div class="resumo-area-hd" onclick="toggleResumoArea(this)">
+        <div class="resumo-area-bar" style="background:${a.cor}"></div>
+        <span class="resumo-area-nome">${a.nome}</span>
+        <span class="resumo-status-tag ${tagCls}">${tagTxt}</span>
+        <span class="resumo-chev">▼</span>
+      </div>
+      <div class="resumo-area-body">${fieldsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleResumoArea(hd) {
+  const body = hd.nextElementSibling;
+  const chev = hd.querySelector('.resumo-chev');
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  chev.classList.toggle('open', !open);
+}
+
+// PDF
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    const restaurante = document.getElementById('rname').value || 'Meu Restaurante';
+    const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210, H=297, mg=18, cw=W-mg*2;
+
+    const hdr = (titulo) => {
+      pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+      pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+      if(titulo) pdf.text(titulo.toUpperCase(),W-mg,11,{align:'right'});
+    };
+
+    const ftr = (p,t) => {
+      pdf.setPage(p);
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10);
+      pdf.text(`${p} / ${t}`,W-mg,H-10,{align:'right'});
+    };
+
+    // CAPA
+    hdr('Manual de Processos');
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(28); pdf.setTextColor(245,240,232); pdf.text('Manual de',mg,42);
+    pdf.setFont('helvetica','bolditalic'); pdf.setTextColor(212,175,122); pdf.text('Processos',mg,56);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(122,115,105); pdf.text('Sistema D.O.S.E. · Módulo O',mg,66);
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,74,W-mg,74);
+    pdf.setFontSize(9); pdf.setTextColor(184,150,90); pdf.text(restaurante.toUpperCase(),mg,81);
+    pdf.setTextColor(122,115,105); pdf.text(hoje,W-mg,81,{align:'right'});
+    pdf.line(mg,85,W-mg,85);
+
+    // ÍNDICE
+    let y=98;
+    const stColors = {sim:[74,173,122], parc:[224,150,64], nao:[192,85,85]};
+    AREAS.forEach((a,i)=>{
+      const st = statusState[a.id];
+      const stTxt = st==='sim'?'Documentado':st==='parc'?'Parcial':st==='nao'?'Não documentado':'Não informado';
+      const cor = stColors[st] || [122,115,105];
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(184,150,90);
+      pdf.text(`${i+1}.`, mg, y);
+      pdf.setTextColor(210,200,185);
+      pdf.text(a.nome, mg+7, y);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8);
+      pdf.setTextColor(...cor);
+      pdf.text(stTxt, W-mg, y, {align:'right'});
+      y+=9;
+    });
+
+    // UMA SEÇÃO POR ÁREA
+    for (const a of AREAS) {
+      pdf.addPage(); hdr(a.nome);
+      y=26;
+
+      // Barra colorida + título
+      const rgb = hexToRgb(a.cor);
+      pdf.setFillColor(...rgb); pdf.rect(mg,y,3,22,'F');
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(245,240,232);
+      pdf.text(a.nome, mg+8, y+8);
+      const st = statusState[a.id];
+      const stTxt = st==='sim'?'Documentado':st==='parc'?'Parcial':st==='nao'?'Não documentado':'Não informado';
+      const stCor = stColors[st]||[122,115,105];
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(...stCor);
+      pdf.text(stTxt.toUpperCase(), mg+8, y+16);
+      y+=30;
+
+      // Campos
+      for (const p of a.perguntas) {
+        const val = dados[a.id + '_' + p.id] || '';
+        if(y>H-30){pdf.addPage();hdr(a.nome);y=24;}
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(122,115,105);
+        pdf.text(p.label.toUpperCase(), mg, y); y+=5;
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
+        pdf.setTextColor(val?210:80, val?200:76, val?185:70);
+        const lines = pdf.splitTextToSize(val||'Não preenchido', cw);
+        const show = lines.slice(0,4);
+        pdf.text(show, mg, y); y+=show.length*5+6;
+        pdf.setDrawColor(184,150,90,0.1); pdf.setLineWidth(0.2); pdf.line(mg,y,W-mg,y); y+=5;
+      }
+
+      // Campo livre
+      const livre = dados[a.livreId];
+      if(livre){
+        if(y>H-40){pdf.addPage();hdr(a.nome);y=24;}
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(184,150,90);
+        pdf.text(a.livreLabel.toUpperCase(), mg, y); y+=6;
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(160,152,140);
+        const lLines = pdf.splitTextToSize(livre, cw);
+        pdf.text(lLines.slice(0,8), mg, y);
+      }
+    }
+
+    const total = pdf.internal.getNumberOfPages();
+    for(let p=1;p<=total;p++) ftr(p,total);
+    pdf.save(`ManualProcessos-${restaurante.replace(/\s+/g,'-')}.pdf`);
+  } catch(err){
+    console.error(err); alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Implementação | Sistema D.O.S.E. Bônus 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --charcoal:#011e34;--cream:#fff1e6;--gold:#5b91bc;--gold-light:#8fb3d1;
+  --muted:#5d6d7c;--border:rgba(91,145,188,0.18);
+  --presente:#6a4a8a;--presente-light:#b87ad4;--presente-border:rgba(106,74,138,0.28);--presente-bg:rgba(106,74,138,0.06);
+}
+html{scroll-behavior:smooth;}
+body{min-height:100%;font-family:'Manrope',sans-serif;color:var(--cream);background:var(--charcoal);}
+
+/* HERO */
+.hero{padding:52px 48px 40px;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(106,74,138,0.08) 0%,transparent 70%);pointer-events:none;}
+.presente-tag{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--presente-light);border:1px solid var(--presente-border);display:inline-flex;align-items:center;gap:8px;padding:5px 14px;margin-bottom:20px;}
+.hero-title{font-family:'Manrope',serif;font-size:clamp(32px,4vw,56px);font-weight:300;line-height:1.05;margin-bottom:14px;}
+.hero-title em{font-style:italic;color:var(--gold-light);}
+.hero-sub{font-size:13px;font-weight:300;color:rgba(245,240,232,0.55);max-width:640px;line-height:1.8;margin-bottom:28px;}
+.hero-instrucao{font-size:12px;font-weight:300;color:rgba(245,240,232,0.4);line-height:1.8;padding:16px 20px;border:1px solid rgba(91,145,188,0.12);background:rgba(91,145,188,0.04);max-width:640px;}
+
+/* SELETOR DE TIPO */
+.seletor-wrap{padding:36px 48px;border-bottom:1px solid var(--border);}
+.seletor-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--presente-light);margin-bottom:16px;font-weight:500;}
+.tipos-grid{display:flex;gap:8px;flex-wrap:wrap;}
+.tipo-btn{padding:10px 18px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;border:1px solid rgba(91,145,188,0.2);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;font-family:'Manrope',sans-serif;}
+.tipo-btn:hover{border-color:var(--presente-light);color:var(--presente-light);}
+.tipo-btn.active{border-color:var(--presente-light);background:var(--presente-bg);color:var(--presente-light);}
+
+/* CONTEÚDO */
+.conteudo{padding:40px 48px;max-width:1000px;}
+.tipo-panel{display:none;}
+.tipo-panel.active{display:block;}
+
+.tipo-header{margin-bottom:36px;}
+.tipo-emoji{font-size:32px;margin-bottom:12px;}
+.tipo-nome{font-family:'Manrope',serif;font-size:clamp(28px,3.5vw,48px);font-weight:300;line-height:1.05;margin-bottom:8px;}
+.tipo-nome em{font-style:italic;color:var(--gold-light);}
+.risco-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;}
+.risco-card{padding:14px 18px;flex:1;min-width:220px;}
+.risco-card.risco{border:1px solid rgba(192,112,112,0.28);background:rgba(192,112,112,0.05);}
+.risco-card.prioridade{border:1px solid rgba(106,74,138,0.28);background:var(--presente-bg);}
+.rc-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:500;margin-bottom:6px;}
+.risco-card.risco .rc-label{color:#c07070;}
+.risco-card.prioridade .rc-label{color:var(--presente-light);}
+.rc-text{font-size:12.5px;font-weight:300;color:rgba(245,240,232,0.6);line-height:1.7;}
+
+/* SEMANAS */
+.semanas{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:28px;}
+.semana-card{border:1px solid var(--border);background:rgba(245,240,232,0.02);}
+.semana-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.semana-num{font-family:'Manrope',serif;font-size:40px;font-weight:300;color:rgba(91,145,188,0.18);line-height:1;flex-shrink:0;}
+.semana-info{}
+.semana-titulo{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-light);margin-bottom:2px;}
+.semana-foco{font-size:11px;font-weight:300;color:var(--muted);}
+.semana-itens{padding:16px 20px;list-style:none;}
+.semana-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(91,145,188,0.05);cursor:pointer;transition:background 0.15s;}
+.semana-item:last-child{border-bottom:none;}
+.semana-item:hover{background:rgba(91,145,188,0.03);}
+.item-check{width:16px;height:16px;border:1px solid rgba(91,145,188,0.28);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.item-check.done{background:var(--presente-light);border-color:var(--presente-light);}
+.item-check.done::after{content:'✓';font-size:10px;color:var(--charcoal);font-weight:700;}
+.item-ferramenta{font-size:11px;font-weight:600;color:var(--gold-light);margin-bottom:2px;}
+.item-ferramenta.done-text{text-decoration:line-through;color:var(--muted);}
+.item-desc{font-size:11.5px;font-weight:300;color:rgba(245,240,232,0.5);line-height:1.6;}
+.item-desc.done-text{text-decoration:line-through;color:rgba(122,115,105,0.4);}
+
+/* PROGRESSO */
+.progresso-geral{margin-bottom:32px;padding:20px 24px;border:1px solid var(--presente-border);background:var(--presente-bg);}
+.prog-titulo{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--presente-light);margin-bottom:10px;font-weight:500;}
+.prog-barra-bg{height:4px;background:rgba(106,74,138,0.15);margin-bottom:8px;}
+.prog-barra-fill{height:100%;background:var(--presente-light);transition:width 0.5s ease;}
+.prog-info{display:flex;justify-content:space-between;font-size:11px;color:rgba(245,240,232,0.4);}
+
+/* NOTA ESPECIAL */
+.nota-especial{margin-top:8px;padding:10px 14px;border-left:2px solid var(--presente-light);background:rgba(106,74,138,0.04);}
+.nota-especial p{font-size:11.5px;font-weight:300;color:rgba(245,240,232,0.55);line-height:1.65;}
+.nota-especial strong{color:var(--presente-light);font-weight:500;}
+
+/* VAZIO */
+.estado-vazio{padding:80px 48px;text-align:center;opacity:0.4;}
+.vazio-icon{font-family:'Manrope',serif;font-size:72px;color:var(--presente-light);line-height:1;margin-bottom:16px;}
+.vazio-txt{font-size:13px;color:var(--muted);line-height:1.8;}
+
+/* FOOTER */
+.footer{padding:24px 48px;border-top:1px solid var(--border);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(91,145,188,0.3);margin-top:24px;}
+
+@media(max-width:700px){
+  .hero,.seletor-wrap,.conteudo,.footer{padding-left:24px;padding-right:24px;}
+  .semanas{grid-template-columns:1fr;}
+  .risco-row{flex-direction:column;}
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="hero">
+  <div class="presente-tag">Sistema D.O.S.E. · Bônus 3</div>
+  <h1 class="hero-title">Guia de Implementação<br><em>por Tipo de Negócio</em></h1>
+  <p class="hero-sub">Você concluiu o Sistema D.O.S.E. Tem o método, tem as ferramentas. A pergunta que fica é: por onde começo de verdade? A resposta depende do tipo de negócio que você tem. Este guia organiza a sequência exata para o seu perfil.</p>
+  <div class="hero-instrucao">Selecione o tipo do seu negócio abaixo. A sequência das 4 primeiras semanas foi organizada com base nos gargalos mais comuns de cada operação. Marque os itens conforme avança para acompanhar seu progresso.</div>
+</div>
+
+<div class="seletor-wrap">
+  <p class="seletor-label">Qual é o seu negócio?</p>
+  <div class="tipos-grid">
+    <button class="tipo-btn" onclick="setTipo('alacarte')">🍽️ Restaurante a la carte</button>
+    <button class="tipo-btn" onclick="setTipo('confeitaria')">🎂 Confeitaria e padaria</button>
+    <button class="tipo-btn" onclick="setTipo('delivery')">📦 Delivery</button>
+    <button class="tipo-btn" onclick="setTipo('lanchonete')">🥪 Lanchonete e fast food</button>
+    <button class="tipo-btn" onclick="setTipo('bar')">🍺 Bar e petiscaria</button>
+    <button class="tipo-btn" onclick="setTipo('cafe')">☕ Café e cafeteria</button>
+    <button class="tipo-btn" onclick="setTipo('foodtruck')">🚚 Food truck</button>
+  </div>
+</div>
+
+<div class="conteudo" id="conteudo">
+
+  <!-- VAZIO INICIAL -->
+  <div id="estado-vazio" class="estado-vazio">
+    <div class="vazio-icon">◎</div>
+    <p class="vazio-txt">Selecione o tipo do seu negócio acima<br>para ver a sequência de implementação</p>
+  </div>
+
+  <!-- RESTAURANTE A LA CARTE -->
+  <div class="tipo-panel" id="panel-alacarte">
+    <div class="progresso-geral">
+      <p class="prog-titulo">Progresso das 4 semanas</p>
+      <div class="prog-barra-bg"><div class="prog-barra-fill" id="prog-alacarte" style="width:0%"></div></div>
+      <div class="prog-info"><span id="prog-txt-alacarte">0 de 0 itens concluídos</span><span id="prog-pct-alacarte">0%</span></div>
+    </div>
+    <div class="tipo-header">
+      <div class="tipo-emoji">🍽️</div>
+      <h2 class="tipo-nome">Restaurante <em>a la carte</em></h2>
+      <div class="risco-row">
+        <div class="risco-card risco"><p class="rc-label">Maior risco</p><p class="rc-text">CMV alto por variação de porcionamento e precificação desatualizada.</p></div>
+        <div class="risco-card prioridade"><p class="rc-label">Prioridade máxima</p><p class="rc-text">Fichas técnicas e controle de custo por prato antes de qualquer outra coisa.</p></div>
+      </div>
+    </div>
+    <div class="semanas" id="semanas-alacarte">
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">1</span><div class="semana-info"><p class="semana-titulo">Semana 1</p><p class="semana-foco">Diagnóstico e primeiros dados</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">D1 Mapa de Operação</p><p class="item-desc">Mapeie o fluxo do salão ao fechamento de ponta a ponta.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">D2 Checklist dos 5 Vazamentos</p><p class="item-desc">Foco especial em desperdício e porcionamento inconsistente.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">O1 Banco de Ingredientes</p><p class="item-desc">Cadastre os insumos mais usados primeiro. Não precisa ser tudo de uma vez.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">E2 Fechamento de Caixa</p><p class="item-desc">Implante agora. Não espere terminar o curso para começar a registrar.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">2</span><div class="semana-info"><p class="semana-titulo">Semana 2</p><p class="semana-foco">Fichas técnicas e custo real</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">O2 Ficha Técnica Gerencial</p><p class="item-desc">Comece pelos 5 pratos mais vendidos. Com fator de correção.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">O3 Ficha Técnica Operacional</p><p class="item-desc">Monte com foto de referência. A equipe de cozinha precisa disso.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">S2 Planilha de CMV</p><p class="item-desc">Use os dados das fichas técnicas para calcular o CMV real do negócio.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">3</span><div class="semana-info"><p class="semana-titulo">Semana 3</p><p class="semana-foco">Precificação e cardápio</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">S3 Calculadora de Precificação</p><p class="item-desc">Revise os pratos com CMV acima de 35%. São os que mais drenam a margem.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">S5 Análise de Cardápio</p><p class="item-desc">Identifique os abacaxis e tome a primeira decisão sobre cada um.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">D4 Diagnóstico de Compras</p><p class="item-desc">Com o CMV calculado, você vai para a negociação com dado na mão.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">4</span><div class="semana-info"><p class="semana-titulo">Semana 4</p><p class="semana-foco">Rotina e plano</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">O4 Manual de Processos</p><p class="item-desc">Documente abertura, fechamento e recebimento de mercadoria primeiro.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">E3 Checklist do Gestor Lucrativo</p><p class="item-desc">Implante as abas diária e semanal. A mensal vem depois.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'alacarte')"><div class="item-check"></div><div><p class="item-ferramenta">E5 Plano de 30 Dias</p><p class="item-desc">Monte com as 3 prioridades que apareceram no diagnóstico D3.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFEITARIA E PADARIA -->
+  <div class="tipo-panel" id="panel-confeitaria">
+    <div class="progresso-geral">
+      <p class="prog-titulo">Progresso das 4 semanas</p>
+      <div class="prog-barra-bg"><div class="prog-barra-fill" id="prog-confeitaria" style="width:0%"></div></div>
+      <div class="prog-info"><span id="prog-txt-confeitaria">0 de 0 itens concluídos</span><span id="prog-pct-confeitaria">0%</span></div>
+    </div>
+    <div class="tipo-header">
+      <div class="tipo-emoji">🎂</div>
+      <h2 class="tipo-nome">Confeitaria <em>e padaria</em></h2>
+      <div class="risco-row">
+        <div class="risco-card risco"><p class="rc-label">Maior risco</p><p class="rc-text">Precificação de encomendas sem considerar hora de trabalho e desperdício no preparo.</p></div>
+        <div class="risco-card prioridade"><p class="rc-label">Prioridade máxima</p><p class="rc-text">Ficha técnica com fator de correção e precificação correta de tudo que é vendido.</p></div>
+      </div>
+    </div>
+    <div class="semanas" id="semanas-confeitaria">
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">1</span><div class="semana-info"><p class="semana-titulo">Semana 1</p><p class="semana-foco">Estoque e controle de insumos</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">D2 Checklist dos 5 Vazamentos</p><p class="item-desc">Foco em desperdício de insumo e estoque descontrolado.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">O1 Banco de Ingredientes</p><p class="item-desc">Cadastre farinhas, gorduras, ovos e os insumos de maior custo primeiro.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">O5 Controle de Estoque</p><p class="item-desc">Implante o inventário imediatamente. É a base para o CMV correto.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">E2 Fechamento de Caixa</p><p class="item-desc">Separe balcão de encomendas no registro desde o início.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">2</span><div class="semana-info"><p class="semana-titulo">Semana 2</p><p class="semana-foco">Fichas técnicas com fator de correção</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">O2 Ficha Técnica Gerencial</p><p class="item-desc">Comece pelos itens de maior volume. Atenção especial ao fator de correção: rendimento real de massa é diferente do peso dos ingredientes.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">S3 Calculadora de Precificação</p><p class="item-desc">Revise o preço de tudo que vende no balcão com o custo real calculado.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">Bônus 4 · Precificação para Eventos</p><p class="item-desc">Se você atende encomendas, esta é sua ferramenta mais urgente agora.</p>
+            <div class="nota-especial"><p>A lógica de encomenda é completamente diferente do balcão. Inclui <strong>sua hora de trabalho</strong>, embalagem especial e deslocamento. Não precifique encomenda sem ela.</p></div>
+          </div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">3</span><div class="semana-info"><p class="semana-titulo">Semana 3</p><p class="semana-foco">CMV e fornecedores</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">S2 Planilha de CMV</p><p class="item-desc">Calcule por categoria: panificação vs. confeitaria. O comportamento é diferente.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">D4 Diagnóstico de Compras</p><p class="item-desc">Seus fornecedores de insumo têm grande impacto no CMV. Negocie com dado.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">S5 Análise de Cardápio</p><p class="item-desc">Identifique quais produtos sustentam a margem e quais drenam.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">4</span><div class="semana-info"><p class="semana-titulo">Semana 4</p><p class="semana-foco">Padronização e plano</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">O3 Ficha Técnica Operacional</p><p class="item-desc">Padronize as receitas para a equipe de produção com foto do resultado final.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">E3 Checklist do Gestor Lucrativo</p><p class="item-desc">Inclua conferência de estoque na aba diária.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'confeitaria')"><div class="item-check"></div><div><p class="item-ferramenta">E5 Plano de 30 Dias</p><p class="item-desc">Foco em margem de encomendas e CMV de insumos no primeiro ciclo.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELIVERY -->
+  <div class="tipo-panel" id="panel-delivery">
+    <div class="progresso-geral">
+      <p class="prog-titulo">Progresso das 4 semanas</p>
+      <div class="prog-barra-bg"><div class="prog-barra-fill" id="prog-delivery" style="width:0%"></div></div>
+      <div class="prog-info"><span id="prog-txt-delivery">0 de 0 itens concluídos</span><span id="prog-pct-delivery">0%</span></div>
+    </div>
+    <div class="tipo-header">
+      <div class="tipo-emoji">📦</div>
+      <h2 class="tipo-nome"><em>Delivery</em></h2>
+      <div class="risco-row">
+        <div class="risco-card risco"><p class="rc-label">Maior risco</p><p class="rc-text">Taxa das plataformas não considerada na precificação. CMV aparente menor do que o real.</p></div>
+        <div class="risco-card prioridade"><p class="rc-label">Prioridade máxima</p><p class="rc-text">Precificação com taxa de plataforma e embalagem incluídos no custo variável.</p></div>
+      </div>
+    </div>
+    <div class="semanas" id="semanas-delivery">
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">1</span><div class="semana-info"><p class="semana-titulo">Semana 1</p><p class="semana-foco">Diagnóstico e dados financeiros</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">D1 Mapa de Operação</p><p class="item-desc">Mapeie o fluxo do pedido ao despacho.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">D2 Checklist dos 5 Vazamentos</p><p class="item-desc">Foco em embalagem e taxa de plataforma nos custos variáveis.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">S1 Levantamento Financeiro</p><p class="item-desc">Separe faturamento bruto da plataforma do faturamento líquido. São números diferentes.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">E2 Fechamento de Caixa</p><p class="item-desc">Registre por plataforma separadamente desde o início.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">2</span><div class="semana-info"><p class="semana-titulo">Semana 2</p><p class="semana-foco">Custo real com taxa incluída</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">O2 Ficha Técnica Gerencial</p><p class="item-desc">Inclua embalagem no custo de cada item. Ela faz parte do custo de produção.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">S3 Calculadora de Precificação</p><p class="item-desc">Use o método CMV Alvo considerando a taxa da plataforma como custo variável.</p>
+            <div class="nota-especial"><p>Se a plataforma cobra 30% e o seu CMV alvo é 32%, você está operando no limite. A precificação precisa considerar os dois custos juntos.</p></div>
+          </div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">S2 Planilha de CMV</p><p class="item-desc">Calcule com e sem taxa para entender o impacto real de cada plataforma.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">3</span><div class="semana-info"><p class="semana-titulo">Semana 3</p><p class="semana-foco">Cardápio e padronização</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">O3 Ficha Técnica Operacional</p><p class="item-desc">Padronize o porcionamento para embalagem. Foto do item embalado como referência.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">S5 Análise de Cardápio</p><p class="item-desc">Identifique quais itens têm margem real após taxa de plataforma. Pode surpreender.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">E4 Painel de Indicadores</p><p class="item-desc">Monitore ticket médio por plataforma. As taxas impactam de forma diferente.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">4</span><div class="semana-info"><p class="semana-titulo">Semana 4</p><p class="semana-foco">Processos e plano</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">O4 Manual de Processos</p><p class="item-desc">Documente montagem do pedido e conferência antes do despacho.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">E3 Checklist do Gestor Lucrativo</p><p class="item-desc">Inclua abertura e fechamento das plataformas na aba diária.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'delivery')"><div class="item-check"></div><div><p class="item-ferramenta">E5 Plano de 30 Dias</p><p class="item-desc">Foco em mix de cardápio com melhor margem após taxas.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- LANCHONETE -->
+  <div class="tipo-panel" id="panel-lanchonete">
+    <div class="progresso-geral">
+      <p class="prog-titulo">Progresso das 4 semanas</p>
+      <div class="prog-barra-bg"><div class="prog-barra-fill" id="prog-lanchonete" style="width:0%"></div></div>
+      <div class="prog-info"><span id="prog-txt-lanchonete">0 de 0 itens concluídos</span><span id="prog-pct-lanchonete">0%</span></div>
+    </div>
+    <div class="tipo-header">
+      <div class="tipo-emoji">🥪</div>
+      <h2 class="tipo-nome">Lanchonete <em>e fast food</em></h2>
+      <div class="risco-row">
+        <div class="risco-card risco"><p class="rc-label">Maior risco</p><p class="rc-text">Volume alto com margem baixa. Pequenas variações de custo têm grande impacto no resultado.</p></div>
+        <div class="risco-card prioridade"><p class="rc-label">Prioridade máxima</p><p class="rc-text">Padronização de porcionamento e controle de desperdício em escala.</p></div>
+      </div>
+    </div>
+    <div class="semanas" id="semanas-lanchonete">
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">1</span><div class="semana-info"><p class="semana-titulo">Semana 1</p><p class="semana-foco">Diagnóstico e fichas técnicas</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">D2 Checklist dos 5 Vazamentos</p><p class="item-desc">Desperdício e porcionamento são críticos em alto volume. Comece aqui.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">O1 Banco de Ingredientes e O2 Ficha Técnica Gerencial</p><p class="item-desc">Comece pelos itens de maior giro. A variação de 1g por porção tem impacto enorme em escala.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">O3 Ficha Técnica Operacional</p><p class="item-desc">A foto de referência é essencial para equipe em ritmo acelerado.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">E2 Fechamento de Caixa</p><p class="item-desc">Registre clientes atendidos para calcular ticket médio desde o início.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">2</span><div class="semana-info"><p class="semana-titulo">Semana 2</p><p class="semana-foco">Estoque e CMV</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">O5 Controle de Estoque</p><p class="item-desc">Implante a movimentação diária dos itens de maior giro.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">S2 Planilha de CMV</p><p class="item-desc">Calcule por turno se possível para identificar variação de equipe.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">D4 Diagnóstico de Compras</p><p class="item-desc">Volume alto dá poder de negociação. Negocie com os dados em mãos.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">3</span><div class="semana-info"><p class="semana-titulo">Semana 3</p><p class="semana-foco">Precificação e cardápio</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">S3 Calculadora de Precificação</p><p class="item-desc">Revise o cardápio completo com custo real. Em escala, erro de precificação é caro.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">S5 Análise de Cardápio</p><p class="item-desc">Identifique combos e itens individuais com melhor margem para priorizar.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">4</span><div class="semana-info"><p class="semana-titulo">Semana 4</p><p class="semana-foco">Equipe e plano</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">O4 Manual de Processos</p><p class="item-desc">Documente abertura, produção e fechamento por função.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">E3 Checklist do Gestor Lucrativo</p><p class="item-desc">A aba Equipe Operacional é essencial aqui para consistência em ritmo acelerado.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'lanchonete')"><div class="item-check"></div><div><p class="item-ferramenta">E5 Plano de 30 Dias</p><p class="item-desc">Foco em padronização e redução de variação de porcionamento.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- BAR -->
+  <div class="tipo-panel" id="panel-bar">
+    <div class="progresso-geral">
+      <p class="prog-titulo">Progresso das 4 semanas</p>
+      <div class="prog-barra-bg"><div class="prog-barra-fill" id="prog-bar" style="width:0%"></div></div>
+      <div class="prog-info"><span id="prog-txt-bar">0 de 0 itens concluídos</span><span id="prog-pct-bar">0%</span></div>
+    </div>
+    <div class="tipo-header">
+      <div class="tipo-emoji">🍺</div>
+      <h2 class="tipo-nome">Bar <em>e petiscaria</em></h2>
+      <div class="risco-row">
+        <div class="risco-card risco"><p class="rc-label">Maior risco</p><p class="rc-text">CMV de bebidas não analisado separado do CMV de cozinha. Os comportamentos são completamente diferentes.</p></div>
+        <div class="risco-card prioridade"><p class="rc-label">Prioridade máxima</p><p class="rc-text">Separar o controle e o CMV de bebidas do CMV de comida desde o início.</p></div>
+      </div>
+    </div>
+    <div class="semanas" id="semanas-bar">
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">1</span><div class="semana-info"><p class="semana-titulo">Semana 1</p><p class="semana-foco">Diagnóstico separado: bar e cozinha</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">D1 Mapa de Operação</p><p class="item-desc">Mapeie o fluxo do bar e da cozinha separadamente.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">D2 Checklist dos 5 Vazamentos</p><p class="item-desc">Foco em estoque de bebidas e controle de abertura de garrafas.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">O5 Controle de Estoque</p><p class="item-desc">Cadastre bebidas e insumos de bar separados dos de cozinha.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">E2 Fechamento de Caixa</p><p class="item-desc">Separe consumo de mesa, balcão e delivery se houver.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">2</span><div class="semana-info"><p class="semana-titulo">Semana 2</p><p class="semana-foco">Fichas técnicas e precificação</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">O2 Ficha Técnica Gerencial</p><p class="item-desc">Calcule custo de drinques e petiscos com a mesma lógica. Inclua perda no porcionamento.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">S3 Calculadora de Precificação</p><p class="item-desc">Revise o preço de bebidas considerando perda e porcionamento correto.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">D4 Diagnóstico de Compras</p><p class="item-desc">Fornecedores de bebida têm grande margem de negociação. Vá com dados.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">3</span><div class="semana-info"><p class="semana-titulo">Semana 3</p><p class="semana-foco">CMV e cardápio</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">S2 Planilha de CMV por categoria</p><p class="item-desc">Analise bebidas e comida separadamente. O CMV de bebida saudável é diferente do de cozinha.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">S5 Análise de Cardápio</p><p class="item-desc">Petiscos e drinques na mesma matriz. Identifique o que sustenta a margem do negócio.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">4</span><div class="semana-info"><p class="semana-titulo">Semana 4</p><p class="semana-foco">Processos e plano</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">O4 Manual de Processos</p><p class="item-desc">Documente abertura e fechamento do bar com conferência de estoque de bebidas.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">E3 Checklist do Gestor Lucrativo</p><p class="item-desc">Inclua conferência de bebidas na aba diária obrigatoriamente.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'bar')"><div class="item-check"></div><div><p class="item-ferramenta">E5 Plano de 30 Dias</p><p class="item-desc">Foco em controle de bebidas e revisão de precificação de drinques.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAFÉ -->
+  <div class="tipo-panel" id="panel-cafe">
+    <div class="progresso-geral">
+      <p class="prog-titulo">Progresso das 4 semanas</p>
+      <div class="prog-barra-bg"><div class="prog-barra-fill" id="prog-cafe" style="width:0%"></div></div>
+      <div class="prog-info"><span id="prog-txt-cafe">0 de 0 itens concluídos</span><span id="prog-pct-cafe">0%</span></div>
+    </div>
+    <div class="tipo-header">
+      <div class="tipo-emoji">☕</div>
+      <h2 class="tipo-nome">Café <em>e cafeteria</em></h2>
+      <div class="risco-row">
+        <div class="risco-card risco"><p class="rc-label">Maior risco</p><p class="rc-text">Ticket médio baixo com alto custo de insumo por xícara. Desperdício de café e leite tem grande impacto.</p></div>
+        <div class="risco-card prioridade"><p class="rc-label">Prioridade máxima</p><p class="rc-text">Ficha técnica de bebidas e controle de desperdício no preparo.</p></div>
+      </div>
+    </div>
+    <div class="semanas" id="semanas-cafe">
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">1</span><div class="semana-info"><p class="semana-titulo">Semana 1</p><p class="semana-foco">Custo real por xícara</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">D2 Checklist dos 5 Vazamentos</p><p class="item-desc">Foco em desperdício de café e leite no preparo. São os maiores custos ocultos.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">O1 Banco de Ingredientes</p><p class="item-desc">Cadastre café, leite e insumos de maior custo primeiro.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">O2 Ficha Técnica Gerencial</p><p class="item-desc">Comece pelas bebidas mais vendidas com o custo exato por dose.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">E2 Fechamento de Caixa</p><p class="item-desc">Registre por turno para identificar picos de movimento.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">2</span><div class="semana-info"><p class="semana-titulo">Semana 2</p><p class="semana-foco">Precificação e padronização</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">S3 Calculadora de Precificação</p><p class="item-desc">Revise o preço das bebidas com o custo real calculado.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">O3 Ficha Técnica Operacional</p><p class="item-desc">Padronize a extração, temperatura e proporção de leite. Consistência é reputação.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">S2 Planilha de CMV</p><p class="item-desc">CMV de cafeteria saudável fica entre 22% e 32%. Veja onde você está.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">3</span><div class="semana-info"><p class="semana-titulo">Semana 3</p><p class="semana-foco">Cardápio e fornecedores</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">S5 Análise de Cardápio</p><p class="item-desc">Identifique o que complementa o café com boa margem: doces, salgados, kits.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">D4 Diagnóstico de Compras</p><p class="item-desc">Negocie contrato de café com fornecedor torrador. Volume e consistência são seus argumentos.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">4</span><div class="semana-info"><p class="semana-titulo">Semana 4</p><p class="semana-foco">Processos e plano</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">O4 Manual de Processos</p><p class="item-desc">Documente abertura de máquina, limpeza e calibração.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">E4 Painel de Indicadores</p><p class="item-desc">Monitore ticket médio e meta de café vendido por dia.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'cafe')"><div class="item-check"></div><div><p class="item-ferramenta">E5 Plano de 30 Dias</p><p class="item-desc">Foco em ticket médio e mix de cardápio de acompanhamento.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOD TRUCK -->
+  <div class="tipo-panel" id="panel-foodtruck">
+    <div class="progresso-geral">
+      <p class="prog-titulo">Progresso das 4 semanas</p>
+      <div class="prog-barra-bg"><div class="prog-barra-fill" id="prog-foodtruck" style="width:0%"></div></div>
+      <div class="prog-info"><span id="prog-txt-foodtruck">0 de 0 itens concluídos</span><span id="prog-pct-foodtruck">0%</span></div>
+    </div>
+    <div class="tipo-header">
+      <div class="tipo-emoji">🚚</div>
+      <h2 class="tipo-nome">Food truck <em>e operação itinerante</em></h2>
+      <div class="risco-row">
+        <div class="risco-card risco"><p class="rc-label">Maior risco</p><p class="rc-text">Custo por evento sem controle. Falta de histórico financeiro por ponto de venda.</p></div>
+        <div class="risco-card prioridade"><p class="rc-label">Prioridade máxima</p><p class="rc-text">Fechamento de caixa por evento e precificação que contemple custo de deslocamento.</p></div>
+      </div>
+    </div>
+    <div class="semanas" id="semanas-foodtruck">
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">1</span><div class="semana-info"><p class="semana-titulo">Semana 1</p><p class="semana-foco">Dados por evento e diagnóstico</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">D1 Mapa de Operação</p><p class="item-desc">Mapeie o fluxo de montagem, serviço e desmontagem.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">D2 Checklist dos 5 Vazamentos</p><p class="item-desc">Foco em desperdício por evento e custo de deslocamento não contabilizado.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">E2 Fechamento de Caixa</p><p class="item-desc">Registre por evento e localização, não só por dia. Esse dado vai mostrar quais pontos valem a pena.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">2</span><div class="semana-info"><p class="semana-titulo">Semana 2</p><p class="semana-foco">Custo real com deslocamento</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">O2 Ficha Técnica Gerencial e S3 Calculadora de Precificação</p><p class="item-desc">Inclua custo de deslocamento na precificação. É um custo variável real do seu negócio.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">Bônus 4 · Precificação para Eventos</p><p class="item-desc">Se você atende eventos privados, use esta ferramenta para precificar corretamente.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">O5 Controle de Estoque</p><p class="item-desc">Controle o que sai por evento para calibrar a compra e evitar excesso.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">3</span><div class="semana-info"><p class="semana-titulo">Semana 3</p><p class="semana-foco">CMV e seleção de pontos</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">S2 Planilha de CMV</p><p class="item-desc">Analise CMV por ponto de venda para identificar quais locais são mais lucrativos.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">S5 Análise de Cardápio</p><p class="item-desc">Cardápio enxuto é essencial em operação móvel. Elimine os abacaxis sem hesitar.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">Bônus 3 · Calculadora de Ponto de Equilíbrio</p><p class="item-desc">Calcule o faturamento mínimo por evento para cobrir os custos incluindo deslocamento.</p></div></li>
+        </ul>
+      </div>
+      <div class="semana-card">
+        <div class="semana-header"><span class="semana-num">4</span><div class="semana-info"><p class="semana-titulo">Semana 4</p><p class="semana-foco">Equipe e plano</p></div></div>
+        <ul class="semana-itens">
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">O4 Manual de Processos</p><p class="item-desc">Documente montagem, operação e desmontagem para trabalhar com equipe.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">E4 Painel de Indicadores</p><p class="item-desc">Compare desempenho por ponto de venda. Use esse dado para selecionar os eventos certos.</p></div></li>
+          <li class="semana-item" onclick="toggleItem(this,'foodtruck')"><div class="item-check"></div><div><p class="item-ferramenta">E5 Plano de 30 Dias</p><p class="item-desc">Foco em seleção de pontos mais lucrativos e calibração de compra por evento.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /conteudo -->
+
+<div class="footer">Elaborado por Rô Gonzaga | RG Gastrô Educação · Sistema D.O.S.E. · Ferramenta exclusiva para alunos</div>
+
+<script>
+let tipoAtivo = null;
+const progressos = {};
+
+function setTipo(id) {
+  // Esconde vazio
+  document.getElementById('estado-vazio').style.display = 'none';
+  // Esconde painéis
+  document.querySelectorAll('.tipo-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+  // Mostra painel
+  document.getElementById('panel-' + id).classList.add('active');
+  event.target.classList.add('active');
+  tipoAtivo = id;
+  atualizarProgresso(id);
+  // Scroll suave
+  document.getElementById('conteudo').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function toggleItem(li, tipo) {
+  const check = li.querySelector('.item-check');
+  const ferramenta = li.querySelector('.item-ferramenta');
+  const desc = li.querySelector('.item-desc');
+  const isDone = check.classList.contains('done');
+  check.classList.toggle('done', !isDone);
+  ferramenta.classList.toggle('done-text', !isDone);
+  desc.classList.toggle('done-text', !isDone);
+  atualizarProgresso(tipo);
+}
+
+function atualizarProgresso(tipo) {
+  const panel = document.getElementById('panel-' + tipo);
+  if (!panel) return;
+  const total = panel.querySelectorAll('.semana-item').length;
+  const done = panel.querySelectorAll('.item-check.done').length;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('prog-' + tipo).style.width = pct + '%';
+  document.getElementById('prog-txt-' + tipo).textContent = done + ' de ' + total + ' itens concluídos';
+  document.getElementById('prog-pct-' + tipo).textContent = pct + '%';
+}
+</script>
+</body>
+</html>

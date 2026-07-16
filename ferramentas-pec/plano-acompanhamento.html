@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Plano de Acompanhamento Pós-Implantação — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#011E34;--navy2:#062d4e;--gold:#F7B700;--gold2:#FCC740;--coral:#F25C54;--cream:#FFFEE8;--cream2:#F0EECC;--white:#ffffff;--gray:#6b7280;--gray-l:#e5e7eb;--ok:#22c55e;--ok-l:#dcfce7;--warn:#f59e0b;--warn-l:#fef3c7;--nao:#ef4444;--nao-l:#fee2e2;--info:#3b82f6;--info-l:#dbeafe;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;}
+  .header{background:var(--navy);padding:20px 32px 16px;border-bottom:3px solid var(--gold);}
+  .header-eyebrow{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+  .header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);}
+  .id-bar{background:var(--navy2);padding:14px 32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px 24px;}
+  .id-field{display:flex;flex-direction:column;gap:3px;}
+  .id-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .id-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.2);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:3px 0;outline:none;width:100%;}
+  .id-input::placeholder{color:rgba(255,255,255,.3);}
+  .id-input:focus{border-bottom-color:var(--gold);}
+  .main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+  .resumo{background:var(--navy);border-radius:8px;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;}
+  .resumo-card{background:rgba(255,255,255,.06);border-radius:6px;padding:14px;}
+  .resumo-num{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--gold);}
+  .resumo-num.ok{color:#4ade80;}
+  .resumo-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-top:4px;}
+  .section{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);overflow:hidden;}
+  .sec-header{background:var(--navy);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .sec-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--white);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--cream2);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray);padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-l);}
+  thead th.c{text-align:center;}
+  tbody tr:nth-child(even){background:var(--cream);}
+  td{padding:8px 12px;border-bottom:1px solid var(--gray-l);vertical-align:middle;font-size:12px;}
+  tbody tr:last-child td{border-bottom:none;}
+  .td-num{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;color:var(--gold);text-align:center;width:40px;}
+  .cell-in{border:none;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:transparent;outline:none;width:100%;}
+  .cell-in:focus{border-bottom:1px solid var(--gold);}
+  .status-badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;cursor:pointer;}
+  .s-pendente{background:var(--info-l);color:var(--info);}
+  .s-realizado{background:var(--ok-l);color:var(--ok);}
+  .s-reagendado{background:var(--warn-l);color:var(--warn);}
+  .s-cancelado{background:var(--nao-l);color:var(--nao);}
+  .ind-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;}
+  .ind-nome{font-size:12px;flex:1;min-width:160px;}
+  .ind-valores{display:flex;gap:6px;flex-wrap:wrap;}
+  .ind-campo{display:flex;flex-direction:column;gap:2px;min-width:80px;}
+  .ind-clabel{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);}
+  .ind-input{border:1px solid var(--gray-l);border-radius:4px;padding:4px 6px;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--cream);outline:none;width:80px;}
+  .ind-input:focus{border-color:var(--gold);}
+  .ind-divider{border:none;border-top:1px solid var(--gray-l);}
+  .btn-add{width:100%;padding:10px;border:1.5px dashed var(--gold);border-top:none;background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;border-radius:0 0 8px 8px;}
+  .btn-add:hover{background:var(--gold);color:var(--navy);}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn-acao{padding:10px 24px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+  .btn-acao.primario{background:var(--gold);color:var(--navy);}
+  .btn-acao.primario:hover{background:var(--gold2);}
+  .btn-acao.secundario{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-acao.secundario:hover{background:var(--navy);color:white;}
+  @media print{.acoes,.btn-add{display:none;}body{background:white;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-eyebrow">RG Gastrô Educação</div>
+  <div class="header-title">Plano de Acompanhamento Pós-Implantação</div>
+</div>
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" id="estab" type="text" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" id="consultor" type="text" placeholder="Seu nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Início do acompanhamento</span><input class="id-input" id="inicio" type="date" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Duração prevista</span><input class="id-input" id="duracao" type="text" placeholder="Ex: 6 meses" onchange="salvar()"></div>
+</div>
+<div class="main">
+  <div class="resumo" id="resumo"></div>
+  <div class="section">
+    <div class="sec-header"><span class="sec-title">Calendário de Contatos</span></div>
+    <table>
+      <thead><tr>
+        <th style="width:40px" class="c">#</th>
+        <th>Tipo de contato</th>
+        <th style="width:110px" class="c">Data prevista</th>
+        <th style="width:110px" class="c">Data real</th>
+        <th style="width:120px" class="c">Status</th>
+        <th>Notas</th>
+      </tr></thead>
+      <tbody id="contatosTbody"></tbody>
+    </table>
+    <button class="btn-add" onclick="addContato()">+ Adicionar contato</button>
+  </div>
+  <div class="section">
+    <div class="sec-header"><span class="sec-title">Indicadores de Saúde do Processo</span></div>
+    <div id="indicadoresDiv" style="padding:4px 20px 16px"></div>
+  </div>
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="salvar()">Salvar</button>
+  </div>
+</div>
+<script>
+const KEY='rgGastro_plano';
+const STATUS_CICLO=['pendente','realizado','reagendado','cancelado'];
+const STATUS_LABEL={pendente:'Pendente',realizado:'Realizado',reagendado:'Reagendado',cancelado:'Cancelado'};
+
+const CONTATOS_DEFAULT=[
+  {tipo:'Visita 30 dias — revisão de adoção',dataPrev:'',dataReal:'',status:'pendente',notas:''},
+  {tipo:'Visita 60 dias — calibração de processos',dataPrev:'',dataReal:'',status:'pendente',notas:''},
+  {tipo:'Visita 90 dias — avaliação de autonomia',dataPrev:'',dataReal:'',status:'pendente',notas:''},
+  {tipo:'Check-in remoto mensal',dataPrev:'',dataReal:'',status:'pendente',notas:''},
+  {tipo:'Check-in remoto mensal',dataPrev:'',dataReal:'',status:'pendente',notas:''},
+  {tipo:'Visita semestral — revisão completa',dataPrev:'',dataReal:'',status:'pendente',notas:''},
+];
+const IND_DEFAULT=[
+  {nome:'% preenchimento do checklist de abertura',v30:'',v60:'',v90:'',meta:'100%'},
+  {nome:'% preenchimento do controle de produção',v30:'',v60:'',v90:'',meta:'100%'},
+  {nome:'% preenchimento do controle de desperdício',v30:'',v60:'',v90:'',meta:'100%'},
+  {nome:'Custo semanal de desperdício (R$)',v30:'',v60:'',v90:'',meta:''},
+  {nome:'Custo mensal de quebra (R$)',v30:'',v60:'',v90:'',meta:''},
+  {nome:'Reunião semanal de revisão realizada',v30:'',v60:'',v90:'',meta:'Sim'},
+  {nome:'Responsável interno conduz revisão sem apoio',v30:'',v60:'',v90:'',meta:'Sim'},
+  {nome:'Dono usa dados para decisões operacionais',v30:'',v60:'',v90:'',meta:'Sim'},
+];
+
+let contatos=[...CONTATOS_DEFAULT], indicadores=[...IND_DEFAULT];
+try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);
+  if(d.contatos)contatos=d.contatos;if(d.indicadores)indicadores=d.indicadores;
+  document.getElementById('estab').value=d.estab||'';
+  document.getElementById('consultor').value=d.consultor||'';
+  document.getElementById('inicio').value=d.inicio||'';
+  document.getElementById('duracao').value=d.duracao||'';
+}}catch(e){}
+
+function addContato(){contatos.push({tipo:'',dataPrev:'',dataReal:'',status:'pendente',notas:''});render();}
+function ciclarStatus(i){const idx=STATUS_CICLO.indexOf(contatos[i].status);contatos[i].status=STATUS_CICLO[(idx+1)%STATUS_CICLO.length];render();salvar();}
+
+function render(){
+  const realizados=contatos.filter(c=>c.status==='realizado').length;
+  document.getElementById('resumo').innerHTML=`
+    <div class="resumo-card"><span class="resumo-num">${contatos.length}</span><div class="resumo-label">Total de contatos</div></div>
+    <div class="resumo-card"><span class="resumo-num ok">${realizados}</span><div class="resumo-label">Realizados</div></div>
+    <div class="resumo-card"><span class="resumo-num">${contatos.length-realizados}</span><div class="resumo-label">Pendentes</div></div>`;
+
+  const tbody=document.getElementById('contatosTbody');tbody.innerHTML='';
+  contatos.forEach((c,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-num">${String(i+1).padStart(2,'0')}</td>
+      <td><input class="cell-in" type="text" value="${c.tipo}" placeholder="Tipo de contato..." onchange="contatos[${i}].tipo=this.value;salvar()"></td>
+      <td><input class="cell-in" type="date" value="${c.dataPrev}" style="text-align:center" onchange="contatos[${i}].dataPrev=this.value;salvar()"></td>
+      <td><input class="cell-in" type="date" value="${c.dataReal}" style="text-align:center" onchange="contatos[${i}].dataReal=this.value;salvar()"></td>
+      <td style="text-align:center"><span class="status-badge s-${c.status}" onclick="ciclarStatus(${i})">${STATUS_LABEL[c.status]}</span></td>
+      <td><input class="cell-in" type="text" value="${c.notas}" placeholder="Notas..." onchange="contatos[${i}].notas=this.value;salvar()"></td>`;
+    tbody.appendChild(tr);
+  });
+
+  const div=document.getElementById('indicadoresDiv');div.innerHTML='';
+  indicadores.forEach((ind,i)=>{
+    const row=document.createElement('div');
+    row.innerHTML=`<div class="ind-row">
+      <span class="ind-nome">${ind.nome}</span>
+      <div class="ind-valores">
+        <div class="ind-campo"><span class="ind-clabel">30 dias</span><input class="ind-input" type="text" value="${ind.v30}" placeholder="—" onchange="indicadores[${i}].v30=this.value;salvar()"></div>
+        <div class="ind-campo"><span class="ind-clabel">60 dias</span><input class="ind-input" type="text" value="${ind.v60}" placeholder="—" onchange="indicadores[${i}].v60=this.value;salvar()"></div>
+        <div class="ind-campo"><span class="ind-clabel">90 dias</span><input class="ind-input" type="text" value="${ind.v90}" placeholder="—" onchange="indicadores[${i}].v90=this.value;salvar()"></div>
+        <div class="ind-campo"><span class="ind-clabel">Meta</span><input class="ind-input" type="text" value="${ind.meta}" onchange="indicadores[${i}].meta=this.value;salvar()" style="background:var(--cream2);font-weight:600"></div>
+      </div>
+    </div>${i<indicadores.length-1?'<hr class="ind-divider">':''}`;
+    div.appendChild(row);
+  });
+}
+function salvar(){try{localStorage.setItem(KEY,JSON.stringify({
+  estab:document.getElementById('estab').value,
+  consultor:document.getElementById('consultor').value,
+  inicio:document.getElementById('inicio').value,
+  duracao:document.getElementById('duracao').value,
+  contatos,indicadores
+}));}catch(e){}}
+render();
+</script>
+</body>
+</html>

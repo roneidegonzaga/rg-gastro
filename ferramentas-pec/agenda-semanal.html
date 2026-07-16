@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Agenda Semanal de Compras — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#011E34;--navy2:#062d4e;--gold:#F7B700;--gold2:#FCC740;--cream:#FFFEE8;--cream2:#F0EECC;--white:#ffffff;--gray:#6b7280;--gray-l:#e5e7eb;--ok:#22c55e;--ok-l:#dcfce7;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;}
+  .header{background:var(--navy);padding:20px 32px 16px;border-bottom:3px solid var(--gold);}
+  .header-eyebrow{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+  .header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);}
+  .id-bar{background:var(--navy2);padding:12px 32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px 20px;}
+  .id-field{display:flex;flex-direction:column;gap:3px;}
+  .id-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .id-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.2);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:3px 0;outline:none;width:100%;}
+  .id-input::placeholder{color:rgba(255,255,255,.3);}
+  .id-input:focus{border-bottom-color:var(--gold);}
+  .main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+  .semana-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;}
+  @media(max-width:800px){.semana-grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:500px){.semana-grid{grid-template-columns:repeat(2,1fr);}}
+  .dia-card{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);overflow:hidden;}
+  .dia-card-header{padding:10px 14px;text-align:center;}
+  .dia-nome{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--white);}
+  .dia-data{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px;}
+  .dia-body{padding:10px;}
+  .forn-item{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .forn-check{width:16px;height:16px;border-radius:3px;border:1.5px solid var(--gray-l);background:var(--white);flex-shrink:0;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:10px;}
+  .forn-check.checked{background:var(--ok);border-color:var(--ok);color:white;}
+  .forn-input{border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);outline:none;flex:1;border-bottom:1px solid transparent;transition:border-color .15s;}
+  .forn-input:focus{border-bottom-color:var(--gold);}
+  .forn-input.checked-text{color:var(--gray);text-decoration:line-through;}
+  .btn-rem-forn{background:transparent;border:none;color:var(--gray-l);font-size:13px;cursor:pointer;padding:0 2px;transition:color .15s;}
+  .btn-rem-forn:hover{color:#ef4444;}
+  .btn-add-forn{width:100%;padding:6px;border:1px dashed var(--gold);background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;border-radius:4px;margin-top:4px;}
+  .btn-add-forn:hover{background:var(--gold);color:var(--navy);}
+  .obs-dia{padding:8px 10px;border-top:1px solid var(--gray-l);}
+  .obs-dia-ta{width:100%;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--gray);outline:none;resize:none;min-height:36px;}
+  .obs-dia-ta::placeholder{color:var(--gray-l);}
+  .resp-section{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);padding:16px 20px;display:flex;flex-direction:column;gap:8px;}
+  .resp-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);}
+  .resp-input{border:1px solid var(--gray-l);border-radius:4px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--navy);background:var(--cream);outline:none;width:100%;max-width:300px;}
+  .resp-input:focus{border-color:var(--gold);}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn-acao{padding:10px 24px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+  .btn-acao.primario{background:var(--gold);color:var(--navy);}
+  .btn-acao.primario:hover{background:var(--gold2);}
+  .btn-acao.secundario{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-acao.secundario:hover{background:var(--navy);color:white;}
+  @media print{.acoes,.btn-add-forn,.btn-rem-forn{display:none;}body{background:white;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-eyebrow">RG Gastrô Educação</div>
+  <div class="header-title">Agenda Semanal de Compras</div>
+</div>
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" id="estab" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Semana</span><input class="id-input" type="text" id="semana" placeholder="Ex: 02/06 a 08/06" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Responsável</span><input class="id-input" type="text" id="resp" placeholder="Nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Consultor(a)</span><input class="id-input" type="text" id="consultor" placeholder="Seu nome" onchange="salvar()"></div>
+</div>
+<div class="main">
+  <div class="semana-grid" id="semanaGrid"></div>
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="novaAgenda()">Nova semana</button>
+  </div>
+</div>
+<script>
+const KEY='rgGastro_agenda_compras';
+const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+const CORES=['#011E34','#3B82F6','#F25C54','#22C55E','#A855F7','#F97316','#06B6D4'];
+let dados={estab:'',semana:'',resp:'',consultor:'',agenda:{}};
+
+DIAS.forEach(d=>{if(!dados.agenda[d])dados.agenda[d]={fornecedores:[],obs:''};});
+
+try{const r=localStorage.getItem(KEY);if(r){const s=JSON.parse(r);dados=s;DIAS.forEach(d=>{if(!dados.agenda[d])dados.agenda[d]={fornecedores:[],obs:''};});}}catch(e){}
+
+// Dados de exemplo
+if(DIAS.every(d=>dados.agenda[d].fornecedores.length===0)){
+  dados.agenda['Segunda'].fornecedores=[{nome:'Ceasa',checked:false},{nome:'Filé de Peito',checked:false}];
+  dados.agenda['Terça'].fornecedores=[{nome:'Camarão',checked:false},{nome:'Filé Mignon',checked:false}];
+  dados.agenda['Quarta'].fornecedores=[{nome:'Salmão',checked:false},{nome:'Atacados',checked:false}];
+  dados.agenda['Sábado'].fornecedores=[{nome:'Ceasa',checked:false}];
+}
+
+function render(){
+  document.getElementById('estab').value=dados.estab||'';
+  document.getElementById('semana').value=dados.semana||'';
+  document.getElementById('resp').value=dados.resp||'';
+  document.getElementById('consultor').value=dados.consultor||'';
+  const grid=document.getElementById('semanaGrid');grid.innerHTML='';
+  DIAS.forEach((dia,di)=>{
+    const ag=dados.agenda[dia];
+    const card=document.createElement('div');card.className='dia-card';
+    card.innerHTML=`<div class="dia-card-header" style="background:${CORES[di]}">
+        <div class="dia-nome">${dia}</div></div>
+      <div class="dia-body" id="body-${di}">
+        ${ag.fornecedores.map((f,fi)=>`<div class="forn-item">
+          <div class="forn-check${f.checked?' checked':''}" onclick="toggleCheck('${dia}',${fi})">${f.checked?'✓':''}</div>
+          <input class="forn-input${f.checked?' checked-text':''}" type="text" value="${f.nome}" placeholder="Fornecedor..."
+            onchange="dados.agenda['${dia}'].fornecedores[${fi}].nome=this.value;salvar()">
+          <button class="btn-rem-forn" onclick="removeForn('${dia}',${fi})">×</button>
+        </div>`).join('')}
+        <button class="btn-add-forn" onclick="addForn('${dia}')">+ Fornecedor</button>
+      </div>
+      <div class="obs-dia"><textarea class="obs-dia-ta" placeholder="Obs do dia..."
+        onchange="dados.agenda['${dia}'].obs=this.value;salvar()">${ag.obs||''}</textarea></div>`;
+    grid.appendChild(card);
+  });
+}
+
+function addForn(dia){dados.agenda[dia].fornecedores.push({nome:'',checked:false});salvar();render();}
+function removeForn(dia,fi){dados.agenda[dia].fornecedores.splice(fi,1);salvar();render();}
+function toggleCheck(dia,fi){dados.agenda[dia].fornecedores[fi].checked=!dados.agenda[dia].fornecedores[fi].checked;salvar();render();}
+function novaAgenda(){if(!confirm('Iniciar nova agenda semanal? Os checks serão resetados.'))return;DIAS.forEach(d=>dados.agenda[d].fornecedores.forEach(f=>f.checked=false));dados.semana='';document.getElementById('semana').value='';salvar();render();}
+function salvar(){dados.estab=document.getElementById('estab').value;dados.semana=document.getElementById('semana').value;dados.resp=document.getElementById('resp').value;dados.consultor=document.getElementById('consultor').value;try{localStorage.setItem(KEY,JSON.stringify(dados));}catch(e){}}
+render();
+</script>
+</body>
+</html>

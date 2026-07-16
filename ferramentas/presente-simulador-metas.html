@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Metas | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --charcoal:#011e34;--cream:#fff1e6;--gold:#5b91bc;--gold-light:#8fb3d1;
+  --muted:#5d6d7c;--border:rgba(91,145,188,0.18);
+  --presente:#6a4a8a;--presente-light:#b87ad4;--presente-bg:rgba(106,74,138,0.07);--presente-border:rgba(106,74,138,0.28);
+  --ok:#4a7c59;--ok-light:#6aad7a;
+  --alert:#8a4a4a;--alert-light:#c07070;
+}
+html,body{min-height:100%;font-family:'Manrope',sans-serif;color:var(--cream);background:var(--charcoal);}
+
+/* PRESENTE HEADER */
+.presente-banner{background:linear-gradient(135deg,rgba(106,74,138,0.15),rgba(91,145,188,0.08));border-bottom:1px solid var(--presente-border);padding:32px 48px;text-align:center;position:relative;overflow:hidden;}
+.presente-banner::before{content:'🎁';position:absolute;left:32px;top:50%;transform:translateY(-50%);font-size:56px;opacity:0.15;}
+.presente-banner::after{content:'🎁';position:absolute;right:32px;top:50%;transform:translateY(-50%);font-size:56px;opacity:0.15;}
+.presente-tag{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--presente-light);border:1px solid var(--presente-border);display:inline-block;padding:5px 16px;margin-bottom:14px;}
+.presente-titulo{font-family:'Manrope',serif;font-size:clamp(24px,3vw,40px);font-weight:300;margin-bottom:8px;}
+.presente-titulo em{font-style:italic;color:var(--gold-light);}
+.presente-sub{font-size:12.5px;font-weight:300;color:rgba(245,240,232,0.5);max-width:500px;margin:0 auto;line-height:1.75;}
+
+/* MAIN */
+.main-wrap{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 200px);}
+
+/* INPUTS */
+.col-input{padding:40px 48px;border-right:1px solid var(--border);}
+.col-section{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--presente-light);margin-bottom:24px;font-weight:500;}
+
+.campo{margin-bottom:24px;}
+.campo-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;font-weight:500;}
+.campo-hint{font-size:11px;font-weight:300;color:rgba(245,240,232,0.3);margin-bottom:7px;line-height:1.5;}
+.input-wrap{position:relative;}
+.pfx{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);}
+.sfx{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);}
+input[type="number"]{width:100%;background:rgba(245,240,232,0.03);border:1px solid var(--border);color:var(--cream);font-family:'Manrope',sans-serif;font-size:15px;font-weight:300;padding:13px 14px;outline:none;transition:border-color 0.2s;-moz-appearance:textfield;}
+input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input[type="number"]:focus{border-color:var(--presente-light);}
+input.pl{padding-left:36px;}
+input.pr{padding-right:36px;}
+
+.divider{height:1px;background:var(--border);margin:24px 0;}
+
+/* SLIDER VISUAL */
+.slider-wrap{margin-top:8px;}
+input[type="range"]{-webkit-appearance:none;width:100%;height:3px;background:rgba(91,145,188,0.15);outline:none;border-radius:0;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--presente-light);cursor:pointer;border:2px solid var(--charcoal);}
+.slider-labels{display:flex;justify-content:space-between;font-size:10px;color:rgba(245,240,232,0.3);margin-top:6px;}
+
+/* COLUNA RESULTADO */
+.col-resultado{padding:40px 48px;background:rgba(245,240,232,0.01);}
+.vazio{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;opacity:0.35;text-align:center;}
+.vazio-icon{font-family:'Manrope',serif;font-size:72px;color:var(--presente-light);line-height:1;margin-bottom:12px;}
+.vazio p{font-size:12px;color:var(--muted);line-height:1.8;}
+
+.resultado{display:none;}
+.resultado.show{display:block;}
+
+/* META PRINCIPAL */
+.meta-box{text-align:center;padding:28px 24px;border:1px solid var(--presente-border);background:var(--presente-bg);margin-bottom:28px;}
+.meta-box-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--presente-light);margin-bottom:8px;}
+.meta-box-valor{font-family:'Manrope',serif;font-size:clamp(44px,5vw,68px);font-weight:300;line-height:1;color:var(--gold-light);}
+.meta-box-sub{font-size:12px;color:rgba(245,240,232,0.4);margin-top:8px;line-height:1.6;}
+
+/* CAMINHOS */
+.caminhos-titulo{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--presente-light);margin-bottom:16px;font-weight:500;}
+.caminho-card{padding:18px 18px;border:1px solid var(--border);background:rgba(245,240,232,0.02);margin-bottom:10px;}
+.caminho-card.destaque{border-color:var(--presente-border);background:var(--presente-bg);}
+.caminho-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.caminho-nome{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.caminho-card.destaque .caminho-nome{color:var(--presente-light);}
+.caminho-card:not(.destaque) .caminho-nome{color:var(--muted);}
+.caminho-viabilidade{font-size:10px;padding:3px 8px;border:1px solid;}
+.viavel{color:var(--ok-light);border-color:rgba(74,124,89,0.4);}
+.moderado{color:var(--gold-light);border-color:rgba(91,145,188,0.4);}
+.desafio{color:var(--alert-light);border-color:rgba(192,112,112,0.35);}
+.caminho-numeros{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.cn-item{padding:10px 12px;background:rgba(245,240,232,0.02);border:1px solid rgba(91,145,188,0.06);}
+.cn-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(245,240,232,0.3);margin-bottom:3px;}
+.cn-valor{font-family:'Manrope',serif;font-size:18px;color:var(--cream);}
+.caminho-desc{font-size:12px;font-weight:300;color:rgba(245,240,232,0.45);line-height:1.7;}
+
+/* GAP ANALYSIS */
+.gap-wrap{margin-top:24px;padding:20px 20px;border:1px solid var(--border);}
+.gap-titulo{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.gap-barra-wrap{margin-bottom:6px;}
+.gap-label-row{display:flex;justify-content:space-between;font-size:11px;color:rgba(245,240,232,0.4);margin-bottom:4px;}
+.gap-barra-bg{height:6px;background:rgba(245,240,232,0.04);}
+.gap-barra-fill{height:100%;transition:width 0.7s ease;}
+.gap-barra-fill.atual{background:rgba(91,145,188,0.5);}
+.gap-barra-fill.meta{background:var(--presente-light);}
+.gap-resumo{font-size:12.5px;font-weight:300;color:rgba(245,240,232,0.55);line-height:1.8;margin-top:12px;}
+.gap-resumo strong{color:var(--cream);}
+
+.footer{padding:24px 48px;border-top:1px solid var(--border);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(91,145,188,0.3);}
+
+@media(max-width:768px){
+  .main-wrap{grid-template-columns:1fr;}
+  .col-input{border-right:none;border-bottom:1px solid var(--border);}
+  .presente-banner,.col-input,.col-resultado,.footer{padding-left:24px;padding-right:24px;}
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="presente-banner">
+  <div class="presente-tag">Presente para você</div>
+  <h1 class="presente-titulo">Simulador de<br><em>Metas Mensais</em></h1>
+  <p class="presente-sub">Defina a meta de faturamento que você quer atingir e descubra exatamente o que precisa mudar: quantos clientes por dia, qual aumento de ticket, ou a combinação dos dois.</p>
+</div>
+
+<div class="main-wrap">
+  <div class="col-input">
+    <p class="col-section">Situação atual</p>
+
+    <div class="campo">
+      <label class="campo-label">Faturamento atual médio</label>
+      <p class="campo-hint">Média dos últimos 2 ou 3 meses</p>
+      <div class="input-wrap"><span class="pfx">R$</span><input type="number" id="fat-atual" class="pl" placeholder="0,00" step="500" min="0" oninput="calcular()"></div>
+    </div>
+    <div class="campo">
+      <label class="campo-label">Ticket médio atual</label>
+      <p class="campo-hint">Quanto cada cliente gasta em média</p>
+      <div class="input-wrap"><span class="pfx">R$</span><input type="number" id="ticket-atual" class="pl" placeholder="0,00" step="1" min="0" oninput="calcular()"></div>
+    </div>
+    <div class="campo">
+      <label class="campo-label">Dias abertos por mês</label>
+      <div class="input-wrap"><input type="number" id="dias" placeholder="26" step="1" min="1" max="31" oninput="calcular()"></div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="col-section">Meta desejada</p>
+
+    <div class="campo">
+      <label class="campo-label">Meta de faturamento mensal</label>
+      <p class="campo-hint">Quanto você quer faturar</p>
+      <div class="input-wrap"><span class="pfx">R$</span><input type="number" id="fat-meta" class="pl" placeholder="0,00" step="500" min="0" oninput="calcular()"></div>
+    </div>
+
+    <div class="campo">
+      <label class="campo-label">Crescimento desejado</label>
+      <p class="campo-hint">Ou defina como percentual de aumento</p>
+      <div class="slider-wrap">
+        <input type="range" id="crescimento-slider" min="5" max="100" step="5" value="30" oninput="setMetaPorSlider()">
+        <div class="slider-labels">
+          <span>+5%</span><span>+25%</span><span>+50%</span><span>+75%</span><span>+100%</span>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:8px;font-family:'Manrope',serif;font-size:22px;color:var(--presente-light);" id="slider-display">+30%</div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="col-section">Parâmetros</p>
+
+    <div class="campo">
+      <label class="campo-label">CMV atual (%)</label>
+      <div class="input-wrap"><input type="number" id="cmv" placeholder="33" class="pr" step="1" min="1" max="80" oninput="calcular()"><span class="sfx">%</span></div>
+    </div>
+    <div class="campo">
+      <label class="campo-label">Margem de contribuição atual (%)</label>
+      <p class="campo-hint">Calculada automaticamente se vazio</p>
+      <div class="input-wrap"><input type="number" id="mc" placeholder="auto" class="pr" step="1" min="1" max="99" oninput="calcular()"><span class="sfx">%</span></div>
+    </div>
+  </div>
+
+  <div class="col-resultado">
+    <p class="col-section">Simulação</p>
+
+    <div class="vazio" id="vazio">
+      <div class="vazio-icon">◎</div>
+      <p>Preencha o faturamento atual<br>e a meta para ver os caminhos</p>
+    </div>
+
+    <div class="resultado" id="resultado">
+
+      <div class="meta-box">
+        <p class="meta-box-label">Crescimento necessário</p>
+        <div class="meta-box-valor" id="crescimento-valor">+0%</div>
+        <p class="meta-box-sub" id="meta-sub">Meta de R$ 0 vs atual R$ 0</p>
+      </div>
+
+      <p class="caminhos-titulo">Os 3 caminhos para a meta</p>
+
+      <div class="caminho-card destaque">
+        <div class="caminho-header">
+          <span class="caminho-nome">Caminho 1 · Mais clientes</span>
+          <span class="caminho-viabilidade" id="c1-viab">Viável</span>
+        </div>
+        <div class="caminho-numeros">
+          <div class="cn-item"><p class="cn-label">Clientes/dia agora</p><div class="cn-valor" id="c1-atual">0</div></div>
+          <div class="cn-item"><p class="cn-label">Clientes/dia na meta</p><div class="cn-valor" id="c1-meta">0</div></div>
+          <div class="cn-item"><p class="cn-label">Diferença por dia</p><div class="cn-valor" id="c1-diff">+0</div></div>
+          <div class="cn-item"><p class="cn-label">Ticket mantido em</p><div class="cn-valor" id="c1-ticket">R$ 0</div></div>
+        </div>
+        <p class="caminho-desc" id="c1-desc">Aguardando cálculo...</p>
+      </div>
+
+      <div class="caminho-card">
+        <div class="caminho-header">
+          <span class="caminho-nome">Caminho 2 · Ticket maior</span>
+          <span class="caminho-viabilidade" id="c2-viab">Viável</span>
+        </div>
+        <div class="caminho-numeros">
+          <div class="cn-item"><p class="cn-label">Ticket atual</p><div class="cn-valor" id="c2-ticket-atual">R$ 0</div></div>
+          <div class="cn-item"><p class="cn-label">Ticket necessário</p><div class="cn-valor" id="c2-ticket-meta">R$ 0</div></div>
+          <div class="cn-item"><p class="cn-label">Aumento por cliente</p><div class="cn-valor" id="c2-aumento">+R$ 0</div></div>
+          <div class="cn-item"><p class="cn-label">Clientes mantidos</p><div class="cn-valor" id="c2-clientes">0/dia</div></div>
+        </div>
+        <p class="caminho-desc" id="c2-desc">Aguardando cálculo...</p>
+      </div>
+
+      <div class="caminho-card">
+        <div class="caminho-header">
+          <span class="caminho-nome">Caminho 3 · Combinado</span>
+          <span class="caminho-viabilidade viavel">Recomendado</span>
+        </div>
+        <div class="caminho-numeros">
+          <div class="cn-item"><p class="cn-label">+Clientes/dia</p><div class="cn-valor" id="c3-clientes">+0</div></div>
+          <div class="cn-item"><p class="cn-label">+Ticket</p><div class="cn-valor" id="c3-ticket">+R$ 0</div></div>
+          <div class="cn-item"><p class="cn-label">Crescimento split</p><div class="cn-valor" id="c3-split">50/50</div></div>
+          <div class="cn-item"><p class="cn-label">Esforço estimado</p><div class="cn-valor" id="c3-esforco">Moderado</div></div>
+        </div>
+        <p class="caminho-desc" id="c3-desc">Aguardando cálculo...</p>
+      </div>
+
+      <div class="gap-wrap">
+        <p class="gap-titulo">Análise do gap</p>
+        <div class="gap-barra-wrap">
+          <div class="gap-label-row"><span>Faturamento atual</span><span id="gap-atual-val">R$ 0</span></div>
+          <div class="gap-barra-bg"><div class="gap-barra-fill atual" id="gap-barra-atual" style="width:0%"></div></div>
+        </div>
+        <div class="gap-barra-wrap">
+          <div class="gap-label-row"><span>Meta</span><span id="gap-meta-val">R$ 0</span></div>
+          <div class="gap-barra-bg"><div class="gap-barra-fill meta" id="gap-barra-meta" style="width:100%"></div></div>
+        </div>
+        <div class="gap-resumo" id="gap-resumo">Aguardando dados...</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="footer">Elaborado por Rô Gonzaga | RG Gastrô Educação · Ferramenta exclusiva para alunos do Sistema D.O.S.E.</div>
+
+<script>
+function fmt(n){return n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmtD(n){return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function setMetaPorSlider(){
+  const pct=parseInt(document.getElementById('crescimento-slider').value);
+  document.getElementById('slider-display').textContent='+'+pct+'%';
+  const atual=parseFloat(document.getElementById('fat-atual').value)||0;
+  if(atual>0){
+    document.getElementById('fat-meta').value=(atual*(1+pct/100)).toFixed(0);
+  }
+  calcular();
+}
+
+function calcular(){
+  const fatAtual=parseFloat(document.getElementById('fat-atual').value)||0;
+  const ticketAtual=parseFloat(document.getElementById('ticket-atual').value)||0;
+  const dias=parseFloat(document.getElementById('dias').value)||26;
+  const fatMeta=parseFloat(document.getElementById('fat-meta').value)||0;
+  const cmvPct=(parseFloat(document.getElementById('cmv').value)||33)/100;
+  const mcInput=parseFloat(document.getElementById('mc').value);
+  const mc=mcInput>0?mcInput/100:(1-cmvPct-0.10);
+
+  if(fatAtual<=0||ticketAtual<=0||fatMeta<=0){
+    document.getElementById('vazio').style.display='flex';
+    document.getElementById('resultado').classList.remove('show');
+    return;
+  }
+
+  document.getElementById('vazio').style.display='none';
+  document.getElementById('resultado').classList.add('show');
+
+  const crescPct=((fatMeta-fatAtual)/fatAtual)*100;
+  const clientesAtualDia=fatAtual/(ticketAtual*dias);
+  const clientesAtualMes=fatAtual/ticketAtual;
+
+  // Atualizar slider se meta foi digitada
+  if(!event||event.target.id==='fat-meta'){
+    const sl=Math.min(100,Math.max(5,Math.round(crescPct/5)*5));
+    document.getElementById('crescimento-slider').value=sl;
+    document.getElementById('slider-display').textContent='+'+sl+'%';
+  }
+
+  document.getElementById('crescimento-valor').textContent='+'+fmtD(crescPct)+'%';
+  document.getElementById('meta-sub').textContent='Meta de R$ '+fmt(fatMeta)+' vs atual R$ '+fmt(fatAtual);
+
+  // CAMINHO 1: só clientes, ticket constante
+  const clientesMetaDia=fatMeta/(ticketAtual*dias);
+  const diffClientesDia=clientesMetaDia-clientesAtualDia;
+  document.getElementById('c1-atual').textContent=fmtD(clientesAtualDia);
+  document.getElementById('c1-meta').textContent=fmtD(clientesMetaDia);
+  document.getElementById('c1-diff').textContent='+'+fmtD(diffClientesDia);
+  document.getElementById('c1-ticket').textContent='R$ '+fmtD(ticketAtual);
+  const c1vPercent=diffClientesDia/clientesAtualDia;
+  let c1viab='viavel',c1viabTxt='Viável';
+  if(c1vPercent>0.5){c1viab='desafio';c1viabTxt='Desafiador';}
+  else if(c1vPercent>0.25){c1viab='moderado';c1viabTxt='Moderado';}
+  document.getElementById('c1-viab').className='caminho-viabilidade '+c1viab;
+  document.getElementById('c1-viab').textContent=c1viabTxt;
+  document.getElementById('c1-desc').textContent=`Você precisaria passar de ${fmtD(clientesAtualDia)} para ${fmtD(clientesMetaDia)} clientes por dia, mantendo o ticket médio de R$ ${fmtD(ticketAtual)}. Isso representa ${Math.round(c1vPercent*100)}% mais atendimentos por dia.`;
+
+  // CAMINHO 2: só ticket, clientes constantes
+  const ticketNecessario=fatMeta/clientesAtualMes;
+  const aumentoTicket=ticketNecessario-ticketAtual;
+  const aumentoTicketPct=aumentoTicket/ticketAtual*100;
+  document.getElementById('c2-ticket-atual').textContent='R$ '+fmtD(ticketAtual);
+  document.getElementById('c2-ticket-meta').textContent='R$ '+fmtD(ticketNecessario);
+  document.getElementById('c2-aumento').textContent='+R$ '+fmtD(aumentoTicket);
+  document.getElementById('c2-clientes').textContent=fmtD(clientesAtualDia)+'/dia';
+  let c2viab='viavel',c2viabTxt='Viável';
+  if(aumentoTicketPct>50){c2viab='desafio';c2viabTxt='Desafiador';}
+  else if(aumentoTicketPct>20){c2viab='moderado';c2viabTxt='Moderado';}
+  document.getElementById('c2-viab').className='caminho-viabilidade '+c2viab;
+  document.getElementById('c2-viab').textContent=c2viabTxt;
+  document.getElementById('c2-desc').textContent=`Cada cliente precisaria gastar R$ ${fmtD(ticketNecessario)} em vez de R$ ${fmtD(ticketAtual)}, um aumento de R$ ${fmtD(aumentoTicket)} por visita (+${fmtD(aumentoTicketPct)}%). Estratégias: upsell, combo, prato premium ou redução de desconto.`;
+
+  // CAMINHO 3: combinado 50/50
+  const metaMeia=fatAtual+(fatMeta-fatAtual)*0.5;
+  const ticketC3=ticketAtual*(1+crescPct/100*0.5);
+  const clientesDiaC3=metaMeia/(ticketAtual*dias);
+  const diffC3=clientesDiaC3-clientesAtualDia;
+  const aumentoTicketC3=ticketC3-ticketAtual;
+  document.getElementById('c3-clientes').textContent='+'+fmtD(diffC3)+'/dia';
+  document.getElementById('c3-ticket').textContent='+R$ '+fmtD(aumentoTicketC3);
+  document.getElementById('c3-split').textContent='50% / 50%';
+  document.getElementById('c3-esforco').textContent='Moderado';
+  document.getElementById('c3-desc').textContent=`Metade do crescimento vem de mais clientes (+${fmtD(diffC3)}/dia) e metade de ticket maior (+R$ ${fmtD(aumentoTicketC3)}/cliente). É o caminho de menor tensão: você não precisa dobrar em nenhuma frente.`;
+
+  // GAP
+  const maxBar=Math.max(fatAtual,fatMeta);
+  document.getElementById('gap-barra-atual').style.width=(fatAtual/maxBar*100)+'%';
+  document.getElementById('gap-barra-meta').style.width='100%';
+  document.getElementById('gap-atual-val').textContent='R$ '+fmt(fatAtual);
+  document.getElementById('gap-meta-val').textContent='R$ '+fmt(fatMeta);
+
+  const difFat=fatMeta-fatAtual;
+  const difLucro=difFat*mc;
+  document.getElementById('gap-resumo').innerHTML=`O gap entre hoje e a meta é de <strong>R$ ${fmt(difFat)}</strong> por mês. Com a margem de contribuição atual de <strong>${Math.round(mc*100)}%</strong>, atingir a meta representaria aproximadamente <strong>R$ ${fmt(difLucro)} a mais de margem por mês</strong> antes dos custos fixos.`;
+}
+
+// Init
+document.getElementById('fat-meta').value='';
+</script>
+</body>
+</html>

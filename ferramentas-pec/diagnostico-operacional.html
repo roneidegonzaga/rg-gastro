@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roteiro de Diagnóstico Operacional — Gasttro Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #011E34;
+    --navy-light: #062d4e;
+    --gold: #F7B700;
+    --gold-soft: #FCC740;
+    --coral: #F25C54;
+    --cream: #FFFEE8;
+    --cream-dark: #f5f4d8;
+    --gray: #6b7280;
+    --gray-light: #e5e7eb;
+    --white: #ffffff;
+    --ok: #22c55e;
+    --parcial: #f59e0b;
+    --nao: #ef4444;
+    --na: #9ca3af;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--navy);
+    padding: 32px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .header-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .header-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.2;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+  }
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .badge-presencial {
+    background: var(--gold);
+    color: var(--navy);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 2px;
+  }
+
+  /* IDENTIFICAÇÃO */
+  .identificacao {
+    background: var(--navy-light);
+    padding: 24px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px 24px;
+    border-bottom: 3px solid var(--gold);
+  }
+  .id-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .id-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .id-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 4px 0;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .id-input::placeholder { color: rgba(255,255,255,0.3); }
+  .id-input:focus { border-bottom-color: var(--gold); }
+
+  /* LAYOUT PRINCIPAL */
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  /* BARRA DE PROGRESSO */
+  .progress-bar-wrap {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(1,30,52,0.08);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .progress-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gray);
+    white-space: nowrap;
+    min-width: 100px;
+  }
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    background: var(--gray-light);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--coral));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-pct {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--navy);
+    min-width: 48px;
+    text-align: right;
+  }
+
+  /* SEÇÃO */
+  .secao {
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(1,30,52,0.08);
+  }
+  .secao-header {
+    background: var(--navy);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .secao-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.6;
+    line-height: 1;
+    min-width: 32px;
+  }
+  .secao-info { flex: 1; }
+  .secao-titulo {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.3;
+  }
+  .secao-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+  }
+  .secao-status-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.4);
+    white-space: nowrap;
+  }
+  .secao-status-badge.completo {
+    background: rgba(34,197,94,0.15);
+    color: #4ade80;
+  }
+
+  .secao-body { padding: 0; }
+
+  /* ITEM DE VERIFICAÇÃO */
+  .item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: start;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--gray-light);
+    transition: background 0.15s;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: #fafaf2; }
+
+  .item-left { display: flex; flex-direction: column; gap: 6px; }
+  .item-pergunta {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--navy);
+    line-height: 1.4;
+  }
+  .item-dica {
+    font-size: 12px;
+    color: var(--gray);
+    font-style: italic;
+    line-height: 1.4;
+  }
+  .item-obs-wrap {
+    margin-top: 8px;
+    display: none;
+  }
+  .item-obs-wrap.visivel { display: block; }
+  .item-obs {
+    width: 100%;
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    background: var(--cream);
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .item-obs:focus { border-color: var(--gold); }
+
+  /* BOTÕES DE STATUS */
+  .status-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+  }
+  .status-row {
+    display: flex;
+    gap: 4px;
+  }
+  .btn-status {
+    border: 1.5px solid var(--gray-light);
+    background: transparent;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--gray);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-status:hover { border-color: var(--navy); color: var(--navy); }
+
+  .btn-status.ok.ativo { background: var(--ok); border-color: var(--ok); color: white; }
+  .btn-status.parcial.ativo { background: var(--parcial); border-color: var(--parcial); color: white; }
+  .btn-status.nao.ativo { background: var(--nao); border-color: var(--nao); color: white; }
+  .btn-status.na.ativo { background: var(--na); border-color: var(--na); color: white; }
+
+  .btn-obs {
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    color: var(--gold);
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-obs:hover { color: var(--navy); }
+
+  /* NOTA FINAL DA SEÇÃO */
+  .secao-nota-wrap {
+    padding: 16px 24px;
+    background: var(--cream);
+    border-top: 2px solid var(--cream-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .secao-nota-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+  .secao-nota-input {
+    width: 100%;
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    background: var(--white);
+    resize: vertical;
+    min-height: 72px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .secao-nota-input:focus { border-color: var(--gold); }
+
+  /* PAINEL DE RESUMO */
+  .resumo {
+    background: var(--navy);
+    border-radius: 8px;
+    padding: 32px;
+    color: var(--white);
+  }
+  .resumo-titulo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+  .resumo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .resumo-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-left: 3px solid transparent;
+  }
+  .resumo-card.ok { border-left-color: var(--ok); }
+  .resumo-card.parcial { border-left-color: var(--parcial); }
+  .resumo-card.nao { border-left-color: var(--nao); }
+  .resumo-card.na { border-left-color: var(--na); }
+  .resumo-card-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .resumo-card.ok .resumo-card-num { color: #4ade80; }
+  .resumo-card.parcial .resumo-card-num { color: #fbbf24; }
+  .resumo-card.nao .resumo-card-num { color: #f87171; }
+  .resumo-card.na .resumo-card-num { color: var(--na); }
+  .resumo-card-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+
+  .resumo-prioridades {
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .resumo-prioridades-titulo {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .prioridade-textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--white);
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .prioridade-textarea::placeholder { color: rgba(255,255,255,0.25); }
+  .prioridade-textarea:focus { border-color: var(--gold); }
+
+  /* LEGENDA */
+  .legenda {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+  }
+  .legenda-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* BOTÕES DE AÇÃO */
+  .acoes {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .btn-acao {
+    padding: 12px 28px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-acao.primario {
+    background: var(--gold);
+    color: var(--navy);
+  }
+  .btn-acao.primario:hover { background: var(--gold-soft); }
+  .btn-acao.secundario {
+    background: transparent;
+    color: var(--navy);
+    border: 1.5px solid var(--navy);
+  }
+  .btn-acao.secundario:hover { background: var(--navy); color: var(--white); }
+
+  @media print {
+    body { background: white; }
+    .acoes { display: none; }
+    .btn-status { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .secao-header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .resumo { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <span class="header-eyebrow">Gasttro Design</span>
+    <h1 class="header-title">Roteiro de Diagnóstico Operacional</h1>
+    <p class="header-sub">Consultoria de Gestão para Restaurantes na Prática</p>
+  </div>
+  <div class="header-meta">
+    <span class="badge-presencial">Visita Presencial</span>
+  </div>
+</div>
+
+<div class="identificacao">
+  <div class="id-field">
+    <span class="id-label">Consultor(a)</span>
+    <input class="id-input" type="text" placeholder="Seu nome">
+  </div>
+  <div class="id-field">
+    <span class="id-label">Cliente / Estabelecimento</span>
+    <input class="id-input" type="text" placeholder="Nome do restaurante">
+  </div>
+  <div class="id-field">
+    <span class="id-label">Tipo de negócio</span>
+    <input class="id-input" type="text" placeholder="À la carte, self-service, delivery...">
+  </div>
+  <div class="id-field">
+    <span class="id-label">Data da visita</span>
+    <input class="id-input" type="date">
+  </div>
+  <div class="id-field">
+    <span class="id-label">Horário</span>
+    <input class="id-input" type="text" placeholder="Ex: 10h às 14h">
+  </div>
+  <div class="id-field">
+    <span class="id-label">Responsável presente</span>
+    <input class="id-input" type="text" placeholder="Quem te recebeu">
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- PROGRESSO -->
+  <div class="progress-bar-wrap">
+    <span class="progress-label">Diagnóstico</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-pct" id="progressPct">0%</span>
+  </div>
+
+  <!-- SEÇÃO 1: VISÃO DO DONO -->
+  <div class="secao" id="s1">
+    <div class="secao-header">
+      <span class="secao-num">01</span>
+      <div class="secao-info">
+        <div class="secao-titulo">Conversa com o dono</div>
+        <div class="secao-desc">Entender a visão, as dores declaradas e o contexto do negócio</div>
+      </div>
+      <span class="secao-status-badge" id="badge-s1">Pendente</span>
+    </div>
+    <div class="secao-body">
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">O dono consegue descrever claramente o problema principal do negócio?</span>
+          <span class="item-dica">Atenção ao que ele diz x o que de fato pode estar acontecendo.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+            <button class="btn-status na" onclick="setStatus(this,'na')">N/A</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">O dono conhece o faturamento médio mensal?</span>
+          <span class="item-dica">Não precisa ser exato — se ele tem noção ou se é palpite.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">O dono sabe quantos colaboradores trabalham na operação?</span>
+          <span class="item-dica">Registrar: cozinha, salão, gestão. CLT, MEI ou informal.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Já teve consultoria ou algum tipo de assessoria antes?</span>
+          <span class="item-dica">O que foi feito, o que funcionou, o que não funcionou. Isso evita repetir erros.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">O dono consegue priorizar o que precisa mudar primeiro?</span>
+          <span class="item-dica">Se ele lista 10 coisas com a mesma urgência, é sinal de que precisa de direcionamento forte.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="secao-nota-wrap">
+      <span class="secao-nota-label">Impressão geral desta seção</span>
+      <textarea class="secao-nota-input" placeholder="Resumo da conversa com o dono. O que mais chamou atenção?"></textarea>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2: OPERAÇÃO DE COZINHA -->
+  <div class="secao" id="s2">
+    <div class="secao-header">
+      <span class="secao-num">02</span>
+      <div class="secao-info">
+        <div class="secao-titulo">Operação de cozinha</div>
+        <div class="secao-desc">Observação direta — entrar na cozinha e ver a realidade</div>
+      </div>
+      <span class="secao-status-badge" id="badge-s2">Pendente</span>
+    </div>
+    <div class="secao-body">
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">A cozinha está setorizada (praças definidas)?</span>
+          <span class="item-dica">Cada colaborador sabe onde começa e termina seu espaço de trabalho.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe mise en place documentado ou segue rotina informal?</span>
+          <span class="item-dica">Perguntar a diferentes colaboradores — as respostas revelam se há padrão real ou dependência de uma pessoa.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Documentado</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Informal</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Nenhum</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe controle de produção diária (o que produzir, quanto, quando)?</span>
+          <span class="item-dica">Cronograma de praça, ficha de produção, qualquer registro — formal ou manual.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe processo de troca de turno documentado?</span>
+          <span class="item-dica">O que fica em praça, o que precisa de reposição, quem assina a saída.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe checklist de abertura por setor?</span>
+          <span class="item-dica">Verificar se é usado na prática ou só existe no papel.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Existe, não usa</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">A operação depende de uma pessoa-chave para funcionar?</span>
+          <span class="item-dica">"Se o João faltar, trava." Esse é o pior sinal de falta de processo.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcialmente</button>
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="secao-nota-wrap">
+      <span class="secao-nota-label">Impressão geral desta seção</span>
+      <textarea class="secao-nota-input" placeholder="O que observou na cozinha? Nível da equipe, organização do espaço, pontos críticos visíveis."></textarea>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3: COMPRAS E ESTOQUE -->
+  <div class="secao" id="s3">
+    <div class="secao-header">
+      <span class="secao-num">03</span>
+      <div class="secao-info">
+        <div class="secao-titulo">Compras e estoque</div>
+        <div class="secao-desc">Onde o dinheiro some sem que ninguém veja</div>
+      </div>
+      <span class="secao-status-badge" id="badge-s3">Pendente</span>
+    </div>
+    <div class="secao-body">
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe inventário de insumos sendo feito com regularidade?</span>
+          <span class="item-dica">Com qual frequência? Quem faz? É conferido ou só registrado?</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Irregular</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe estoque mínimo definido para os principais insumos?</span>
+          <span class="item-dica">Ou compram quando "está acabando" — sem critério definido?</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Informal</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe requisição de mercadoria documentada?</span>
+          <span class="item-dica">Quem pede, como pede, quem autoriza, quem recebe.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe roteiro de compras (fornecedor, produto, dia, forma de recebimento)?</span>
+          <span class="item-dica">Compras feitas sem roteiro geram pedidos duplicados, falta de produto e capital parado.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe inventário de louças e utensílios?</span>
+          <span class="item-dica">Quebras não controladas são custo invisível. Verificar se sabem quantas peças têm e quantas somem por mês.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="secao-nota-wrap">
+      <span class="secao-nota-label">Impressão geral desta seção</span>
+      <textarea class="secao-nota-input" placeholder="Como está o estoque fisicamente? Organização, acesso, controle de temperatura, sinalização..."></textarea>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: CONTROLE E DESPERDÍCIO -->
+  <div class="secao" id="s4">
+    <div class="secao-header">
+      <span class="secao-num">04</span>
+      <div class="secao-info">
+        <div class="secao-titulo">Controle operacional e desperdício</div>
+        <div class="secao-desc">O que está sendo medido — e o que está escorrendo</div>
+      </div>
+      <span class="secao-status-badge" id="badge-s4">Pendente</span>
+    </div>
+    <div class="secao-body">
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe controle de desperdício de alimentos?</span>
+          <span class="item-dica">Registro de sobras, devoluções, descarte. Quem registra, onde, com qual frequência.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Informal</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe controle de quebra de utensílios?</span>
+          <span class="item-dica">Registro de data, item, motivo, responsável e custo estimado.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe análise de vendas por item de cardápio?</span>
+          <span class="item-dica">Saber o que vende mais e menos ajuda a ajustar produção, compras e cardápio.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">Existe ficha técnica dos pratos (ingredientes, quantidades, modo de preparo)?</span>
+          <span class="item-dica">Operacional ou gerencial — qualquer versão conta. Se não existe, o custo real do prato é desconhecido.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-left">
+          <span class="item-pergunta">A equipe tem conhecimento dos processos que executa?</span>
+          <span class="item-dica">Perguntar diretamente a um colaborador sobre uma rotina. A resposta diz mais do que qualquer manual.</span>
+          <div class="item-obs-wrap"><textarea class="item-obs" placeholder="Anotações..."></textarea></div>
+        </div>
+        <div class="status-btns">
+          <div class="status-row">
+            <button class="btn-status ok" onclick="setStatus(this,'ok')">Sim</button>
+            <button class="btn-status parcial" onclick="setStatus(this,'parcial')">Parcial</button>
+            <button class="btn-status nao" onclick="setStatus(this,'nao')">Não</button>
+          </div>
+          <button class="btn-obs" onclick="toggleObs(this)">+ nota</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="secao-nota-wrap">
+      <span class="secao-nota-label">Impressão geral desta seção</span>
+      <textarea class="secao-nota-input" placeholder="Nível de controle percebido. Qual é o maior ponto de fuga identificado nesta seção?"></textarea>
+    </div>
+  </div>
+
+  <!-- RESUMO FINAL -->
+  <div class="resumo">
+    <div class="resumo-titulo">Resumo do Diagnóstico</div>
+    <div class="resumo-grid">
+      <div class="resumo-card ok">
+        <span class="resumo-card-num" id="cnt-ok">0</span>
+        <span class="resumo-card-label">Processos OK</span>
+      </div>
+      <div class="resumo-card parcial">
+        <span class="resumo-card-num" id="cnt-parcial">0</span>
+        <span class="resumo-card-label">Parcial / Informal</span>
+      </div>
+      <div class="resumo-card nao">
+        <span class="resumo-card-num" id="cnt-nao">0</span>
+        <span class="resumo-card-label">Ausente / Crítico</span>
+      </div>
+      <div class="resumo-card na">
+        <span class="resumo-card-num" id="cnt-na">0</span>
+        <span class="resumo-card-label">Não se aplica</span>
+      </div>
+    </div>
+
+    <div class="resumo-prioridades">
+      <div class="resumo-prioridades-titulo">Prioridades identificadas (top 3)</div>
+      <textarea class="prioridade-textarea" placeholder="1. &#10;2. &#10;3. "></textarea>
+    </div>
+
+    <div class="resumo-prioridades">
+      <div class="resumo-prioridades-titulo">Próximos passos recomendados</div>
+      <textarea class="prioridade-textarea" placeholder="O que propor ao cliente como primeiro movimento..."></textarea>
+    </div>
+
+    <div class="legenda">
+      <div class="legenda-item"><div class="legenda-dot" style="background:#22c55e"></div>OK — processo existe e funciona</div>
+      <div class="legenda-item"><div class="legenda-dot" style="background:#f59e0b"></div>Parcial — existe mas é informal ou incompleto</div>
+      <div class="legenda-item"><div class="legenda-dot" style="background:#ef4444"></div>Não — ausente ou crítico</div>
+      <div class="legenda-item"><div class="legenda-dot" style="background:#9ca3af"></div>N/A — não se aplica a este negócio</div>
+    </div>
+  </div>
+
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / Salvar PDF</button>
+    <button class="btn-acao primario" onclick="limpar()">Novo diagnóstico</button>
+  </div>
+
+</div>
+
+<script>
+  const TOTAL_ITENS = document.querySelectorAll('.item').length;
+
+  function setStatus(btn, tipo) {
+    const row = btn.closest('.status-row');
+    row.querySelectorAll('.btn-status').forEach(b => {
+      b.classList.remove('ativo');
+    });
+    btn.classList.add('ativo');
+    atualizarProgresso();
+    atualizarResumo();
+    atualizarBadges();
+  }
+
+  function toggleObs(btn) {
+    const wrap = btn.closest('.item').querySelector('.item-obs-wrap');
+    wrap.classList.toggle('visivel');
+    btn.textContent = wrap.classList.contains('visivel') ? '− nota' : '+ nota';
+  }
+
+  function contarRespondidos() {
+    return document.querySelectorAll('.btn-status.ativo').length;
+  }
+
+  function atualizarProgresso() {
+    const pct = Math.round((contarRespondidos() / TOTAL_ITENS) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+  }
+
+  function atualizarResumo() {
+    const counts = { ok: 0, parcial: 0, nao: 0, na: 0 };
+    document.querySelectorAll('.btn-status.ativo').forEach(btn => {
+      if (btn.classList.contains('ok')) counts.ok++;
+      else if (btn.classList.contains('parcial')) counts.parcial++;
+      else if (btn.classList.contains('nao')) counts.nao++;
+      else if (btn.classList.contains('na')) counts.na++;
+    });
+    document.getElementById('cnt-ok').textContent = counts.ok;
+    document.getElementById('cnt-parcial').textContent = counts.parcial;
+    document.getElementById('cnt-nao').textContent = counts.nao;
+    document.getElementById('cnt-na').textContent = counts.na;
+  }
+
+  function atualizarBadges() {
+    ['s1','s2','s3','s4'].forEach(id => {
+      const secao = document.getElementById(id);
+      const itens = secao.querySelectorAll('.item');
+      const respondidos = secao.querySelectorAll('.btn-status.ativo').length;
+      const badge = document.getElementById('badge-' + id);
+      if (respondidos === 0) {
+        badge.textContent = 'Pendente';
+        badge.className = 'secao-status-badge';
+      } else if (respondidos < itens.length) {
+        badge.textContent = respondidos + '/' + itens.length;
+        badge.className = 'secao-status-badge';
+      } else {
+        badge.textContent = 'Concluído';
+        badge.className = 'secao-status-badge completo';
+      }
+    });
+  }
+
+  function limpar() {
+    if (!confirm('Limpar todo o diagnóstico e começar um novo?')) return;
+    document.querySelectorAll('.btn-status').forEach(b => b.classList.remove('ativo'));
+    document.querySelectorAll('.item-obs, .secao-nota-input, .prioridade-textarea').forEach(t => t.value = '');
+    document.querySelectorAll('.item-obs-wrap').forEach(w => w.classList.remove('visivel'));
+    document.querySelectorAll('.btn-obs').forEach(b => b.textContent = '+ nota');
+    document.querySelectorAll('.id-input').forEach(i => i.value = '');
+    atualizarProgresso();
+    atualizarResumo();
+    atualizarBadges();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>

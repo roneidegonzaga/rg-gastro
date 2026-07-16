@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha Técnica | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+/* HEADER */
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 420px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+/* SESSION BAR */
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+/* ING BANNER */
+.ing-banner { padding: 12px 48px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 300; display: flex; align-items: center; gap: 10px; }
+.ing-banner.ok { background: rgba(74,124,89,0.07); color: #6aad7a; }
+.ing-banner.vazio { background: rgba(193,127,42,0.07); color: #fcc740; }
+.ing-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.ing-banner.ok .ing-dot { background: var(--green); }
+.ing-banner.vazio .ing-dot { background: var(--amber); }
+
+/* PAINEL FICHAS */
+.fichas-bar { display: flex; align-items: center; gap: 10px; padding: 14px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fichas-tabs { display: flex; gap: 0; overflow-x: auto; flex: 1; }
+.ficha-tab { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; padding: 8px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.ficha-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.ficha-tab:hover:not(.active) { color: var(--cream); }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.2s; white-space: nowrap; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--border-h); }
+.btn-outline:hover { background: rgba(2,82,145,0.06); }
+.btn-sm { padding: 5px 11px; font-size: 10px; }
+.btn-red { background: rgba(139,58,58,0.15); color: #c07070; border: 1px solid rgba(139,58,58,0.3); }
+.btn-red:hover { background: rgba(139,58,58,0.25); }
+
+/* MAIN */
+main { max-width: 940px; margin: 0 auto; padding: 32px 48px 80px; }
+
+/* FICHA CARD */
+.ficha-wrap { display: none; }
+.ficha-wrap.active { display: block; }
+
+.ficha-header-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.fb { display: flex; flex-direction: column; gap: 7px; }
+.fb-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+input[type="text"].f, input[type="number"].f, select.f, textarea.f {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.03); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 9px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="text"].f::placeholder, input[type="number"].f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="text"].f:focus, input[type="number"].f:focus, select.f:focus { border-color: var(--gold); }
+select.f { cursor: pointer; color-scheme: light; }
+select.f option { background: #f9e8d7; color: #011e34; }
+textarea.f { resize: vertical; min-height: 72px; line-height: 1.7; }
+.sw { position: relative; }
+.sa { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+
+/* INGREDIENTES DA FICHA */
+.secao { margin-bottom: 28px; }
+.secao-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 300; color: var(--gold-light); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+/* LINHA DE INGREDIENTE */
+.ing-linha { display: grid; grid-template-columns: 2fr 80px 100px 60px 90px 36px; gap: 8px; align-items: center; margin-bottom: 8px; }
+.ing-select { font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 300; background: rgba(1,30,52,0.03); border: 1px solid var(--border); color: var(--cream); padding: 8px 28px 8px 10px; outline: none; cursor: pointer; appearance: none; width: 100%; transition: border-color 0.25s; color-scheme: light; }
+.ing-select:focus { border-color: var(--gold); }
+.ing-select option { background: #f9e8d7; color: #011e34; }
+.ing-input { font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 300; background: rgba(1,30,52,0.03); border: 1px solid var(--border); color: var(--cream); padding: 8px 10px; outline: none; width: 100%; transition: border-color 0.25s; text-align: right; }
+.ing-input:focus { border-color: var(--gold); }
+.ing-input::placeholder { color: rgba(1,30,52,0.4); font-size: 11px; }
+.ing-unidade { font-size: 11px; color: var(--muted); text-align: center; }
+.ing-fc { font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 300; background: rgba(2,82,145,0.06); border: 1px solid rgba(91,145,188,0.15); color: var(--cream); padding: 8px 10px; outline: none; width: 100%; transition: border-color 0.25s; text-align: center; }
+.ing-fc:focus { border-color: var(--gold); }
+.ing-custo-calc { font-family: 'Manrope', sans-serif; font-size: 16px; color: var(--gold); text-align: right; line-height: 1; padding: 0 4px; }
+.ing-custo-calc.na { font-family: 'Manrope', sans-serif; font-size: 10px; color: var(--muted); font-style: italic; }
+.ing-del { background: transparent; border: none; color: rgba(139,58,58,0.5); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px; transition: color 0.2s; }
+.ing-del:hover { color: #c07070; }
+
+.ing-linha-header { display: grid; grid-template-columns: 2fr 80px 100px 60px 90px 36px; gap: 8px; margin-bottom: 6px; }
+.ih { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.ih-r { text-align: right; }
+.ih-c { text-align: center; }
+
+.btn-add-ing { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 10px 20px; background: transparent; color: var(--muted); border: 1px solid rgba(1,30,52,0.2); cursor: pointer; transition: all 0.25s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
+.btn-add-ing:hover { color: var(--gold); border-color: var(--border-h); background: rgba(2,82,145,0.06); }
+
+/* RESULTADO */
+.resultado-box { border: 1px solid var(--border-h); background: rgba(2,82,145,0.06); padding: 24px 28px; margin-bottom: 28px; }
+.resultado-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin-bottom: 16px; }
+.res-item { background: var(--charcoal); padding: 16px 18px; }
+.res-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.res-value { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; line-height: 1; color: var(--gold); }
+.res-value.big { font-size: 36px; }
+.res-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.res-alerta { font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.7; padding-top: 14px; border-top: 1px solid var(--border); }
+
+/* MODO PREPARO */
+.modo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+/* FICHA VAZIA */
+.ficha-vazia { text-align: center; padding: 60px 20px; color: var(--muted); }
+.fv-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
+.fv-title { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 8px; }
+.fv-sub { font-size: 12px; line-height: 1.7; margin-bottom: 24px; }
+
+/* IMPORTAR EXCEL */
+.import-area { background: rgba(74,106,138,0.07); border: 1px solid rgba(74,106,138,0.25); border-left: 3px solid #6b7fa3; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.import-txt { font-size: 12px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.6; flex: 1; }
+.import-txt strong { color: rgba(1,30,52,0.7); font-weight: 500; }
+.btn-import { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 18px; background: rgba(74,106,138,0.2); color: #8aaad4; border: 1px solid rgba(74,106,138,0.35); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.btn-import:hover { background: rgba(74,106,138,0.35); color: #aaccee; }
+#excelInput { display: none; }
+
+/* PDF OVERLAY */
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 768px) {
+  header, .session-bar, .fichas-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .ing-banner { padding-left: 20px; padding-right: 20px; }
+  .ficha-header-row { grid-template-columns: 1fr 1fr; }
+  .resultado-grid { grid-template-columns: 1fr 1fr; }
+  .ing-linha { grid-template-columns: 1fr 70px 80px; }
+  .ing-linha > :nth-child(n+4) { display: none; }
+  .modo-row { grid-template-columns: 1fr; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando PDF</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Ficha<br><em>Técnica</em></h1>
+    <p class="hsub">Monte a ficha técnica de cada prato usando os ingredientes do seu banco. A ferramenta calcula o custo total e o custo por porção com o fator de correção aplicado.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo O · O2</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<div class="ing-banner vazio" id="ingBanner">
+  <div class="ing-dot"></div>
+  <span id="ingBannerMsg">Verificando banco de ingredientes...</span>
+</div>
+
+<div class="fichas-bar">
+  <div class="fichas-tabs" id="fichasTabs"></div>
+  <button class="btn btn-outline" onclick="exportarTodasExcel()" title="Exportar todas as fichas em Excel, uma aba por ficha">Excel: todas</button>
+  <button class="btn btn-outline" onclick="exportarTodasPDF()" title="Exportar todas as fichas em PDF compilado">PDF: todas</button>
+  <button class="btn btn-gold" onclick="novaFicha()">+ Nova ficha</button>
+</div>
+
+<main>
+  <div class="import-area">
+    <div class="import-txt">
+      <strong>Sem ingredientes no banco?</strong> Exporte o Excel do Banco de Ingredientes (O1) e importe aqui. Os ingredientes serão carregados automaticamente para uso nas fichas.
+    </div>
+    <button class="btn-import" onclick="document.getElementById('excelInput').click()">Importar Excel do O1</button>
+    <input type="file" id="excelInput" accept=".xlsx,.xls" onchange="importarExcelO1(this)">
+  </div>
+  <div id="fichasContainer">
+    <div class="ficha-vazia" id="fichaVazia">
+      <div class="fv-icon">📋</div>
+      <p class="fv-title">Nenhuma ficha técnica criada</p>
+      <p class="fv-sub">Clique em "Nova ficha" para criar a primeira ficha técnica.<br>Use os ingredientes cadastrados no Banco de Ingredientes (O1).</p>
+      <button class="btn btn-gold" onclick="novaFicha()">Criar primeira ficha</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta O2 · Ficha Técnica</span>
+</footer>
+
+<script>
+// FORMATAÇÃO BRL
+function formatBRL(valor) {
+  if (valor === null || valor === undefined || isNaN(valor)) return 'N/C';
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ESTADO
+let ingredientesBase = JSON.parse(localStorage.getItem('dose-ingredientes') || '[]');
+let prepreparosIng = JSON.parse(localStorage.getItem('dose-prepreparos-ing') || '[]');
+let ingredientes = [...ingredientesBase, ...prepreparosIng];
+let fichas = JSON.parse(localStorage.getItem('dose-fichas') || '[]');
+let fichaAtiva = null;
+let ingCounter = {};
+
+// INIT
+verificarIngredientes();
+carregarRascunho();
+renderTabs();
+if (fichas.length > 0) mostrarFicha(fichas[0].id);
+
+function carregarRascunho() {
+  const nome = localStorage.getItem('dose-fichas-rname');
+  if (nome) document.getElementById('rname').value = nome;
+  document.getElementById('rname').addEventListener('input', e => {
+    localStorage.setItem('dose-fichas-rname', e.target.value);
+  });
+}
+
+function verificarIngredientes() {
+  const banner = document.getElementById('ingBanner');
+  const msg = document.getElementById('ingBannerMsg');
+  const totalIng = ingredientesBase.length;
+  const totalPP = prepreparosIng.length;
+  if (totalIng > 0 || totalPP > 0) {
+    banner.className = 'ing-banner ok';
+    let txt = `${totalIng} ingrediente${totalIng !== 1 ? 's' : ''} encontrado${totalIng !== 1 ? 's' : ''} no Banco de Ingredientes (O1).`;
+    if (totalPP > 0) txt += ` + ${totalPP} pré-preparo${totalPP !== 1 ? 's' : ''} disponível${totalPP !== 1 ? 'eis' : ''}.`;
+    txt += ' Prontos para usar nas fichas.';
+    msg.textContent = txt;
+  } else {
+    banner.className = 'ing-banner vazio';
+    msg.textContent = 'Nenhum ingrediente encontrado. Use o Banco de Ingredientes (O1) no mesmo navegador, ou importe o Excel do O1 usando o botão abaixo.';
+  }
+}
+
+// IMPORTAR EXCEL DO O1
+function importarExcelO1(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets['Ingredientes'];
+      if (!ws) {
+        alert('Arquivo não reconhecido. Certifique-se de exportar o Excel direto da ferramenta O1 (Banco de Ingredientes).');
+        return;
+      }
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      const importados = [];
+      let encontrouCabecalho = false;
+      rows.forEach((row, i) => {
+        if (!encontrouCabecalho) {
+          // Detecta linha de cabeçalho pela coluna "Ingrediente"
+          if (row[0] && String(row[0]).toUpperCase().includes('INGREDIENTE')) {
+            encontrouCabecalho = true;
+          }
+          return;
+        }
+        const nome = row[0];
+        if (!nome || String(nome).trim() === '') return;
+        const categoria = row[1] || '';
+        const preco = parseFloat(row[2]) || 0;
+        const peso = parseFloat(row[3]) || 0;
+        const unidade = row[4] || '';
+        const custoRaw = parseFloat(row[5]) || null;
+        const unidadeBase = row[6] || unidade;
+        const fornecedor = row[7] || '';
+        // Recalcula custo se possível, ou usa o do arquivo
+        let custo = custoRaw;
+        if (!custo && preco && peso && unidade) {
+          if (unidade === 'g') custo = preco / (peso / 1000);
+          else if (unidade === 'ml') custo = preco / (peso / 1000);
+          else if (['kg','L','unidade','pacote','caixa'].includes(unidade)) custo = preco / peso;
+        }
+        importados.push({
+          id: Date.now() + i,
+          nome: String(nome).trim(),
+          categoria,
+          preco,
+          peso,
+          unidade,
+          custo,
+          unidadeBase: unidadeBase || unidade,
+          fornecedor,
+          obs: '',
+          atualizado: new Date().toLocaleDateString('pt-BR'),
+        });
+      });
+
+      if (importados.length === 0) {
+        alert('Nenhum ingrediente encontrado no arquivo. Verifique se o Excel foi exportado pelo Banco de Ingredientes (O1).');
+        return;
+      }
+
+      // Mesclar com ingredientes existentes sem duplicar por nome
+      const nomesExistentes = new Set(ingredientes.map(i => i.nome.toLowerCase()));
+      const novos = importados.filter(i => !nomesExistentes.has(i.nome.toLowerCase()));
+      ingredientes = [...ingredientes, ...novos];
+      ingredientesBase = [...ingredientesBase, ...novos];
+      localStorage.setItem('dose-ingredientes', JSON.stringify(ingredientesBase));
+      verificarIngredientes();
+
+      const banner = document.getElementById('ingBanner');
+      banner.className = 'ing-banner ok';
+      document.getElementById('ingBannerMsg').textContent =
+        `${novos.length} ingrediente${novos.length !== 1 ? 's' : ''} importado${novos.length !== 1 ? 's' : ''} com sucesso. Total no banco: ${ingredientes.length}.`;
+
+      // Recarregar selects nas fichas abertas
+      document.querySelectorAll('.ficha-wrap.active').forEach(wrap => {
+        const fichaId = parseInt(wrap.id.replace('ficha_',''));
+        const ficha = fichas.find(f => f.id === fichaId);
+        if (ficha) {
+          wrap.remove();
+          renderFicha(ficha);
+          mostrarFicha(fichaId);
+        }
+      });
+
+    } catch(err) {
+      console.error(err);
+      alert('Erro ao ler o arquivo. Certifique-se de usar o Excel exportado pela ferramenta O1.');
+    }
+    input.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function onCatChange(fichaId, val) {
+  atualizarCampo(fichaId, 'categoriaBase', val);
+  atualizarCampo(fichaId, 'categoria', val);
+  const outroEl = document.getElementById('fn_cat_outro_' + fichaId);
+  if (outroEl) outroEl.style.display = val === 'Outro' ? 'block' : 'none';
+}
+
+// FICHAS
+function novaFicha() {
+  const id = Date.now();
+  const ficha = {
+    id, nome: '', categoria: '', categoriaBase: '', categoriaOutro: '',
+    rendimento: 1, obs: '', ingredientes: [],
+  };
+  fichas.push(ficha);
+  salvarFichas();
+  renderFicha(ficha);
+  renderTabs();
+  mostrarFicha(id);
+  document.getElementById('fichaVazia').style.display = 'none';
+}
+
+function removerFicha(id) {
+  const ficha = fichas.find(f => f.id === id);
+  const nomeFicha = ficha?.nome || 'esta ficha';
+  if (!confirm(`Remover "${nomeFicha}"?`)) return;
+  fichas = fichas.filter(f => f.id !== id);
+  document.getElementById('ficha_' + id)?.remove();
+  salvarFichas();
+  renderTabs();
+  if (fichas.length > 0) mostrarFicha(fichas[0].id);
+  else { fichaAtiva = null; document.getElementById('fichaVazia').style.display = 'block'; }
+}
+
+function mostrarFicha(id) {
+  fichaAtiva = id;
+  document.querySelectorAll('.ficha-wrap').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ficha-tab').forEach(el => el.classList.remove('active'));
+  const wrap = document.getElementById('ficha_' + id);
+  if (wrap) {
+    wrap.classList.add('active');
+    document.getElementById('fichaVazia').style.display = 'none';
+  }
+  const tab = document.getElementById('tab_' + id);
+  if (tab) tab.classList.add('active');
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('fichasTabs');
+  tabs.innerHTML = fichas.map(f =>
+    `<button class="ficha-tab ${f.id === fichaAtiva ? 'active' : ''}" id="tab_${f.id}" onclick="mostrarFicha(${f.id})">${f.nome || 'Novo prato'}</button>`
+  ).join('');
+}
+
+function renderFicha(ficha) {
+  document.getElementById('fichaVazia').style.display = 'none';
+  const container = document.getElementById('fichasContainer');
+  let wrap = document.getElementById('ficha_' + ficha.id);
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'ficha-wrap';
+    wrap.id = 'ficha_' + ficha.id;
+    container.appendChild(wrap);
+  }
+
+  wrap.innerHTML = `
+    <!-- DADOS DO PRATO -->
+    <div class="secao">
+      <div class="ficha-header-row">
+        <div class="fb">
+          <label class="fb-label">Nome do prato</label>
+          <input type="text" class="f" id="fn_nome_${ficha.id}" value="${esc(ficha.nome)}" placeholder="Ex: Filé ao molho madeira..." oninput="atualizarCampo(${ficha.id},'nome',this.value)">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Categoria</label>
+          <div class="sw">
+            <select class="f" id="fn_cat_${ficha.id}" onchange="onCatChange(${ficha.id},this.value)">
+              <option value="">Selecione</option>
+              ${['Entrada','Prato principal','Sobremesa','Bebida','Acompanhamento','Lanche','Outro'].map(c => `<option${(ficha.categoria===c||ficha.categoriaBase===c)?' selected':''}>${c}</option>`).join('')}
+            </select>
+            <span class="sa">▾</span>
+          </div>
+          <input type="text" class="f" id="fn_cat_outro_${ficha.id}"
+            style="margin-top:6px;display:${ficha.categoriaBase==='Outro'||(!['Entrada','Prato principal','Sobremesa','Bebida','Acompanhamento','Lanche'].includes(ficha.categoria)&&ficha.categoria)?'block':'none'}"
+            value="${esc(ficha.categoriaOutro||'')}"
+            placeholder="Descreva a categoria..."
+            oninput="atualizarCampo(${ficha.id},'categoriaOutro',this.value)">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Rendimento (porções)</label>
+          <input type="number" class="f" id="fn_rend_${ficha.id}" value="${ficha.rendimento||1}" min="1" step="1" oninput="atualizarCampo(${ficha.id},'rendimento',parseFloat(this.value)||1);calcResultado(${ficha.id})">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Observações gerenciais</label>
+          <input type="text" class="f" id="fn_obs_${ficha.id}" value="${esc(ficha.obs||'')}" placeholder="Ex: prato sazonal, alta rotatividade..." oninput="atualizarCampo(${ficha.id},'obs',this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- INGREDIENTES -->
+    <div class="secao">
+      <p class="secao-title">Ingredientes e fator de correção</p>
+      <div class="ing-linha-header">
+        <span class="ih">Ingrediente</span>
+        <span class="ih ih-r">Quantidade</span>
+        <span class="ih ih-c">Unidade usada</span>
+        <span class="ih ih-c">FC</span>
+        <span class="ih ih-r">Custo</span>
+        <span class="ih"></span>
+      </div>
+      <div id="ings_${ficha.id}"></div>
+      <button class="btn-add-ing" onclick="addIngLinha(${ficha.id})">+ Adicionar ingrediente</button>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="resultado-box" id="resultado_${ficha.id}">
+      <div class="resultado-grid">
+        <div class="res-item">
+          <p class="res-label">Custo total da receita</p>
+          <p class="res-value big" id="res_total_${ficha.id}">R$ 0,00</p>
+        </div>
+        <div class="res-item">
+          <p class="res-label">Rendimento</p>
+          <p class="res-value" id="res_rend_${ficha.id}">1 porção</p>
+        </div>
+        <div class="res-item">
+          <p class="res-label">Custo por porção</p>
+          <p class="res-value big" id="res_porcao_${ficha.id}" style="color:var(--gold-light)">R$ 0,00</p>
+        </div>
+        <div class="res-item">
+          <p class="res-label">Ingredientes com FC</p>
+          <p class="res-value" id="res_fc_${ficha.id}" style="color:var(--muted)">0</p>
+          <p class="res-note">fator aplicado</p>
+        </div>
+      </div>
+      <p class="res-alerta" id="res_msg_${ficha.id}">Adicione ingredientes para ver o custo calculado.</p>
+    </div>
+
+    <!-- AÇÕES -->
+    <div class="ficha-actions">
+      <button class="btn btn-gold" onclick="gerarPDF(${ficha.id})"><span>Gerar PDF</span></button>
+      <button class="btn btn-outline" onclick="exportarExcelFicha(${ficha.id})">Exportar Excel</button>
+      <button class="btn btn-red btn-sm" onclick="removerFicha(${ficha.id})">Remover ficha</button>
+    </div>`;
+
+  // renderizar ingredientes
+  ficha.ingredientes.forEach(ing => addIngLinhaExistente(ficha.id, ing));
+  calcResultado(ficha.id);
+}
+
+// INGREDIENTES NA FICHA
+function addIngLinha(fichaId) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  const ingId = Date.now();
+  ficha.ingredientes.push({ id: ingId, ingId: '', qtd: '', unidade: '', fc: 1, custo: null });
+  salvarFichas();
+  renderIngLinha(fichaId, ficha.ingredientes[ficha.ingredientes.length - 1]);
+  calcResultado(fichaId);
+}
+
+function addIngLinhaExistente(fichaId, ing) {
+  renderIngLinha(fichaId, ing);
+}
+
+function renderIngLinha(fichaId, ing) {
+  const container = document.getElementById('ings_' + fichaId);
+  const ficha = fichas.find(f => f.id === fichaId);
+  const div = document.createElement('div');
+  div.className = 'ing-linha';
+  div.id = 'ingl_' + ing.id;
+
+  const ingAtual = ingredientes.find(i => i.id == ing.ingId);
+  const unidades = ingAtual ? unidadesUsaveis(ingAtual.unidadeBase) : ['kg','g','L','ml','unidade'];
+
+  div.innerHTML = `
+    <div class="sw" style="position:relative">
+      <select class="ing-select" onchange="onIngSelect(${fichaId},${ing.id},this.value)">
+        <option value="">Selecione o ingrediente</option>
+        <optgroup label="Ingredientes">
+          ${ingredientesBase.map(i => `<option value="${i.id}"${i.id==ing.ingId?' selected':''}>${i.nome}${i.categoria?' ('+i.categoria+')':''}</option>`).join('')}
+        </optgroup>
+        ${prepreparosIng.length > 0 ? `<optgroup label="Pré-preparo">
+          ${prepreparosIng.map(i => `<option value="${i.id}"${i.id==ing.ingId?' selected':''}>${i.nome}</option>`).join('')}
+        </optgroup>` : ''}
+      </select>
+      <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▾</span>
+    </div>
+    <input type="number" class="ing-input" placeholder="Qtd" value="${ing.qtd||''}" min="0" step="0.001"
+      oninput="onIngQtd(${fichaId},${ing.id},this.value)" title="Quantidade utilizada na receita">
+    <div class="sw" style="position:relative">
+      <select class="ing-select" id="ingun_${ing.id}" onchange="onIngUnidade(${fichaId},${ing.id},this.value)">
+        ${unidades.map(u => `<option value="${u}"${u===ing.unidade?' selected':''}>${u}</option>`).join('')}
+      </select>
+      <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▾</span>
+    </div>
+    <input type="number" class="ing-fc" id="ingfc_${ing.id}" value="${ing.fc||1}" min="1" step="0.01"
+      title="Fator de correção: 1 = sem perda, 1.3 = 30% de perda no preparo"
+      placeholder="FC" oninput="onIngFC(${fichaId},${ing.id},this.value)">
+    <div class="ing-custo-calc ${ing.custo===null?'na':''}" id="ingc_${ing.id}">
+      ${ing.custo !== null ? 'R$ ' + formatBRL(ing.custo) : 'N/C'}
+    </div>
+    <button class="ing-del" onclick="removerIngLinha(${fichaId},${ing.id})" title="Remover ingrediente">×</button>`;
+
+  container.appendChild(div);
+}
+
+function unidadesUsaveis(base) {
+  if (base === 'kg') return ['kg','g'];
+  if (base === 'L') return ['L','ml'];
+  return [base];
+}
+
+function onIngSelect(fichaId, ingId, val) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  const ing = ficha?.ingredientes.find(i => i.id === ingId);
+  if (!ing) return;
+  ing.ingId = val ? parseInt(val) : '';
+  const ingBase = ingredientes.find(i => i.id == val);
+  if (ingBase) {
+    const uns = unidadesUsaveis(ingBase.unidadeBase);
+    ing.unidade = uns[0];
+    const sel = document.getElementById('ingun_' + ingId);
+    if (sel) {
+      sel.innerHTML = uns.map(u => `<option value="${u}"${u===ing.unidade?' selected':''}>${u}</option>`).join('');
+    }
+  }
+  calcIngCusto(ficha, ing);
+  salvarFichas();
+  calcResultado(fichaId);
+}
+
+function onIngQtd(fichaId, ingId, val) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  const ing = ficha?.ingredientes.find(i => i.id === ingId);
+  if (!ing) return;
+  ing.qtd = parseFloat(val) || 0;
+  calcIngCusto(ficha, ing);
+  salvarFichas();
+  calcResultado(fichaId);
+}
+
+function onIngUnidade(fichaId, ingId, val) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  const ing = ficha?.ingredientes.find(i => i.id === ingId);
+  if (!ing) return;
+  ing.unidade = val;
+  calcIngCusto(ficha, ing);
+  salvarFichas();
+  calcResultado(fichaId);
+}
+
+function onIngFC(fichaId, ingId, val) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  const ing = ficha?.ingredientes.find(i => i.id === ingId);
+  if (!ing) return;
+  ing.fc = parseFloat(val) || 1;
+  calcIngCusto(ficha, ing);
+  salvarFichas();
+  calcResultado(fichaId);
+}
+
+function removerIngLinha(fichaId, ingId) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  ficha.ingredientes = ficha.ingredientes.filter(i => i.id !== ingId);
+  document.getElementById('ingl_' + ingId)?.remove();
+  salvarFichas();
+  calcResultado(fichaId);
+}
+
+function calcIngCusto(ficha, ing) {
+  const ingBase = ingredientes.find(i => i.id == ing.ingId);
+  const el = document.getElementById('ingc_' + ing.id);
+  if (!ingBase || !ingBase.custo || !ing.qtd || !ing.unidade) {
+    ing.custo = null;
+    if (el) { el.className = 'ing-custo-calc na'; el.textContent = 'N/C'; }
+    return;
+  }
+  let qtdKgL = ing.qtd;
+  if (ing.unidade === 'g') qtdKgL = ing.qtd / 1000;
+  if (ing.unidade === 'ml') qtdKgL = ing.qtd / 1000;
+  const fc = parseFloat(ing.fc) || 1;
+  ing.custo = ingBase.custo * qtdKgL * fc;
+  if (el) {
+    el.className = 'ing-custo-calc';
+    el.textContent = 'R$ ' + formatBRL(ing.custo);
+  }
+}
+
+function calcResultado(fichaId) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  const custos = ficha.ingredientes.map(i => i.custo).filter(c => c !== null);
+  const total = custos.reduce((a, b) => a + b, 0);
+  const rend = parseFloat(ficha.rendimento) || 1;
+  const porcao = total / rend;
+  const comFC = ficha.ingredientes.filter(i => (parseFloat(i.fc)||1) !== 1).length;
+
+  const elTotal = document.getElementById('res_total_' + fichaId);
+  const elRend = document.getElementById('res_rend_' + fichaId);
+  const elPorc = document.getElementById('res_porcao_' + fichaId);
+  const elFC = document.getElementById('res_fc_' + fichaId);
+  const elMsg = document.getElementById('res_msg_' + fichaId);
+
+  if (elTotal) elTotal.textContent = 'R$ ' + formatBRL(total);
+  if (elRend) elRend.textContent = rend + (rend === 1 ? ' porção' : ' porções');
+  if (elPorc) elPorc.textContent = 'R$ ' + formatBRL(porcao);
+  if (elFC) elFC.textContent = comFC;
+
+  if (elMsg) {
+    const semCusto = ficha.ingredientes.filter(i => i.custo === null).length;
+    if (ficha.ingredientes.length === 0) {
+      elMsg.textContent = 'Adicione ingredientes para ver o custo calculado.';
+    } else if (semCusto > 0) {
+      elMsg.textContent = `${semCusto} ingrediente${semCusto>1?'s':''} sem custo calculado. Verifique se o ingrediente está cadastrado no Banco de Ingredientes (O1) com preço e unidade preenchidos.`;
+    } else {
+      elMsg.textContent = `Custo calculado com ${ficha.ingredientes.length} ingrediente${ficha.ingredientes.length>1?'s':''}.${comFC>0?' Fator de correção aplicado em '+comFC+' item'+(comFC>1?'s':'')+'.':''}`;
+    }
+  }
+
+  ficha.custoTotal = total;
+  ficha.custoPorcao = porcao;
+  salvarFichas();
+}
+
+function atualizarCampo(fichaId, campo, valor) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  ficha[campo] = valor;
+  if (campo === 'nome') renderTabs();
+  salvarFichas();
+}
+
+function salvarFichas() {
+  localStorage.setItem('dose-fichas', JSON.stringify(fichas));
+}
+
+function esc(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// GERAR PDF
+async function gerarPDF(fichaId) {
+  const { jsPDF } = window.jspdf;
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  document.getElementById('pdfOverlay').classList.add('visible');
+
+  try {
+    const nome = document.getElementById('rname').value || 'Meu Restaurante';
+    const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210, H=297, mg=18, cw=W-mg*2;
+
+    const hdr = () => {
+      pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+      pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+      pdf.text('MÓDULO O  ·  O2',W-mg,11,{align:'right'});
+    };
+
+    const ftr = (p,t) => {
+      pdf.setPage(p);
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10);
+      pdf.text(`${p} / ${t}`,W-mg,H-10,{align:'right'});
+    };
+
+    hdr();
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(22); pdf.setTextColor(245,240,232);
+    pdf.text('Ficha Técnica',mg,42);
+    pdf.setFont('helvetica','bolditalic'); pdf.setFontSize(28); pdf.setTextColor(212,175,122);
+    const nomePrato = ficha.nome || 'Sem nome';
+    const nomeLines = pdf.splitTextToSize(nomePrato, cw);
+    pdf.text(nomeLines.slice(0,2), mg, 58);
+    let y = 58 + nomeLines.slice(0,2).length * 9;
+
+    const catLabel = ficha.categoriaBase === 'Outro' && ficha.categoriaOutro
+      ? `Outro: ${ficha.categoriaOutro}`
+      : (ficha.categoria || '');
+
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(122,115,105);
+    if (catLabel) pdf.text(catLabel, mg, y); y += 6;
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,y,W-mg,y); y += 8;
+
+    pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+    pdf.text(nome.toUpperCase(), mg, y);
+    pdf.setTextColor(122,115,105);
+    pdf.text(hoje, W-mg, y, {align:'right'}); y += 10;
+
+    // DADOS
+    const dados = [
+      ['Rendimento', `${ficha.rendimento||1} porção${(ficha.rendimento||1)>1?'s':''}`],
+      ['Custo total', `R$ ${formatBRL((ficha.custoTotal||0))}`],
+      ['Custo por porção', `R$ ${formatBRL((ficha.custoPorcao||0))}`],
+      ficha.tempoPreparo ? ['Tempo de preparo', `${ficha.tempoPreparo} min`] : null,
+    ].filter(Boolean);
+
+    const hw = cw / dados.length;
+    dados.forEach(([label, val], i) => {
+      const cx = mg + i * hw;
+      pdf.setFillColor(40,38,32); pdf.rect(cx, y, hw-2, 20, 'F');
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text(label.toUpperCase(), cx+8, y+7);
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(184,150,90);
+      pdf.text(val, cx+8, y+15);
+    });
+    y += 28;
+
+    // INGREDIENTES
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232);
+    pdf.text('Ingredientes', mg, y); y += 8;
+    const cols = ['INGREDIENTE','QTD','UNID','FC','CUSTO'];
+    const cws = [70, 20, 20, 16, 30];
+    let cx2 = mg;
+    cols.forEach((col, i) => {
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(184,150,90);
+      pdf.text(col, cx2, y, {align: i>0?'right':'left'});
+      cx2 += cws[i];
+    });
+    y += 5;
+    pdf.setDrawColor(184,150,90,0.3); pdf.line(mg,y,W-mg,y); y += 4;
+
+    ficha.ingredientes.forEach((ing, idx) => {
+      const ingBase = ingredientes.find(i => i.id == ing.ingId);
+      if (y > H-30) {
+        pdf.addPage(); hdr(); y = 24;
+      }
+      const bg = idx%2===0;
+      if (bg) { pdf.setFillColor(34,32,24); pdf.rect(mg,y-3,cw,10,'F'); }
+      cx2 = mg;
+      const cells = [
+        ingBase?.nome || 'Ingrediente',
+        ing.qtd || '',
+        ing.unidade || '',
+        (parseFloat(ing.fc)||1).toFixed(2),
+        ing.custo !== null ? 'R$ ' + formatBRL(ing.custo) : 'N/C',
+      ];
+      cells.forEach((cell, i) => {
+        pdf.setFont('helvetica', i===0?'normal':'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(i===4?(ing.custo!==null?212:122):i===0?245:160, i===4&&ing.custo!==null?175:i===0?240:152, i===4&&ing.custo!==null?122:i===0?232:140);
+        pdf.text(String(cell), i>0?cx2+cws[i]:cx2, y+4, {align:i>0?'right':'left'});
+        cx2 += cws[i];
+      });
+      y += 10;
+    });
+
+    pdf.setDrawColor(184,150,90,0.2); pdf.line(mg,y,W-mg,y); y += 10;
+
+    if (ficha.obs) {
+      if (y > H-40) { pdf.addPage(); hdr(); y = 24; }
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232);
+      pdf.text('Observações', mg, y); y += 8;
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(160,152,140);
+      pdf.text(pdf.splitTextToSize(ficha.obs, cw).slice(0,4), mg, y);
+    }
+
+    const total = pdf.internal.getNumberOfPages();
+    for (let p=1;p<=total;p++) ftr(p,total);
+    pdf.save(`FichaTecnica-${(ficha.nome||'prato').replace(/\s+/g,'-')}.pdf`);
+
+  } catch(err) {
+    console.error(err);
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+
+// EXPORTAR TODAS AS FICHAS: EXCEL
+function exportarTodasExcel() {
+  if (fichas.length === 0) { alert('Nenhuma ficha técnica criada.'); return; }
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const wb = XLSX.utils.book_new();
+  const C = { ouro:'B8965A', ouroClr:'D4AF7A', escuro:'1A1814', meiTom:'2A2620', creme:'F5F0E8', muteado:'7A7369', faixaA:'222018', faixaB:'1E1C18' };
+
+  const cel = (v,bold=false,sz=10,color=C.creme,bg=C.escuro,align='left') => ({
+    v:v===null||v===undefined?'':v, t:typeof v==='number'?'n':'s',
+    s:{font:{bold,sz,color:{rgb:color},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:align,vertical:'center',wrapText:true}}
+  });
+
+  // ABA ÍNDICE
+  const idxRows = [
+    [cel('FICHAS TÉCNICAS GERENCIAIS',true,14,C.ouro,C.meiTom),...Array(3).fill(cel('',false,10,C.creme,C.meiTom))],
+    [cel(nome,false,10,C.muteado,C.meiTom),cel('',false,10,C.creme,C.meiTom),cel('',false,10,C.creme,C.meiTom),cel(hoje,false,9,C.muteado,C.meiTom,'right')],
+    Array(4).fill(cel('',false,10,C.creme,C.escuro)),
+    ['PRATO','CATEGORIA','RENDIMENTO','CUSTO POR PORÇÃO'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+    ...fichas.map((f,i)=>{
+      const bg=i%2===0?C.faixaA:C.faixaB;
+      const catLabel = f.categoriaBase==='Outro'&&f.categoriaOutro ? `Outro: ${f.categoriaOutro}` : (f.categoria||'');
+      const mk=(v,c=C.creme,b=false,a='left')=>({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:a,vertical:'center'}}});
+      return [
+        mk(f.nome||'Sem nome',C.creme,true),
+        mk(catLabel,C.ouroClr),
+        mk(`${f.rendimento||1} porção(ões)`,C.muteado),
+        {v:f.custoPorcao?parseFloat(f.custoPorcao.toFixed(2)):'',t:f.custoPorcao?'n':'s',s:{font:{bold:true,sz:11,color:{rgb:C.ouro},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+      ];
+    }),
+    Array(4).fill(cel('',false,10,C.creme,C.meiTom)),
+    [cel(`${fichas.length} ficha(s) técnica(s)  ·  Gerado pelo Sistema D.O.S.E. · Gasttro Design`,false,8,C.muteado,C.meiTom),...Array(3).fill(cel('',false,8,C.muteado,C.meiTom))],
+  ];
+  const wsIdx = XLSX.utils.aoa_to_sheet(idxRows);
+  wsIdx['!cols'] = [{wch:32},{wch:22},{wch:16},{wch:20}];
+  wsIdx['!merges'] = [{s:{r:0,c:0},e:{r:0,c:3}},{s:{r:1,c:0},e:{r:1,c:2}}];
+  XLSX.utils.book_append_sheet(wb, wsIdx, 'Índice');
+
+  // UMA ABA POR FICHA
+  fichas.forEach(ficha => {
+    const catLabel = ficha.categoriaBase==='Outro'&&ficha.categoriaOutro ? `Outro: ${ficha.categoriaOutro}` : (ficha.categoria||'');
+    const rows = [
+      [cel('FICHA TÉCNICA GERENCIAL',true,13,C.ouro,C.meiTom),...Array(4).fill(cel('',false,10,C.creme,C.meiTom))],
+      [cel(ficha.nome||'Sem nome',true,12,C.creme,C.meiTom),...Array(4).fill(cel('',false,10,C.creme,C.meiTom))],
+      [cel(nome,false,9,C.muteado,C.meiTom),cel('',false,9,C.muteado,C.meiTom),cel('',false,9,C.muteado,C.meiTom),cel('',false,9,C.muteado,C.meiTom),cel(hoje,false,9,C.muteado,C.meiTom,'right')],
+      Array(5).fill(cel('',false,10,C.creme,C.escuro)),
+      [cel('DADOS',true,9,C.escuro,C.ouro),...Array(4).fill(cel('',true,9,C.escuro,C.ouro))],
+      [cel('Categoria',false,10,C.muteado,C.escuro),cel(catLabel,false,10,C.creme,C.escuro),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+      [cel('Rendimento',false,10,C.muteado,C.escuro),cel(`${ficha.rendimento||1} porção(ões)`,false,10,C.creme,C.escuro),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+      [cel('Custo total',true,10,C.muteado,C.escuro),cel(parseFloat((ficha.custoTotal||0).toFixed(2)),true,12,C.ouro,C.escuro,'right'),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+      [cel('Custo por porção',true,10,C.muteado,C.escuro),cel(parseFloat((ficha.custoPorcao||0).toFixed(2)),true,13,C.ouroClr,C.escuro,'right'),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+      ficha.obs ? [cel('Observações',false,10,C.muteado,C.escuro),cel(ficha.obs,false,10,C.creme,C.escuro),...Array(3).fill(cel('',false,10,C.creme,C.escuro))] : null,
+      Array(5).fill(cel('',false,10,C.creme,C.escuro)),
+      ['INGREDIENTE','QTD','UNIDADE','FC','CUSTO (R$)'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+      ...ficha.ingredientes.map((ing,i)=>{
+        const base=ingredientes.find(b=>b.id==ing.ingId);
+        const bg=i%2===0?C.faixaA:C.faixaB;
+        const mk=(v,c=C.creme,b=false,a='left')=>({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:a,vertical:'center'}}});
+        return [
+          mk(base?.nome||'Ingrediente',C.creme,true),
+          mk(ing.qtd?String(ing.qtd):'',C.muteado,false,'right'),
+          mk(ing.unidade,C.muteado),
+          mk((parseFloat(ing.fc)||1).toFixed(2),C.muteado,false,'center'),
+          {v:ing.custo!==null?parseFloat(ing.custo.toFixed(2)):'',t:ing.custo!==null?'n':'s',s:{font:{bold:true,sz:11,color:{rgb:C.ouro},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+        ];
+      }),
+    ].filter(Boolean);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:32},{wch:12},{wch:12},{wch:8},{wch:18}];
+    ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}},{s:{r:1,c:0},e:{r:1,c:4}},{s:{r:2,c:0},e:{r:2,c:3}}];
+    // Nome da aba limitado a 31 caracteres (limite do Excel)
+    const nomeAba = (ficha.nome||'Sem nome').replace(/[:\\\/\?\*\[\]]/g,'').slice(0,28);
+    XLSX.utils.book_append_sheet(wb, ws, nomeAba || `Ficha ${fichas.indexOf(ficha)+1}`);
+  });
+
+  XLSX.writeFile(wb, `FichasTecnicas-${nome.replace(/\s+/g,'-')}-${hoje.replace(/\//g,'-')}.xlsx`);
+}
+
+// EXPORTAR TODAS AS FICHAS: PDF
+async function exportarTodasPDF() {
+  if (fichas.length === 0) { alert('Nenhuma ficha técnica criada.'); return; }
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    const nome = document.getElementById('rname').value || 'Meu Restaurante';
+    const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210, H=297, mg=18, cw=W-mg*2;
+
+    const hdr = () => {
+      pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+      pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+      pdf.text('MÓDULO O  ·  O2',W-mg,11,{align:'right'});
+    };
+
+    const ftr = (p,t) => {
+      pdf.setPage(p);
+      pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10);
+      pdf.text(`${p} / ${t}`,W-mg,H-10,{align:'right'});
+    };
+
+    // CAPA GERAL
+    hdr();
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(22); pdf.setTextColor(245,240,232); pdf.text('Fichas Técnicas',mg,42);
+    pdf.setFont('helvetica','bolditalic'); pdf.setFontSize(16); pdf.setTextColor(212,175,122); pdf.text('Gerenciais',mg,54);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(122,115,105); pdf.text('Sistema D.O.S.E. · Módulo O',mg,64);
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,72,W-mg,72);
+    pdf.setFontSize(9); pdf.setTextColor(184,150,90); pdf.text(nome.toUpperCase(),mg,79);
+    pdf.setTextColor(122,115,105); pdf.text(hoje,W-mg,79,{align:'right'});
+    pdf.line(mg,83,W-mg,83);
+    let y=95;
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232); pdf.text(`${fichas.length} ficha${fichas.length!==1?'s':''} técnica${fichas.length!==1?'s':''}`,mg,y); y+=10;
+    fichas.forEach((f,i)=>{
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(184,150,90);
+      pdf.text(`${i+1}.`, mg, y);
+      pdf.setTextColor(210,200,185);
+      pdf.text(f.nome||'Sem nome', mg+8, y);
+      pdf.setTextColor(122,115,105); pdf.setFontSize(9);
+      pdf.text(`R$ ${formatBRL((f.custoPorcao||0))}/porção`, W-mg, y, {align:'right'});
+      y+=8;
+    });
+
+    // UMA PÁGINA POR FICHA
+    for (const ficha of fichas) {
+      pdf.addPage(); hdr();
+      y=28;
+      const catLabel = ficha.categoriaBase==='Outro'&&ficha.categoriaOutro ? `Outro: ${ficha.categoriaOutro}` : (ficha.categoria||'');
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(20); pdf.setTextColor(245,240,232);
+      const nomeLines = pdf.splitTextToSize(ficha.nome||'Sem nome', cw);
+      pdf.text(nomeLines.slice(0,2),mg,y); y+=nomeLines.slice(0,2).length*8+2;
+      if(catLabel){pdf.setFont('helvetica','normal');pdf.setFontSize(9);pdf.setTextColor(122,115,105);pdf.text(catLabel,mg,y);y+=6;}
+      pdf.setDrawColor(184,150,90);pdf.setLineWidth(0.3);pdf.line(mg,y,W-mg,y);y+=8;
+
+      const dados=[
+        ['Rendimento',`${ficha.rendimento||1} porção${(ficha.rendimento||1)>1?'s':''}`],
+        ['Custo total',`R$ ${formatBRL((ficha.custoTotal||0))}`],
+        ['Custo por porção',`R$ ${formatBRL((ficha.custoPorcao||0))}`],
+      ];
+      const hw=cw/dados.length;
+      dados.forEach(([label,val],i)=>{
+        const cx=mg+i*hw;
+        pdf.setFillColor(40,38,32);pdf.rect(cx,y,hw-2,18,'F');
+        pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(122,115,105);pdf.text(label.toUpperCase(),cx+6,y+6);
+        pdf.setFont('helvetica','bold');pdf.setFontSize(11);pdf.setTextColor(184,150,90);pdf.text(val,cx+6,y+13);
+      });
+      y+=26;
+
+      pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(245,240,232);pdf.text('Ingredientes',mg,y);y+=7;
+      const cols2=['INGREDIENTE','QTD','UNID','FC','CUSTO'];
+      const cws2=[72,18,18,14,28];
+      let cx2=mg;
+      cols2.forEach((col,i)=>{pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(184,150,90);pdf.text(col,cx2+(i>0?cws2[i]:0),y,{align:i>0?'right':'left'});cx2+=cws2[i];});
+      y+=4;pdf.setDrawColor(184,150,90,0.3);pdf.line(mg,y,W-mg,y);y+=4;
+
+      ficha.ingredientes.forEach((ing,idx)=>{
+        if(y>H-30){pdf.addPage();hdr();y=24;}
+        const ingBase=ingredientes.find(i=>i.id==ing.ingId);
+        if(idx%2===0){pdf.setFillColor(34,32,24);pdf.rect(mg,y-3,cw,9,'F');}
+        cx2=mg;
+        [ingBase?.nome||'Ingrediente',ing.qtd||'',ing.unidade||'',(parseFloat(ing.fc)||1).toFixed(2),ing.custo!==null?'R$ '+formatBRL(ing.custo):'N/C'].forEach((cell,i)=>{
+          pdf.setFont('helvetica','normal');pdf.setFontSize(9);
+          pdf.setTextColor(i===4?(ing.custo!==null?212:100):i===0?245:160,i===4&&ing.custo!==null?175:i===0?240:152,i===4&&ing.custo!==null?122:i===0?232:140);
+          pdf.text(String(cell),i>0?cx2+cws2[i]:cx2,y+3,{align:i>0?'right':'left'});
+          cx2+=cws2[i];
+        });
+        y+=9;
+      });
+
+      if(ficha.obs){y+=4;pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(122,115,105);pdf.text('OBS: '+ficha.obs,mg,y);}
+    }
+
+    const total=pdf.internal.getNumberOfPages();
+    for(let p=1;p<=total;p++) ftr(p,total);
+    pdf.save(`FichasTecnicas-${nome.replace(/\s+/g,'-')}-${hoje.replace(/,\s*/g,'-').replace(/\s+/g,'-')}.pdf`);
+  } catch(err){
+    console.error(err);
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+
+// EXPORTAR EXCEL FICHA INDIVIDUAL
+function exportarExcelFicha(fichaId) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  const nome = document.getElementById('rname').value || 'Meu Restaurante';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const wb = XLSX.utils.book_new();
+  const C = { ouro:'B8965A', ouroClr:'D4AF7A', escuro:'1A1814', meiTom:'2A2620', creme:'F5F0E8', muteado:'7A7369', faixaA:'222018', faixaB:'1E1C18' };
+
+  const cel = (v,bold=false,sz=10,color=C.creme,bg=C.escuro,align='left') => ({
+    v:v===null||v===undefined?'':v, t:typeof v==='number'?'n':'s',
+    s:{font:{bold,sz,color:{rgb:color},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:align,vertical:'center',wrapText:true}}
+  });
+
+  const rows = [
+    [cel('FICHA TÉCNICA',true,14,C.ouro,C.meiTom),...Array(4).fill(cel('',false,10,C.creme,C.meiTom))],
+    [cel(ficha.nome||'Sem nome',true,12,C.creme,C.meiTom),...Array(4).fill(cel('',false,10,C.creme,C.meiTom))],
+    [cel(nome,false,9,C.muteado,C.meiTom),cel('',false,9,C.muteado,C.meiTom),cel('',false,9,C.muteado,C.meiTom),cel('',false,9,C.muteado,C.meiTom),cel(hoje,false,9,C.muteado,C.meiTom,'right')],
+    Array(5).fill(cel('',false,10,C.creme,C.escuro)),
+    [cel('DADOS GERAIS',true,9,C.escuro,C.ouro),...Array(4).fill(cel('',true,9,C.escuro,C.ouro))],
+    [cel('Categoria',false,10,C.muteado,C.escuro),cel(ficha.categoria||'',false,10,C.creme,C.escuro),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+    [cel('Rendimento',false,10,C.muteado,C.escuro),cel(`${ficha.rendimento||1} porção(ões)`,false,10,C.creme,C.escuro),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+    [cel('Tempo de preparo',false,10,C.muteado,C.escuro),cel(ficha.tempoPreparo?`${ficha.tempoPreparo} min`:'',false,10,C.creme,C.escuro),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+    [cel('Custo total',true,10,C.muteado,C.escuro),cel(parseFloat((ficha.custoTotal||0).toFixed(2)),true,12,C.ouro,C.escuro,'right'),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+    [cel('Custo por porção',true,10,C.muteado,C.escuro),cel(parseFloat((ficha.custoPorcao||0).toFixed(2)),true,13,C.ouroClr,C.escuro,'right'),...Array(3).fill(cel('',false,10,C.creme,C.escuro))],
+    Array(5).fill(cel('',false,10,C.creme,C.escuro)),
+    ['INGREDIENTE','QTD','UNIDADE','FC','CUSTO (R$)'].map(h=>({v:h,t:'s',s:{font:{bold:true,sz:9,color:{rgb:C.escuro},name:'Calibri'},fill:{fgColor:{rgb:C.ouro},patternType:'solid'},alignment:{horizontal:'left',vertical:'center'}}})),
+    ...ficha.ingredientes.map((ing,i)=>{
+      const base=ingredientes.find(b=>b.id==ing.ingId);
+      const bg=i%2===0?C.faixaA:C.faixaB;
+      const mk=(v,c=C.creme,b=false,a='left')=>({v:v||'',t:'s',s:{font:{bold:b,sz:10,color:{rgb:c},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:a,vertical:'center'}}});
+      return [
+        mk(base?.nome||'Ingrediente',C.creme,true),
+        mk(ing.qtd?String(ing.qtd):'',C.muteado,false,'right'),
+        mk(ing.unidade,C.muteado),
+        mk((parseFloat(ing.fc)||1).toFixed(2),C.muteado,false,'center'),
+        {v:ing.custo!==null?parseFloat(ing.custo.toFixed(2)):''  ,t:ing.custo!==null?'n':'s',s:{font:{bold:true,sz:11,color:{rgb:C.ouro},name:'Calibri'},fill:{fgColor:{rgb:bg},patternType:'solid'},alignment:{horizontal:'right',vertical:'center'}}},
+      ];
+    }),
+    Array(5).fill(cel('',false,10,C.creme,C.meiTom)),
+    ficha.modoPreparo ? [cel('MODO DE PREPARO',true,9,C.ouro,C.meiTom),...Array(4).fill(cel('',true,9,C.ouro,C.meiTom))] : null,
+    ficha.modoPreparo ? [cel(ficha.modoPreparo,false,10,C.creme,C.escuro),...Array(4).fill(cel('',false,10,C.creme,C.escuro))] : null,
+  ].filter(Boolean);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:32},{wch:12},{wch:12},{wch:8},{wch:18}];
+  ws['!rows'] = [{hpt:26},{hpt:20},{hpt:14},{hpt:6},{hpt:18},...Array(6).fill({hpt:18}),{hpt:6},{hpt:18},...ficha.ingredientes.map(()=>({hpt:18})),{hpt:6}];
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}},{s:{r:1,c:0},e:{r:1,c:4}},{s:{r:2,c:0},e:{r:2,c:3}}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Ficha Técnica');
+
+  XLSX.writeFile(wb, `FichaTecnica-${(ficha.nome||'prato').replace(/\s+/g,'-')}-${hoje.replace(/\//g,'-')}.xlsx`);
+}
+
+// RENDERIZAR FICHAS SALVAS
+fichas.forEach(f => renderFicha(f));
+if (fichas.length > 0) {
+  document.getElementById('fichaVazia').style.display = 'none';
+  mostrarFicha(fichas[0].id);
+}
+</script>
+</body>
+</html>

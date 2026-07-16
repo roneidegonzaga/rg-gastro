@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist do Gestor Lucrativo | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008;
+  --diaria: #025291; --semanal: #2a4a7a; --mensal: #5a3a8a;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(28px,4vw,48px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 10px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 14px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+.tabs-bar { display: flex; padding: 0 48px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 13px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn:hover:not(.active) { color: var(--cream); }
+
+main { max-width: 800px; margin: 0 auto; padding: 36px 48px 80px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* PROGRESS HEADER */
+.prog-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; gap: 16px; flex-wrap: wrap; }
+.prog-info { display: flex; flex-direction: column; gap: 4px; }
+.prog-data { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 300; color: var(--gold-light); }
+.prog-tipo { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.prog-bar-wrap { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.prog-pct { font-family: 'Manrope', sans-serif; font-size: 32px; font-weight: 300; color: var(--gold); line-height: 1; }
+.prog-track { width: 200px; height: 4px; background: rgba(1,30,52,0.04); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 2px; background: var(--gold); transition: width 0.4s ease; }
+
+/* SEÇÕES DO CHECKLIST */
+.secao-check { margin-bottom: 28px; }
+.sc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.sc-icone { font-size: 18px; }
+.sc-titulo { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; }
+.sc-count { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+/* ITEM DO CHECKLIST */
+.check-item { display: flex; align-items: flex-start; gap: 14px; padding: 13px 16px; border: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all 0.2s; user-select: none; }
+.check-item:hover { background: rgba(1,30,52,0.04); border-color: rgba(91,145,188,0.3); }
+.check-item.marcado { background: rgba(26,94,42,0.06); border-color: rgba(26,94,42,0.25); }
+.check-box { width: 18px; height: 18px; border: 1.5px solid var(--muted); border-radius: 2px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.check-item.marcado .check-box { background: var(--green); border-color: var(--green); }
+.check-mark { color: #fff; font-size: 11px; font-weight: 700; display: none; }
+.check-item.marcado .check-mark { display: block; }
+.check-texto { flex: 1; }
+.check-nome { font-size: 13px; font-weight: 400; color: var(--cream); margin-bottom: 2px; transition: color 0.2s; line-height: 1.4; }
+.check-item.marcado .check-nome { color: var(--muted); text-decoration: line-through; }
+.check-dica { font-size: 11px; font-weight: 300; color: rgba(1,30,52,0.4); line-height: 1.5; margin-top: 2px; }
+.check-tempo { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: rgba(1,30,52,0.4); flex-shrink: 0; margin-top: 3px; }
+
+/* ADICIONAR ITEM CUSTOMIZADO */
+.add-item-wrap { display: flex; gap: 8px; margin-top: 10px; }
+.add-input { font-family: 'Manrope', sans-serif; font-size: 12px; background: rgba(1,30,52,0.04); border: 1px solid rgba(91,145,188,0.15); color: var(--cream); flex: 1; padding: 8px 12px; outline: none; transition: border-color 0.2s; }
+.add-input::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+.add-input:focus { border-color: var(--gold); }
+.add-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 14px; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.add-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* RESULTADO FINAL */
+.resultado-final { border: 1px solid var(--border-h); padding: 24px 28px; margin-top: 28px; text-align: center; display: none; }
+.rf-icone { font-size: 40px; margin-bottom: 10px; }
+.rf-titulo { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; color: var(--gold-light); margin-bottom: 6px; }
+.rf-sub { font-size: 13px; font-weight: 300; color: rgba(1,30,52,0.7); line-height: 1.7; margin-bottom: 20px; }
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 12px 28px; cursor: pointer; transition: all 0.25s; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; position: relative; overflow: hidden; }
+.btn-gold::after { content: ''; position: absolute; inset: 0; background: var(--charcoal); transform: translateX(-100%); transition: transform 0.25s; }
+.btn-gold:hover::after { transform: translateX(0); }
+.btn-gold span { position: relative; z-index: 1; }
+.btn-gold:hover span { color: var(--gold); }
+.btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+.btn-red-sm { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); font-size: 10px; padding: 4px 9px; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+/* HISTÓRICO */
+.hist-item { border: 1px solid var(--border); padding: 16px 20px; margin-bottom: 10px; }
+.hi-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.hi-data { font-size: 13px; font-weight: 500; color: var(--cream); }
+.hi-tipo { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+.hi-tipo.diaria { background: rgba(2,82,145,0.06); color: var(--diaria); }
+.hi-tipo.semanal { background: rgba(42,74,122,0.15); color: #7aaad4; }
+.hi-tipo.mensal { background: rgba(90,58,138,0.15); color: #b09ad4; }
+.hi-pct { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 300; }
+.hi-pct.completo { color: #1a5e2a; }
+.hi-pct.parcial { color: #7a4008; }
+.hi-itens { font-size: 11px; color: var(--muted); }
+
+.empty-state { text-align: center; padding: 44px 20px; color: var(--muted); }
+.empty-icon { font-size: 34px; margin-bottom: 12px; opacity: 0.35; }
+.empty-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; line-height: 1.7; }
+
+/* CONFIGURAÇÕES */
+.conf-secao { margin-bottom: 28px; }
+.conf-titulo { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 300; color: var(--gold-light); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.conf-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(91,145,188,0.06); gap: 12px; }
+.conf-nome { font-size: 12px; color: var(--cream); flex: 1; }
+.conf-dica { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header, .session-bar, .tabs-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .prog-track { width: 120px; }
+}
+/* TURNOS */
+.turno-btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.turno-btn.active { background: rgba(2,82,145,0.06); border-color: var(--gold); color: var(--gold); }
+.turno-btn:hover:not(.active) { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Checklist do<br><em>Gestor Lucrativo</em></h1>
+    <p class="hsub">Rotinas diárias, semanais e mensais que mantêm o negócio nos trilhos sem depender da memória do dono. Execute, registre e acompanhe.</p>
+  </div>
+  <div class="header-right"><span class="module-badge">Módulo E · E3</span></div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="ativarTab('diaria',this)">📅 Rotina diária</button>
+  <button class="tab-btn" onclick="ativarTab('semanal',this)">📆 Rotina semanal</button>
+  <button class="tab-btn" onclick="ativarTab('mensal',this)">🗓️ Rotina mensal</button>
+  <button class="tab-btn" onclick="ativarTab('equipe',this)">👥 Equipe operacional</button>
+  <button class="tab-btn" onclick="ativarTab('historico',this)">Histórico</button>
+  <button class="tab-btn" onclick="ativarTab('config',this)">Personalizar</button>
+</div>
+
+<main>
+
+  <!-- DIÁRIA -->
+  <div class="tab-panel active" id="tab-diaria">
+    <div class="prog-header">
+      <div class="prog-info">
+        <p class="prog-tipo">Rotina diária</p>
+        <p class="prog-data" id="dataDiaria"></p>
+      </div>
+      <div class="prog-bar-wrap">
+        <span class="prog-pct" id="pctDiaria">0%</span>
+        <div class="prog-track"><div class="prog-fill" id="fillDiaria" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div id="checklistDiaria"></div>
+    <div class="resultado-final" id="rfDiaria">
+      <div class="rf-icone">✅</div>
+      <p class="rf-titulo">Rotina diária concluída</p>
+      <p class="rf-sub">Todos os itens verificados. Seu negócio está nos trilhos hoje.</p>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="registrarExecucao('diaria')"><span>Registrar no histórico</span></button>
+        <button class="btn btn-outline" onclick="resetarChecklist('diaria')">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEMANAL -->
+  <div class="tab-panel" id="tab-semanal">
+    <div class="prog-header">
+      <div class="prog-info">
+        <p class="prog-tipo">Rotina semanal</p>
+        <p class="prog-data" id="dataSemanal"></p>
+      </div>
+      <div class="prog-bar-wrap">
+        <span class="prog-pct" id="pctSemanal">0%</span>
+        <div class="prog-track"><div class="prog-fill" id="fillSemanal" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div id="checklistSemanal"></div>
+    <div class="resultado-final" id="rfSemanal">
+      <div class="rf-icone">🏆</div>
+      <p class="rf-titulo">Rotina semanal concluída</p>
+      <p class="rf-sub">Semana fechada com gestão completa.</p>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="registrarExecucao('semanal')"><span>Registrar no histórico</span></button>
+        <button class="btn btn-outline" onclick="resetarChecklist('semanal')">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENSAL -->
+  <div class="tab-panel" id="tab-mensal">
+    <div class="prog-header">
+      <div class="prog-info">
+        <p class="prog-tipo">Rotina mensal</p>
+        <p class="prog-data" id="dataMenusal"></p>
+      </div>
+      <div class="prog-bar-wrap">
+        <span class="prog-pct" id="pctMensal">0%</span>
+        <div class="prog-track"><div class="prog-fill" id="fillMensal" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div id="checklistMensal"></div>
+    <div class="resultado-final" id="rfMensal">
+      <div class="rf-icone">🎯</div>
+      <p class="rf-titulo">Rotina mensal concluída</p>
+      <p class="rf-sub">Mês fechado com diagnóstico e planejamento em dia.</p>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="registrarExecucao('mensal')"><span>Registrar no histórico</span></button>
+        <button class="btn btn-outline" onclick="resetarChecklist('mensal')">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EQUIPE OPERACIONAL -->
+  <div class="tab-panel" id="tab-equipe">
+    <p style="font-size:12px;font-weight:300;color:var(--muted);line-height:1.7;margin-bottom:24px">Checklists para a equipe executar em cada turno. O dono não precisa estar presente. Cada turno tem seus itens e a equipe marca conforme executa.</p>
+
+    <!-- SELETOR DE TURNO -->
+    <div style="display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap">
+      <button class="turno-btn active" id="tbAbertura" onclick="ativarTurno('abertura',this)">☀️ Abertura</button>
+      <button class="turno-btn" id="tbServico" onclick="ativarTurno('servico',this)">🍽️ Serviço</button>
+      <button class="turno-btn" id="tbFechamento" onclick="ativarTurno('fechamento',this)">🌙 Fechamento</button>
+    </div>
+
+    <div id="turnoAbertura" class="turno-panel">
+      <div class="prog-header">
+        <div class="prog-info">
+          <p class="prog-tipo">Turno de abertura</p>
+          <p class="prog-data" style="font-size:16px">Antes de abrir as portas</p>
+        </div>
+        <div class="prog-bar-wrap">
+          <span class="prog-pct" id="pctAbertura">0%</span>
+          <div class="prog-track"><div class="prog-fill" id="fillAbertura" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div id="checklistAbertura"></div>
+      <div class="resultado-final" id="rfAbertura" style="display:none">
+        <div class="rf-icone">☀️</div>
+        <p class="rf-titulo">Abertura concluída</p>
+        <p class="rf-sub">O restaurante está pronto para abrir.</p>
+        <div class="btn-row"><button class="btn btn-outline" onclick="resetarTurno('abertura')">Reiniciar</button></div>
+      </div>
+    </div>
+
+    <div id="turnoServico" class="turno-panel" style="display:none">
+      <div class="prog-header">
+        <div class="prog-info">
+          <p class="prog-tipo">Durante o serviço</p>
+          <p class="prog-data" style="font-size:16px">Rotinas do atendimento</p>
+        </div>
+        <div class="prog-bar-wrap">
+          <span class="prog-pct" id="pctServico">0%</span>
+          <div class="prog-track"><div class="prog-fill" id="fillServico" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div id="checklistServico"></div>
+      <div class="resultado-final" id="rfServico" style="display:none">
+        <div class="rf-icone">🍽️</div>
+        <p class="rf-titulo">Serviço verificado</p>
+        <p class="rf-sub">Todos os pontos do serviço conferidos.</p>
+        <div class="btn-row"><button class="btn btn-outline" onclick="resetarTurno('servico')">Reiniciar</button></div>
+      </div>
+    </div>
+
+    <div id="turnoFechamento" class="turno-panel" style="display:none">
+      <div class="prog-header">
+        <div class="prog-info">
+          <p class="prog-tipo">Turno de fechamento</p>
+          <p class="prog-data" style="font-size:16px">Antes de fechar as portas</p>
+        </div>
+        <div class="prog-bar-wrap">
+          <span class="prog-pct" id="pctFechamento">0%</span>
+          <div class="prog-track"><div class="prog-fill" id="fillFechamento" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div id="checklistFechamento"></div>
+      <div class="resultado-final" id="rfFechamento" style="display:none">
+        <div class="rf-icone">🌙</div>
+        <p class="rf-titulo">Fechamento concluído</p>
+        <p class="rf-sub">O restaurante está fechado e em ordem.</p>
+        <div class="btn-row"><button class="btn btn-outline" onclick="resetarTurno('fechamento')">Reiniciar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="tab-panel" id="tab-historico">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <p style="font-family:'Manrope',serif;font-size:22px;font-weight:300">Histórico de execuções</p>
+      <button class="btn btn-outline btn-sm" onclick="limparHistorico()">Limpar histórico</button>
+    </div>
+    <div id="histContent"></div>
+  </div>
+
+  <!-- PERSONALIZAR -->
+  <div class="tab-panel" id="tab-config">
+    <p style="font-size:12px;font-weight:300;color:var(--muted);line-height:1.7;margin-bottom:28px">Adicione, edite ou remova itens de cada rotina. As alterações ficam salvas e aparecem nos checklists automaticamente.</p>
+    <div id="configContent"></div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta E3 · Checklist do Gestor Lucrativo</span>
+</footer>
+
+<script>
+// ITENS PADRÃO
+const DEFAULTS = {
+  diaria: [
+    { id: 'd1', nome: 'Fechar o caixa do dia', dica: 'Registrar faturamento, saídas e resultado na ferramenta E2.', tempo: '5 min' },
+    { id: 'd2', nome: 'Verificar o estoque crítico', dica: 'Conferir os itens com saldo abaixo do mínimo e providenciar reposição.', tempo: '5 min' },
+    { id: 'd3', nome: 'Checar as pendências da equipe', dica: 'Verificar escalas, faltas e comunicados do dia.', tempo: '5 min' },
+    { id: 'd4', nome: 'Confirmar as compras do dia seguinte', dica: 'Revisar o que precisa ser pedido para amanhã com base no estoque.', tempo: '5 min' },
+    { id: 'd5', nome: 'Registrar observações do dia', dica: 'Anotar eventos relevantes: movimento atípico, problema operacional, feedback de cliente.', tempo: '3 min' },
+  ],
+  semanal: [
+    { id: 's1', nome: 'Revisar o CMV da semana', dica: 'Comparar o gasto em insumos com o faturamento. Está dentro do esperado?', tempo: '15 min' },
+    { id: 's2', nome: 'Fazer o inventário de estoque', dica: 'Contagem física dos itens principais e atualização na ferramenta O5.', tempo: '20 min' },
+    { id: 's3', nome: 'Pagar fornecedores e conferir vencimentos', dica: 'Verificar boletos e notas fiscais a pagar na semana.', tempo: '10 min' },
+    { id: 's4', nome: 'Avaliar o desempenho da equipe', dica: 'Identificar pontos positivos e melhorias para feedback individual.', tempo: '10 min' },
+    { id: 's5', nome: 'Revisar os pratos com maior saída', dica: 'Conferir se os itens mais vendidos têm insumos garantidos para a próxima semana.', tempo: '5 min' },
+    { id: 's6', nome: 'Analisar os resultados diários da semana', dica: 'Verificar os fechamentos de caixa da semana e identificar padrões de queda ou alta.', tempo: '10 min' },
+  ],
+  mensal: [
+    { id: 'm1', nome: 'Preencher o Levantamento Financeiro (S1)', dica: 'Registrar faturamento, custos fixos, variáveis e CMV do mês.', tempo: '30 min' },
+    { id: 'm2', nome: 'Atualizar o Painel Histórico Financeiro (S1b)', dica: 'Registrar o mês no painel de evolução para acompanhar a tendência.', tempo: '10 min' },
+    { id: 'm3', nome: 'Revisar a Planilha de CMV (S2)', dica: 'Analisar o CMV por categoria e por prato. Algo mudou?', tempo: '20 min' },
+    { id: 'm4', nome: 'Renegociar com fornecedores se necessário', dica: 'Com base nos custos do mês, identificar insumos com maior impacto no CMV e avaliar alternativas.', tempo: '30 min' },
+    { id: 'm5', nome: 'Revisar a Análise de Cardápio (S5)', dica: 'Verificar se houve mudança na classificação de algum prato. Algum abacaxi ou interrogação virou estrela?', tempo: '15 min' },
+    { id: 'm6', nome: 'Atualizar o Plano de 30 Dias (E5)', dica: 'Revisar as prioridades do mês anterior e definir as 3 prioridades do próximo mês.', tempo: '20 min' },
+    { id: 'm7', nome: 'Fazer uma reunião de feedback com a equipe', dica: 'Compartilhar resultados do mês, reconhecer o que foi bem e alinhar melhorias.', tempo: '30 min' },
+  ],
+};
+
+let itens = JSON.parse(localStorage.getItem('dose-checklist-itens') || 'null') || JSON.parse(JSON.stringify(DEFAULTS));
+let marcados = JSON.parse(localStorage.getItem('dose-checklist-marcados') || '{"diaria":[],"semanal":[],"mensal":[]}');
+let historico = JSON.parse(localStorage.getItem('dose-checklist-hist') || '[]');
+
+document.getElementById('rname').value = localStorage.getItem('dose-checklist-rname') || '';
+document.getElementById('rname').addEventListener('input', e => localStorage.setItem('dose-checklist-rname', e.target.value));
+
+// Init checklists principais
+['diaria', 'semanal', 'mensal'].forEach(t => renderChecklist(t));
+
+const hoje = new Date();
+document.getElementById('dataDiaria').textContent = hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+document.getElementById('dataSemanal').textContent = 'Semana de ' + semanaLabel();
+document.getElementById('dataMenusal').textContent = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+function semanaLabel() {
+  const d = new Date();
+  const dom = new Date(d); dom.setDate(d.getDate() - d.getDay());
+  const sab = new Date(dom); sab.setDate(dom.getDate() + 6);
+  return dom.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'}) + ' a ' + sab.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+}
+
+function salvar() {
+  localStorage.setItem('dose-checklist-itens', JSON.stringify(itens));
+  localStorage.setItem('dose-checklist-marcados', JSON.stringify(marcados));
+  localStorage.setItem('dose-checklist-hist', JSON.stringify(historico));
+}
+
+function ativarTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'historico') renderHistorico();
+  if (id === 'config') renderConfig();
+}
+
+// RENDERIZAR CHECKLIST
+function renderChecklist(tipo) {
+  const container = document.getElementById('checklist' + cap(tipo));
+  const lista = itens[tipo];
+  const marc = marcados[tipo] || [];
+
+  // Agrupar por seção
+  const grupos = {
+    'Financeiro': lista.filter(i => ['d1','s1','s6','m1','m2','m3'].includes(i.id)),
+    'Estoque e Compras': lista.filter(i => ['d2','d4','s2','s3','s5','m4'].includes(i.id)),
+    'Equipe': lista.filter(i => ['d3','s4','m7'].includes(i.id)),
+    'Análise e Planejamento': lista.filter(i => ['d5','m5','m6'].includes(i.id)),
+    'Itens personalizados': lista.filter(i => i.id.startsWith('custom_')),
+  };
+
+  // Para tipos sem agrupamento complexo, mostrar tudo junto
+  const semGrupo = lista.filter(i => !Object.values(grupos).flat().find(g => g.id === i.id));
+
+  let html = '';
+
+  // Verificar se tem agrupamento real
+  const temGrupo = Object.values(grupos).some(g => g.length > 0);
+
+  if (temGrupo) {
+    for (const [nome, items] of Object.entries(grupos)) {
+      if (items.length === 0) continue;
+      const marcadosGrupo = items.filter(i => marc.includes(i.id)).length;
+      html += `<div class="secao-check">
+        <div class="sc-header">
+          <span class="sc-titulo">${nome}</span>
+          <span class="sc-count">${marcadosGrupo}/${items.length}</span>
+        </div>
+        ${items.map(item => renderItem(item, marc)).join('')}
+      </div>`;
+    }
+  } else {
+    html = lista.map(item => renderItem(item, marc)).join('');
+  }
+
+  // Itens sem grupo
+  if (semGrupo.length > 0) {
+    html += semGrupo.map(item => renderItem(item, marc)).join('');
+  }
+
+  // Adicionar item customizado
+  html += `<div class="add-item-wrap">
+    <input type="text" class="add-input" id="addInput_${tipo}" placeholder="Adicionar item personalizado...">
+    <button class="add-btn" onclick="adicionarItem('${tipo}')">+ Adicionar</button>
+  </div>`;
+
+  container.innerHTML = html;
+  atualizarProgresso(tipo);
+}
+
+function renderItem(item, marc) {
+  const checked = marc.includes(item.id);
+  return `<div class="check-item ${checked ? 'marcado' : ''}" onclick="toggleItem('${item.tipo||''}','${item.id}',this)">
+    <div class="check-box"><span class="check-mark">✓</span></div>
+    <div class="check-texto">
+      <p class="check-nome">${item.nome}</p>
+      ${item.dica ? `<p class="check-dica">${item.dica}</p>` : ''}
+    </div>
+    ${item.tempo ? `<span class="check-tempo">${item.tempo}</span>` : ''}
+  </div>`;
+}
+
+function toggleItem(tipo, id, el) {
+  // Descobrir o tipo pelo contexto
+  const tipoAtivo = ['diaria','semanal','mensal'].find(t => document.getElementById('tab-'+t).classList.contains('active')) || tipo;
+  if (!marcados[tipoAtivo]) marcados[tipoAtivo] = [];
+  const idx = marcados[tipoAtivo].indexOf(id);
+  if (idx === -1) marcados[tipoAtivo].push(id);
+  else marcados[tipoAtivo].splice(idx, 1);
+  el.classList.toggle('marcado', idx === -1);
+  salvar();
+  atualizarProgresso(tipoAtivo);
+}
+
+function atualizarProgresso(tipo) {
+  const lista = itens[tipo];
+  const marc = marcados[tipo] || [];
+  const total = lista.length;
+  const feitos = marc.filter(id => lista.find(i => i.id === id)).length;
+  const pct = total > 0 ? Math.round((feitos / total) * 100) : 0;
+
+  document.getElementById('pct' + cap(tipo)).textContent = pct + '%';
+  document.getElementById('fill' + cap(tipo)).style.width = pct + '%';
+
+  const rf = document.getElementById('rf' + cap(tipo));
+  if (pct === 100 && total > 0) rf.style.display = 'block';
+  else rf.style.display = 'none';
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function resetarChecklist(tipo) {
+  marcados[tipo] = [];
+  salvar();
+  renderChecklist(tipo);
+}
+
+function registrarExecucao(tipo) {
+  const lista = itens[tipo];
+  const marc = marcados[tipo] || [];
+  const feitos = marc.filter(id => lista.find(i => i.id === id)).length;
+  const pct = lista.length > 0 ? Math.round((feitos / lista.length) * 100) : 0;
+  historico.unshift({
+    id: Date.now(),
+    tipo,
+    data: hoje.toLocaleDateString('pt-BR'),
+    dataISO: hoje.toISOString().split('T')[0],
+    total: lista.length,
+    feitos,
+    pct,
+  });
+  salvar();
+  const rf = document.getElementById('rf' + cap(tipo));
+  rf.style.display = 'none';
+  rf.innerHTML = `<div class="rf-icone">✅</div><p class="rf-titulo" style="color:#1a5e2a">Registrado com sucesso</p><p class="rf-sub">Execução salva no histórico.</p><div class="btn-row"><button class="btn btn-outline" onclick="resetarChecklist('${tipo}')">Reiniciar checklist</button></div>`;
+  rf.style.display = 'block';
+}
+
+function adicionarItem(tipo) {
+  const input = document.getElementById('addInput_' + tipo);
+  const nome = input.value.trim();
+  if (!nome) return;
+  const id = 'custom_' + Date.now();
+  itens[tipo].push({ id, nome, dica: '', tempo: '' });
+  input.value = '';
+  salvar();
+  renderChecklist(tipo);
+}
+
+// HISTÓRICO
+function renderHistorico() {
+  const el = document.getElementById('histContent');
+  if (historico.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p class="empty-title">Nenhuma execução registrada</p><p class="empty-sub">Conclua um checklist e clique em "Registrar no histórico" para começar.</p></div>`;
+    return;
+  }
+  el.innerHTML = historico.map(h => `
+    <div class="hist-item">
+      <div class="hi-header">
+        <div>
+          <p class="hi-data">${h.data}</p>
+          <p class="hi-itens">${h.feitos} de ${h.total} itens concluídos</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="hi-tipo ${h.tipo}">${h.tipo.charAt(0).toUpperCase() + h.tipo.slice(1)}</span>
+          <span class="hi-pct ${h.pct===100?'completo':'parcial'}">${h.pct}%</span>
+          <button class="btn-red-sm" onclick="removerHist(${h.id})">Remover</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function removerHist(id) {
+  historico = historico.filter(h => h.id !== id);
+  salvar(); renderHistorico();
+}
+
+function limparHistorico() {
+  if (!confirm('Remover todo o histórico?')) return;
+  historico = [];
+  salvar(); renderHistorico();
+}
+
+// CONFIG
+function renderConfig() {
+  const el = document.getElementById('configContent');
+  const TIPOS = [
+    { key: 'diaria', label: 'Rotina diária', cor: 'var(--diaria)' },
+    { key: 'semanal', label: 'Rotina semanal', cor: '#7aaad4' },
+    { key: 'mensal', label: 'Rotina mensal', cor: '#b09ad4' },
+  ];
+  el.innerHTML = TIPOS.map(t => `
+    <div class="conf-secao">
+      <p class="conf-titulo" style="color:${t.cor}">${t.label} (${itens[t.key].length} itens)</p>
+      ${itens[t.key].map((item, i) => `
+        <div class="conf-item">
+          <div class="conf-nome">
+            ${item.nome}
+            ${item.dica ? `<p class="conf-dica">${item.dica}</p>` : ''}
+          </div>
+          ${item.id.startsWith('custom_') ? `<button class="btn-red-sm" onclick="removerItemConf('${t.key}','${item.id}')">Remover</button>` : `<span style="font-size:10px;color:var(--muted)">padrão</span>`}
+        </div>`).join('')}
+      <div class="add-item-wrap" style="margin-top:12px">
+        <input type="text" class="add-input" id="confAdd_${t.key}" placeholder="Adicionar item...">
+        <button class="add-btn" onclick="adicionarItemConf('${t.key}')">+ Adicionar</button>
+      </div>
+    </div>`).join('');
+}
+
+function removerItemConf(tipo, id) {
+  itens[tipo] = itens[tipo].filter(i => i.id !== id);
+  marcados[tipo] = (marcados[tipo] || []).filter(m => m !== id);
+  salvar(); renderConfig();
+  renderChecklist(tipo);
+}
+
+function adicionarItemConf(tipo) {
+  const input = document.getElementById('confAdd_' + tipo);
+  const nome = input.value.trim();
+  if (!nome) return;
+  itens[tipo].push({ id: 'custom_' + Date.now(), nome, dica: '', tempo: '' });
+  input.value = '';
+  salvar(); renderConfig();
+  renderChecklist(tipo);
+}
+
+const DEFAULTS_EQUIPE = {
+  abertura: [
+    { id: 'ab1', nome: 'Ligar os equipamentos e testar funcionamento', dica: 'Chapas, fritadeiras, fornos, câmaras frias, sistema de som.', tempo: '10 min' },
+    { id: 'ab2', nome: 'Conferir a limpeza do salão e banheiros', dica: 'Verificar se o serviço de limpeza foi feito e está dentro do padrão.', tempo: '5 min' },
+    { id: 'ab3', nome: 'Organizar o mise en place da cozinha', dica: 'Separar e portar os insumos do dia conforme as fichas técnicas operacionais.', tempo: '30 min' },
+    { id: 'ab4', nome: 'Verificar o estoque do salão (bebidas, descartáveis)', dica: 'Repor o que estiver abaixo do mínimo antes de abrir.', tempo: '10 min' },
+    { id: 'ab5', nome: 'Conferir as reservas e eventos do dia', dica: 'Verificar se há grupos, eventos ou pedidos especiais programados.', tempo: '5 min' },
+    { id: 'ab6', nome: 'Fazer o briefing da equipe', dica: 'Alinhar o cardápio do dia, pratos em falta, metas e informações relevantes. Máximo 10 minutos.', tempo: '10 min' },
+  ],
+  servico: [
+    { id: 'sv1', nome: 'Monitorar o tempo de saída dos pedidos', dica: 'Conferir se os pedidos estão saindo dentro do tempo prometido ao cliente.', tempo: 'contínuo' },
+    { id: 'sv2', nome: 'Verificar a reposição do mise en place', dica: 'Repor durante o serviço os itens que forem sendo usados para não faltar.', tempo: 'contínuo' },
+    { id: 'sv3', nome: 'Checar a qualidade antes de cada prato sair', dica: 'Temperatura, apresentação e porcionamento dentro do padrão da ficha técnica operacional.', tempo: 'contínuo' },
+    { id: 'sv4', nome: 'Registrar devoluções ou reclamações', dica: 'Anotar qualquer prato devolvido ou feedback negativo de cliente para análise posterior.', tempo: 'conforme ocorre' },
+    { id: 'sv5', nome: 'Controlar o lixo e a limpeza da cozinha durante o serviço', dica: 'Manter bancadas limpas e trocar sacos de lixo conforme necessário.', tempo: 'contínuo' },
+  ],
+  fechamento: [
+    { id: 'fc1', nome: 'Guardar e etiquetar os alimentos preparados', dica: 'Data de preparo, validade e identificação em todos os itens armazenados.', tempo: '15 min' },
+    { id: 'fc2', nome: 'Limpeza completa da cozinha', dica: 'Bancadas, equipamentos, piso, coifas e área de lavagem conforme rotina de higiene.', tempo: '30 min' },
+    { id: 'fc3', nome: 'Desligar os equipamentos corretamente', dica: 'Verificar lista de equipamentos que devem ser desligados ou mantidos ligados.', tempo: '5 min' },
+    { id: 'fc4', nome: 'Conferir o salão e os banheiros', dica: 'Limpar, recolher objetos esquecidos, verificar cadeiras e mesas organizadas.', tempo: '10 min' },
+    { id: 'fc5', nome: 'Fazer a sangria do caixa', dica: 'Retirar o excesso de dinheiro do caixa e preparar o troco para o próximo dia.', tempo: '5 min' },
+    { id: 'fc6', nome: 'Verificar o fechamento das portas, janelas e alarme', dica: 'Checagem final de segurança antes de sair.', tempo: '5 min' },
+  ],
+};
+
+let itensEquipe = JSON.parse(localStorage.getItem('dose-checklist-equipe') || 'null') || JSON.parse(JSON.stringify(DEFAULTS_EQUIPE));
+let marcadosEquipe = JSON.parse(localStorage.getItem('dose-checklist-equipe-marcados') || '{"abertura":[],"servico":[],"fechamento":[]}');
+
+function salvarEquipe() {
+  localStorage.setItem('dose-checklist-equipe', JSON.stringify(itensEquipe));
+  localStorage.setItem('dose-checklist-equipe-marcados', JSON.stringify(marcadosEquipe));
+}
+
+function ativarTurno(turno, btn) {
+  ['abertura','servico','fechamento'].forEach(t => {
+    document.getElementById('turno' + cap(t)).style.display = 'none';
+    document.getElementById('tb' + cap(t)).classList.remove('active');
+  });
+  document.getElementById('turno' + cap(turno)).style.display = 'block';
+  btn.classList.add('active');
+}
+
+function renderTurno(turno) {
+  const container = document.getElementById('checklist' + cap(turno));
+  const lista = itensEquipe[turno];
+  const marc = marcadosEquipe[turno] || [];
+  container.innerHTML = lista.map(item => {
+    const checked = marc.includes(item.id);
+    return `<div class="check-item ${checked ? 'marcado' : ''}" onclick="toggleTurno('${turno}','${item.id}',this)">
+      <div class="check-box"><span class="check-mark">✓</span></div>
+      <div class="check-texto">
+        <p class="check-nome">${item.nome}</p>
+        ${item.dica ? `<p class="check-dica">${item.dica}</p>` : ''}
+      </div>
+      ${item.tempo ? `<span class="check-tempo">${item.tempo}</span>` : ''}
+    </div>`;
+  }).join('') + `<div class="add-item-wrap">
+    <input type="text" class="add-input" id="addEquipe_${turno}" placeholder="Adicionar item ao turno...">
+    <button class="add-btn" onclick="adicionarItemEquipe('${turno}')">+ Adicionar</button>
+  </div>`;
+  atualizarProgressoTurno(turno);
+}
+
+function toggleTurno(turno, id, el) {
+  if (!marcadosEquipe[turno]) marcadosEquipe[turno] = [];
+  const idx = marcadosEquipe[turno].indexOf(id);
+  if (idx === -1) marcadosEquipe[turno].push(id);
+  else marcadosEquipe[turno].splice(idx, 1);
+  el.classList.toggle('marcado', idx === -1);
+  salvarEquipe();
+  atualizarProgressoTurno(turno);
+}
+
+function atualizarProgressoTurno(turno) {
+  const lista = itensEquipe[turno];
+  const marc = marcadosEquipe[turno] || [];
+  const feitos = marc.filter(id => lista.find(i => i.id === id)).length;
+  const pct = lista.length > 0 ? Math.round((feitos / lista.length) * 100) : 0;
+  document.getElementById('pct' + cap(turno)).textContent = pct + '%';
+  document.getElementById('fill' + cap(turno)).style.width = pct + '%';
+  const rf = document.getElementById('rf' + cap(turno));
+  if (rf) rf.style.display = pct === 100 && lista.length > 0 ? 'block' : 'none';
+}
+
+function resetarTurno(turno) {
+  marcadosEquipe[turno] = [];
+  salvarEquipe();
+  renderTurno(turno);
+}
+
+function adicionarItemEquipe(turno) {
+  const input = document.getElementById('addEquipe_' + turno);
+  const nome = input.value.trim();
+  if (!nome) return;
+  itensEquipe[turno].push({ id: 'custom_' + Date.now(), nome, dica: '', tempo: '' });
+  input.value = '';
+  salvarEquipe();
+  renderTurno(turno);
+}
+
+// Init equipe
+['abertura','servico','fechamento'].forEach(t => {
+  if (!itensEquipe[t]) itensEquipe[t] = JSON.parse(JSON.stringify(DEFAULTS_EQUIPE[t]));
+  renderTurno(t);
+});
+</script>
+</body>
+</html>

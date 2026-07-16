@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../dose-sync.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Requisição de Mercadoria — RG Gastrô</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#011E34;--navy2:#062d4e;--gold:#F7B700;--gold2:#FCC740;--coral:#F25C54;--cream:#FFFEE8;--cream2:#F0EECC;--white:#ffffff;--gray:#6b7280;--gray-l:#e5e7eb;--ok:#22c55e;--ok-l:#dcfce7;--warn:#f59e0b;--warn-l:#fef3c7;--nao:#ef4444;--nao-l:#fee2e2;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;}
+  .header{background:var(--navy);padding:20px 32px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--gold);}
+  .header-eyebrow{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+  .header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);}
+  .id-bar{background:var(--navy2);padding:12px 32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px 20px;}
+  .id-field{display:flex;flex-direction:column;gap:3px;}
+  .id-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  .id-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.2);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:3px 0;outline:none;width:100%;}
+  .id-input::placeholder{color:rgba(255,255,255,.3);}
+  .id-input:focus{border-bottom-color:var(--gold);}
+  .main{max-width:1000px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+  .section{background:var(--white);border-radius:8px;box-shadow:0 1px 6px rgba(1,30,52,.08);overflow:hidden;}
+  .sec-header{background:var(--navy2);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .sec-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--cream2);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);padding:8px 10px;text-align:left;border-bottom:1px solid var(--gray-l);}
+  thead th.c{text-align:center;}
+  tbody tr:hover{background:#fafaf2;}
+  td{padding:7px 10px;border-bottom:1px solid var(--gray-l);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .td-num{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;color:var(--gold);text-align:center;width:40px;}
+  .cell-in{border:1px solid var(--gray-l);border-radius:3px;padding:4px 6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--navy);background:var(--cream);outline:none;width:100%;}
+  .cell-in:focus{border-color:var(--gold);}
+  .cell-num{text-align:center;width:70px;}
+  .cell-sel{border:1px solid var(--gray-l);border-radius:3px;padding:4px 5px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--navy);background:var(--cream);outline:none;cursor:pointer;width:100%;}
+  .status-badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;}
+  .s-pendente{background:var(--warn-l);color:var(--warn);}
+  .s-recebido{background:var(--ok-l);color:var(--ok);}
+  .s-parcial{background:#ede9fe;color:#7c3aed;}
+  .s-cancelado{background:var(--nao-l);color:var(--nao);}
+  .btn-rem{background:transparent;border:none;color:var(--gray-l);font-size:15px;cursor:pointer;padding:0 3px;transition:color .15s;}
+  .btn-rem:hover{color:var(--nao);}
+  .btn-add-item{width:100%;padding:10px;border:1.5px dashed var(--gold);border-top:none;background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;border-radius:0 0 8px 8px;}
+  .btn-add-item:hover{background:var(--gold);color:var(--navy);}
+  .obs-body{padding:14px 20px;}
+  .obs-ta{width:100%;border:1px solid var(--gray-l);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--navy);background:var(--cream);resize:vertical;min-height:60px;outline:none;}
+  .obs-ta:focus{border-color:var(--gold);}
+  .ass-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:16px 20px;}
+  .ass-field{display:flex;flex-direction:column;gap:4px;}
+  .ass-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);}
+  .ass-line{border:none;border-bottom:1.5px solid var(--navy);margin-top:24px;}
+  .ass-nome{font-size:10px;color:var(--gray);margin-top:3px;text-align:center;}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn-acao{padding:10px 24px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+  .btn-acao.primario{background:var(--gold);color:var(--navy);}
+  .btn-acao.primario:hover{background:var(--gold2);}
+  .btn-acao.secundario{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-acao.secundario:hover{background:var(--navy);color:white;}
+  @media print{.acoes,.btn-add-item,.btn-rem{display:none;}body{background:white;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><div class="header-eyebrow">RG Gastrô Educação</div><div class="header-title">Requisição de Mercadoria</div></div>
+</div>
+<div class="id-bar">
+  <div class="id-field"><span class="id-label">Estabelecimento</span><input class="id-input" type="text" id="estab" placeholder="Nome do cliente" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Data da requisição</span><input class="id-input" type="date" id="data" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Setor solicitante</span><input class="id-input" type="text" id="setor" placeholder="Ex: Cozinha" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Solicitante</span><input class="id-input" type="text" id="solicitante" placeholder="Nome" onchange="salvar()"></div>
+  <div class="id-field"><span class="id-label">Refeição / Turno</span><input class="id-input" type="text" id="refeicao" placeholder="Ex: Almoço" onchange="salvar()"></div>
+</div>
+<div class="main">
+  <div class="section">
+    <div class="sec-header"><span class="sec-title">Itens solicitados</span></div>
+    <table>
+      <thead><tr>
+        <th style="width:40px" class="c">#</th>
+        <th>Produto</th>
+        <th class="c" style="width:80px">Unidade</th>
+        <th class="c" style="width:80px">Qtd Solicitada</th>
+        <th class="c" style="width:80px">Saldo Estoque</th>
+        <th class="c" style="width:90px">Qtd Entregue</th>
+        <th class="c" style="width:90px">Status</th>
+        <th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <button class="btn-add-item" onclick="addItem()">+ Adicionar item</button>
+  </div>
+  <div class="section">
+    <div class="sec-header"><span class="sec-title">Observações</span></div>
+    <div class="obs-body"><textarea class="obs-ta" id="obs" placeholder="Urgências, substituições, informações adicionais..." onchange="salvar()"></textarea></div>
+  </div>
+  <div class="section">
+    <div class="sec-header"><span class="sec-title">Assinaturas</span></div>
+    <div class="ass-grid">
+      <div class="ass-field"><span class="ass-label">Solicitante</span><div class="ass-line"></div><div class="ass-nome" id="assNome1">—</div></div>
+      <div class="ass-field"><span class="ass-label">Responsável pelo estoque</span><div class="ass-line"></div><div class="ass-nome">—</div></div>
+      <div class="ass-field"><span class="ass-label">Autorização</span><div class="ass-line"></div><div class="ass-nome">—</div></div>
+    </div>
+  </div>
+  <div class="acoes">
+    <button class="btn-acao secundario" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn-acao primario" onclick="novaRequisicao()">Nova requisição</button>
+  </div>
+</div>
+<script>
+const KEY='rgGastro_requisicao';
+let itens=[];
+try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);itens=d.itens||[];document.getElementById('estab').value=d.estab||'';document.getElementById('setor').value=d.setor||'';document.getElementById('solicitante').value=d.solicitante||'';document.getElementById('refeicao').value=d.refeicao||'';document.getElementById('obs').value=d.obs||'';}}catch(e){}
+if(itens.length===0)addItem();
+function itemPadrao(){return{produto:'',unidade:'kg',qtdSol:'',saldo:'',qtdEnt:'',status:'pendente'};}
+function addItem(){itens.push(itemPadrao());renderTabela();}
+function removeItem(i){itens.splice(i,1);renderTabela();}
+function renderTabela(){
+  const tbody=document.getElementById('tbody');tbody.innerHTML='';
+  itens.forEach((item,i)=>{
+    const stMap={pendente:'<span class="status-badge s-pendente">Pendente</span>',recebido:'<span class="status-badge s-recebido">Recebido</span>',parcial:'<span class="status-badge s-parcial">Parcial</span>',cancelado:'<span class="status-badge s-cancelado">Cancelado</span>'};
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-num">${String(i+1).padStart(2,'0')}</td>
+      <td><input class="cell-in" type="text" value="${item.produto}" placeholder="Nome do produto" onchange="itens[${i}].produto=this.value;salvar()"></td>
+      <td><select class="cell-sel" onchange="itens[${i}].unidade=this.value;salvar()"><option${item.unidade==='kg'?' selected':''}>kg</option><option${item.unidade==='g'?' selected':''}>g</option><option${item.unidade==='L'?' selected':''}>L</option><option${item.unidade==='un'?' selected':''}>un</option><option${item.unidade==='cx'?' selected':''}>cx</option><option${item.unidade==='fardo'?' selected':''}>fardo</option></select></td>
+      <td><input class="cell-in cell-num" type="number" min="0" step="0.1" value="${item.qtdSol}" placeholder="0" onchange="itens[${i}].qtdSol=this.value;salvar()"></td>
+      <td><input class="cell-in cell-num" type="number" min="0" step="0.1" value="${item.saldo}" placeholder="0" onchange="itens[${i}].saldo=this.value;salvar()"></td>
+      <td><input class="cell-in cell-num" type="number" min="0" step="0.1" value="${item.qtdEnt}" placeholder="0" onchange="itens[${i}].qtdEnt=this.value;salvar()"></td>
+      <td style="text-align:center"><select class="cell-sel" onchange="itens[${i}].status=this.value;salvar();renderTabela()" style="width:90px">
+        <option value="pendente"${item.status==='pendente'?' selected':''}>Pendente</option>
+        <option value="recebido"${item.status==='recebido'?' selected':''}>Recebido</option>
+        <option value="parcial"${item.status==='parcial'?' selected':''}>Parcial</option>
+        <option value="cancelado"${item.status==='cancelado'?' selected':''}>Cancelado</option>
+      </select></td>
+      <td><button class="btn-rem" onclick="removeItem(${i})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('assNome1').textContent=document.getElementById('solicitante').value||'—';
+}
+function salvar(){try{localStorage.setItem(KEY,JSON.stringify({estab:document.getElementById('estab').value,setor:document.getElementById('setor').value,solicitante:document.getElementById('solicitante').value,refeicao:document.getElementById('refeicao').value,obs:document.getElementById('obs').value,itens}));}catch(e){}}
+function novaRequisicao(){if(!confirm('Limpar e iniciar nova requisição?'))return;itens=[{produto:'',unidade:'kg',qtdSol:'',saldo:'',qtdEnt:'',status:'pendente'}];document.getElementById('data').value=new Date().toISOString().split('T')[0];document.getElementById('obs').value='';renderTabela();}
+document.getElementById('data').value=document.getElementById('data').value||new Date().toISOString().split('T')[0];
+renderTabela();
+</script>
+</body>
+</html>

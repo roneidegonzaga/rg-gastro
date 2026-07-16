@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha Técnica Operacional | Sistema D.O.S.E.</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #011e34; --charcoal: #fff6ec; --gold: #025291; --gold-light: #013a68;
+  --muted: #33475c; --border: rgba(2,82,145,0.2); --border-h: rgba(2,82,145,0.45);
+  --green: #1a5e2a; --red: #7a2020; --amber: #7a4008; --teal: #0a5e5e;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Manrope', sans-serif; background: var(--charcoal); color: var(--cream); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.2; }
+
+header { padding: 40px 48px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.brand { font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; opacity: 0.8; }
+.htitle { font-family: 'Manrope', sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 600; line-height: 1.05; }
+.htitle em { font-style: italic; color: var(--gold-light); }
+.hsub { font-size: 12px; font-weight: 300; color: var(--muted); margin-top: 12px; line-height: 1.7; max-width: 440px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.module-badge { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); background: rgba(2,82,145,0.06); border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; }
+.type-badge { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--teal); background: rgba(10,94,94,0.1); border: 1px solid rgba(10,94,94,0.3); padding: 4px 12px; border-radius: 2px; }
+
+.session-bar { display: flex; align-items: center; gap: 20px; padding: 16px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 10px; }
+.fl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+input[type="text"].fi { font-family: 'Manrope', sans-serif; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--cream); padding: 4px 0; width: 200px; outline: none; transition: border-color 0.25s; }
+input[type="text"].fi::placeholder { color: rgba(1,30,52,0.4); }
+input[type="text"].fi:focus { border-bottom-color: var(--gold); }
+
+.fichas-bar { display: flex; align-items: center; gap: 10px; padding: 14px 48px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fichas-tabs { display: flex; gap: 0; overflow-x: auto; flex: 1; }
+.ficha-tab { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; padding: 8px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.ficha-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.ficha-tab:hover:not(.active) { color: var(--cream); }
+
+.btn { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.2s; white-space: nowrap; border-radius: 1px; }
+.btn-gold { background: var(--gold); color: var(--charcoal); border: none; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--border-h); }
+.btn-outline:hover { background: rgba(2,82,145,0.06); }
+.btn-red { background: rgba(122,32,32,0.15); color: #c07070; border: 1px solid rgba(122,32,32,0.3); }
+.btn-red:hover { background: rgba(122,32,32,0.25); }
+.btn-sm { padding: 5px 11px; font-size: 10px; }
+
+main { max-width: 960px; margin: 0 auto; padding: 32px 48px 80px; }
+
+.ficha-wrap { display: none; }
+.ficha-wrap.active { display: block; }
+
+.ficha-vazia { text-align: center; padding: 60px 20px; color: var(--muted); }
+.fv-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
+.fv-title { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 300; color: rgba(1,30,52,0.7); margin-bottom: 8px; }
+.fv-sub { font-size: 12px; line-height: 1.7; margin-bottom: 24px; }
+
+.secao { margin-bottom: 28px; }
+.secao-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 600; color: var(--gold); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+.ficha-top { display: grid; grid-template-columns: 1fr 280px; gap: 24px; margin-bottom: 28px; }
+
+/* CAMPOS */
+.fb { display: flex; flex-direction: column; gap: 7px; }
+.fb-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--cream); font-weight: 700; }
+input[type="text"].f, input[type="number"].f, select.f, textarea.f {
+  font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300;
+  background: rgba(1,30,52,0.04); border: 1px solid var(--border);
+  color: var(--cream); width: 100%; padding: 9px 12px;
+  outline: none; transition: border-color 0.25s; border-radius: 1px; appearance: none;
+}
+input[type="text"].f::placeholder, input[type="number"].f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+textarea.f { resize: vertical; line-height: 1.8; }
+textarea.f::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+input[type="text"].f:focus, input[type="number"].f:focus, select.f:focus, textarea.f:focus { border-color: var(--gold); }
+select.f { cursor: pointer; color-scheme: light; }
+select.f option { background: #0a3050; }
+.sw { position: relative; }
+.sa { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 10px; }
+
+.header-fields { display: flex; flex-direction: column; gap: 12px; }
+.header-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.header-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* FOTO DO PRATO */
+.foto-box {
+  border: 1px solid var(--border); background: rgba(1,30,52,0.04);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 200px; cursor: pointer; transition: border-color 0.25s; position: relative;
+  overflow: hidden;
+}
+.foto-box:hover { border-color: var(--border-h); }
+.foto-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.foto-placeholder { text-align: center; padding: 24px; pointer-events: none; }
+.foto-placeholder-icon { font-size: 32px; opacity: 0.3; margin-bottom: 8px; }
+.foto-placeholder-text { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.foto-placeholder-sub { font-size: 11px; color: rgba(1,30,52,0.4); margin-top: 4px; }
+.foto-actions { display: flex; gap: 6px; margin-top: 8px; }
+input[type="file"].foto-input { display: none; }
+.foto-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 6px 12px; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.foto-btn:hover { border-color: var(--gold); color: var(--gold); }
+.foto-btn-remover { border-color: rgba(122,32,32,0.3); color: rgba(193,112,112,0.6); }
+.foto-btn-remover:hover { border-color: var(--red); color: #c07070; }
+
+/* INGREDIENTES OPERACIONAIS */
+.ing-op-linha { display: grid; grid-template-columns: 2fr 90px 120px 28px; gap: 8px; align-items: center; margin-bottom: 8px; }
+.ing-op-header { display: grid; grid-template-columns: 2fr 90px 120px 28px; gap: 8px; margin-bottom: 6px; }
+.ih { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.ing-op-input { font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 300; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); padding: 8px 10px; outline: none; width: 100%; transition: border-color 0.25s; }
+.ing-op-input:focus { border-color: var(--gold); }
+.ing-op-input::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+.ing-op-input.ta { resize: none; min-height: 36px; line-height: 1.5; }
+.ing-op-sel { font-family: 'Manrope', sans-serif; font-size: 11px; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); padding: 8px 24px 8px 10px; outline: none; cursor: pointer; appearance: none; width: 100%; color-scheme: light; }
+.ing-op-sel option { background: #0a3050; }
+.ing-del { background: transparent; border: none; color: rgba(122,32,32,0.4); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px; transition: color 0.2s; }
+.ing-del:hover { color: #c07070; }
+.btn-add-ing { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 10px 20px; background: transparent; color: var(--muted); border: 1px solid rgba(1,30,52,0.2); cursor: pointer; transition: all 0.25s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
+.btn-add-ing:hover { color: var(--gold); border-color: var(--border-h); background: rgba(2,82,145,0.06); }
+
+/* PASSOS DE PREPARO */
+.passo-item { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 10px; }
+.passo-num { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 300; color: rgba(91,145,188,0.25); line-height: 1; flex-shrink: 0; width: 28px; margin-top: 6px; }
+.passo-content { flex: 1; display: flex; gap: 8px; align-items: flex-start; }
+.passo-ta { font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 300; background: rgba(1,30,52,0.04); border: 1px solid var(--border); color: var(--cream); width: 100%; padding: 10px 12px; outline: none; transition: border-color 0.25s; resize: none; min-height: 56px; line-height: 1.7; }
+.passo-ta::placeholder { color: rgba(1,30,52,0.4); font-style: italic; }
+.passo-ta:focus { border-color: var(--gold); }
+.btn-add-passo { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 10px 20px; background: transparent; color: var(--muted); border: 1px solid rgba(1,30,52,0.2); cursor: pointer; transition: all 0.25s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
+.btn-add-passo:hover { color: var(--gold); border-color: var(--border-h); background: rgba(2,82,145,0.06); }
+
+/* ALERGÊNICOS */
+.alergenicos-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.alerg-btn { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 6px 14px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.alerg-btn.active { background: rgba(122,64,8,0.15); border-color: var(--amber); color: #7a4008; }
+.alerg-btn:hover:not(.active) { border-color: rgba(91,145,188,0.4); color: var(--cream); }
+
+/* AÇÕES */
+.ficha-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+
+/* PDF OVERLAY */
+.pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(1,30,52,0.7); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.pdf-overlay.visible { display: flex; }
+.pdf-st { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-top: 14px; text-align: center; }
+.pdf-dots { display: inline-flex; gap: 6px; }
+.pdf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
+.pdf-dot:nth-child(2) { animation-delay: 0.2s; }
+.pdf-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer-brand { font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.footer-tool { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 768px) {
+  header, .session-bar, .fichas-bar, main, footer { padding-left: 20px; padding-right: 20px; }
+  .ficha-top { grid-template-columns: 1fr; }
+  .header-row, .header-row-3 { grid-template-columns: 1fr; }
+  .ing-op-linha, .ing-op-header { grid-template-columns: 1fr 80px 28px; }
+  .ing-op-linha > :nth-child(3) { display: none; }
+}
+</style>
+<script src="../dose-sync.js"></script>
+</head>
+<body>
+
+<div class="pdf-overlay" id="pdfOverlay">
+  <div style="text-align:center">
+    <div class="pdf-dots"><div class="pdf-dot"></div><div class="pdf-dot"></div><div class="pdf-dot"></div></div>
+    <p class="pdf-st">Gerando PDF</p>
+  </div>
+</div>
+
+<header>
+  <div>
+    <p class="brand">Gasttro Design · Sistema D.O.S.E.</p>
+    <h1 class="htitle">Ficha Técnica<br><em>Operacional</em></h1>
+    <p class="hsub">Documente os ingredientes, as quantidades, o modo de preparo e os padrões de cada prato. Esta ficha é para a equipe executar com consistência.</p>
+  </div>
+  <div class="header-right">
+    <span class="module-badge">Módulo O · O3</span>
+    <span class="type-badge">Operacional</span>
+  </div>
+</header>
+
+<div class="session-bar">
+  <div class="fg"><span class="fl">Restaurante</span><input type="text" class="fi" id="rname" placeholder="Nome do seu restaurante"></div>
+</div>
+
+<div class="fichas-bar">
+  <div class="fichas-tabs" id="fichasTabs"></div>
+  <button class="btn btn-outline" onclick="exportarTodasPDF()">PDF: todas</button>
+  <button class="btn btn-gold" onclick="novaFicha()">+ Nova ficha</button>
+</div>
+
+<main>
+  <div id="fichasContainer">
+    <div class="ficha-vazia" id="fichaVazia">
+      <div class="fv-icon">📋</div>
+      <p class="fv-title">Nenhuma ficha operacional criada</p>
+      <p class="fv-sub">Clique em "Nova ficha" para começar.<br>Esta ficha é para padronizar a execução do prato pela equipe.</p>
+      <button class="btn btn-gold" onclick="novaFicha()">Criar primeira ficha</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-brand">Gasttro Design</span>
+  <span class="footer-tool">Sistema D.O.S.E. · Ferramenta O3 · Ficha Técnica Operacional</span>
+</footer>
+
+<script>
+const ALERG_LIST = ['Glúten','Lactose','Ovo','Soja','Amendoim','Nozes','Frutos do mar','Peixe','Gergelim','Mostarda','Sulfiltos','Aipo','Lupin'];
+const UNIDADES_OP = ['g','kg','ml','L','unidade','colher de sopa','colher de chá','xícara','pitada','a gosto'];
+
+let fichas = JSON.parse(localStorage.getItem('dose-fichas-op') || '[]');
+let fichaAtiva = null;
+let passoCounter = {};
+
+// INIT
+carregarRascunho();
+fichas.forEach(f => renderFicha(f));
+renderTabs();
+if (fichas.length > 0) {
+  document.getElementById('fichaVazia').style.display = 'none';
+  mostrarFicha(fichas[0].id);
+}
+
+function carregarRascunho() {
+  const nome = localStorage.getItem('dose-fichas-op-rname');
+  if (nome) document.getElementById('rname').value = nome;
+  document.getElementById('rname').addEventListener('input', e => {
+    localStorage.setItem('dose-fichas-op-rname', e.target.value);
+  });
+}
+
+function novaFicha() {
+  const id = Date.now();
+  const ficha = {
+    id, nome: '', categoria: '', categoriaOutro: '', rendimento: 1,
+    tempoPreparo: '', foto: null, ingredientes: [], passos: [], alergenicos: [], obs: '',
+  };
+  fichas.push(ficha);
+  salvar();
+  renderFicha(ficha);
+  renderTabs();
+  mostrarFicha(id);
+  document.getElementById('fichaVazia').style.display = 'none';
+}
+
+function removerFicha(id) {
+  const f = fichas.find(f => f.id === id);
+  if (!confirm(`Remover "${f?.nome || 'esta ficha'}"?`)) return;
+  fichas = fichas.filter(f => f.id !== id);
+  document.getElementById('ficha_' + id)?.remove();
+  salvar();
+  renderTabs();
+  if (fichas.length > 0) mostrarFicha(fichas[0].id);
+  else { fichaAtiva = null; document.getElementById('fichaVazia').style.display = 'block'; }
+}
+
+function mostrarFicha(id) {
+  fichaAtiva = id;
+  document.querySelectorAll('.ficha-wrap').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ficha-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('ficha_' + id)?.classList.add('active');
+  document.getElementById('fichaVazia').style.display = 'none';
+  document.getElementById('tab_' + id)?.classList.add('active');
+}
+
+function renderTabs() {
+  document.getElementById('fichasTabs').innerHTML = fichas.map(f =>
+    `<button class="ficha-tab ${f.id === fichaAtiva ? 'active' : ''}" id="tab_${f.id}" onclick="mostrarFicha(${f.id})">${f.nome || 'Novo prato'}</button>`
+  ).join('');
+}
+
+function salvar() {
+  localStorage.setItem('dose-fichas-op', JSON.stringify(fichas));
+}
+
+function atualizar(id, campo, val) {
+  const f = fichas.find(f => f.id === id);
+  if (!f) return;
+  f[campo] = val;
+  if (campo === 'nome') renderTabs();
+  salvar();
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// RENDER FICHA
+function renderFicha(ficha) {
+  document.getElementById('fichaVazia').style.display = 'none';
+  const container = document.getElementById('fichasContainer');
+  let wrap = document.getElementById('ficha_' + ficha.id);
+  if (!wrap) { wrap = document.createElement('div'); wrap.className = 'ficha-wrap'; wrap.id = 'ficha_' + ficha.id; container.appendChild(wrap); }
+
+  const catBase = ficha.categoriaBase || ficha.categoria || '';
+  const cats = ['Entrada','Prato principal','Sobremesa','Bebida','Acompanhamento','Lanche','Outro'];
+
+  wrap.innerHTML = `
+  <div class="ficha-top">
+    <div class="header-fields">
+      <div class="fb">
+        <label class="fb-label">Nome do prato</label>
+        <input type="text" class="f" value="${esc(ficha.nome)}" placeholder="Ex: Risoto de funghi com trufas..." oninput="atualizar(${ficha.id},'nome',this.value)">
+      </div>
+      <div class="header-row">
+        <div class="fb">
+          <label class="fb-label">Categoria</label>
+          <div class="sw">
+            <select class="f" onchange="onCat(${ficha.id},this.value)">
+              <option value="">Selecione</option>
+              ${cats.map(c=>`<option${catBase===c?' selected':''}>${c}</option>`).join('')}
+            </select><span class="sa">▾</span>
+          </div>
+          <input type="text" class="f" id="cat_outro_${ficha.id}"
+            style="margin-top:6px;display:${catBase==='Outro'?'block':'none'}"
+            value="${esc(ficha.categoriaOutro||'')}" placeholder="Descreva a categoria..."
+            oninput="atualizar(${ficha.id},'categoriaOutro',this.value)">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Rendimento</label>
+          <input type="number" class="f" value="${ficha.rendimento||1}" min="1" placeholder="Porções" oninput="atualizar(${ficha.id},'rendimento',parseFloat(this.value)||1)">
+        </div>
+      </div>
+      <div class="header-row-3">
+        <div class="fb">
+          <label class="fb-label">Tempo de preparo (min)</label>
+          <input type="number" class="f" value="${ficha.tempoPreparo||''}" placeholder="Ex: 25" min="0" oninput="atualizar(${ficha.id},'tempoPreparo',this.value)">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Temperatura de serviço</label>
+          <input type="text" class="f" value="${esc(ficha.tempServ||'')}" placeholder="Ex: quente, gelado, ambiente..." oninput="atualizar(${ficha.id},'tempServ',this.value)">
+        </div>
+        <div class="fb">
+          <label class="fb-label">Validade após preparo</label>
+          <input type="text" class="f" value="${esc(ficha.validade||'')}" placeholder="Ex: consumir em até 3 dias..." oninput="atualizar(${ficha.id},'validade',this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="foto-box" id="fotoBox_${ficha.id}" onclick="document.getElementById('fotoInput_${ficha.id}').click()">
+        ${ficha.foto ? `<img src="${ficha.foto}" alt="Foto do prato">` : `
+        <div class="foto-placeholder">
+          <div class="foto-placeholder-icon">📷</div>
+          <p class="foto-placeholder-text">Foto do prato</p>
+          <p class="foto-placeholder-sub">Clique para adicionar</p>
+        </div>`}
+      </div>
+      <input type="file" class="foto-input" id="fotoInput_${ficha.id}" accept="image/*" onchange="onFoto(${ficha.id},this)">
+      ${ficha.foto ? `<div class="foto-actions"><button class="foto-btn foto-btn-remover" onclick="removerFoto(${ficha.id})">Remover foto</button></div>` : ''}
+    </div>
+  </div>
+
+  <!-- INGREDIENTES -->
+  <div class="secao">
+    <p class="secao-title">Ingredientes</p>
+    <div class="ing-op-header">
+      <span class="ih">Ingrediente</span>
+      <span class="ih">Quantidade</span>
+      <span class="ih">Unidade</span>
+      <span class="ih"></span>
+    </div>
+    <div id="ings_${ficha.id}"></div>
+    <button class="btn-add-ing" onclick="addIng(${ficha.id})">+ Adicionar ingrediente</button>
+  </div>
+
+  <!-- MODO DE PREPARO -->
+  <div class="secao">
+    <p class="secao-title">Modo de preparo</p>
+    <div id="passos_${ficha.id}"></div>
+    <button class="btn-add-passo" onclick="addPasso(${ficha.id})">+ Adicionar passo</button>
+  </div>
+
+  <!-- ALERGÊNICOS -->
+  <div class="secao">
+    <p class="secao-title">Alergênicos presentes</p>
+    <div class="alergenicos-grid" id="alerg_${ficha.id}">
+      ${ALERG_LIST.map(a => `<button class="alerg-btn ${(ficha.alergenicos||[]).includes(a)?'active':''}" onclick="toggleAlerg(${ficha.id},'${a}',this)">${a}</button>`).join('')}
+    </div>
+  </div>
+
+  <!-- OBSERVAÇÕES -->
+  <div class="secao">
+    <p class="secao-title">Observações para a equipe</p>
+    <textarea class="f" style="min-height:80px" placeholder="Padrão de empratamento, dicas de apresentação, cuidados especiais, variações permitidas..." oninput="atualizar(${ficha.id},'obs',this.value)">${esc(ficha.obs)}</textarea>
+  </div>
+
+  <div class="ficha-actions">
+    <button class="btn btn-gold" onclick="gerarPDF(${ficha.id})">Gerar PDF</button>
+    <button class="btn btn-red btn-sm" onclick="removerFicha(${ficha.id})">Remover ficha</button>
+  </div>`;
+
+  // Renderizar ingredientes e passos
+  ficha.ingredientes.forEach(ing => renderIngLinha(ficha.id, ing));
+  if (ficha.passos.length === 0) addPasso(ficha.id, true);
+  else ficha.passos.forEach(p => renderPassoLinha(ficha.id, p));
+}
+
+// INGREDIENTES
+function addIng(fichaId, silent) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  const id = Date.now();
+  ficha.ingredientes.push({ id, nome: '', qtd: '', unidade: 'g' });
+  if (!silent) salvar();
+  renderIngLinha(fichaId, ficha.ingredientes[ficha.ingredientes.length - 1]);
+}
+
+function renderIngLinha(fichaId, ing) {
+  const container = document.getElementById('ings_' + fichaId);
+  const div = document.createElement('div');
+  div.className = 'ing-op-linha'; div.id = 'ingl_' + ing.id;
+  div.innerHTML = `
+    <input type="text" class="ing-op-input" value="${esc(ing.nome)}" placeholder="Ex: Filé mignon, arroz arbóreo..."
+      oninput="onIngNome(${fichaId},${ing.id},this.value)">
+    <input type="text" class="ing-op-input" value="${esc(String(ing.qtd||''))}" placeholder="Ex: 200, 1..."
+      oninput="onIngQtd(${fichaId},${ing.id},this.value)">
+    <div style="position:relative">
+      <select class="ing-op-sel" onchange="onIngUnidade(${fichaId},${ing.id},this.value)">
+        ${UNIDADES_OP.map(u=>`<option value="${u}"${u===ing.unidade?' selected':''}>${u}</option>`).join('')}
+      </select>
+      <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▾</span>
+    </div>
+    <button class="ing-del" onclick="removerIng(${fichaId},${ing.id})">×</button>`;
+  container.appendChild(div);
+}
+
+function onIngNome(fichaId, ingId, val) {
+  const f = fichas.find(f => f.id === fichaId);
+  const ing = f?.ingredientes.find(i => i.id === ingId);
+  if (ing) { ing.nome = val; salvar(); }
+}
+function onIngQtd(fichaId, ingId, val) {
+  const f = fichas.find(f => f.id === fichaId);
+  const ing = f?.ingredientes.find(i => i.id === ingId);
+  if (ing) { ing.qtd = val; salvar(); }
+}
+function onIngUnidade(fichaId, ingId, val) {
+  const f = fichas.find(f => f.id === fichaId);
+  const ing = f?.ingredientes.find(i => i.id === ingId);
+  if (ing) { ing.unidade = val; salvar(); }
+}
+function removerIng(fichaId, ingId) {
+  const f = fichas.find(f => f.id === fichaId);
+  if (f) f.ingredientes = f.ingredientes.filter(i => i.id !== ingId);
+  document.getElementById('ingl_' + ingId)?.remove();
+  salvar();
+}
+
+// PASSOS
+function addPasso(fichaId, silent) {
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  const id = Date.now();
+  ficha.passos.push({ id, texto: '' });
+  if (!silent) salvar();
+  renderPassoLinha(fichaId, ficha.passos[ficha.passos.length - 1]);
+}
+
+function renderPassoLinha(fichaId, passo) {
+  const container = document.getElementById('passos_' + fichaId);
+  const ficha = fichas.find(f => f.id === fichaId);
+  const num = ficha.passos.findIndex(p => p.id === passo.id) + 1;
+  const div = document.createElement('div');
+  div.className = 'passo-item'; div.id = 'passo_' + passo.id;
+  div.innerHTML = `
+    <span class="passo-num">${num}</span>
+    <div class="passo-content">
+      <textarea class="passo-ta" placeholder="Descreva este passo do preparo..." oninput="onPasso(${fichaId},${passo.id},this.value)">${esc(passo.texto)}</textarea>
+      <button class="ing-del" onclick="removerPasso(${fichaId},${passo.id})">×</button>
+    </div>`;
+  container.appendChild(div);
+}
+
+function onPasso(fichaId, passoId, val) {
+  const f = fichas.find(f => f.id === fichaId);
+  const p = f?.passos.find(p => p.id === passoId);
+  if (p) { p.texto = val; salvar(); }
+}
+
+function removerPasso(fichaId, passoId) {
+  const f = fichas.find(f => f.id === fichaId);
+  if (f) f.passos = f.passos.filter(p => p.id !== passoId);
+  document.getElementById('passo_' + passoId)?.remove();
+  // Renumerar
+  const container = document.getElementById('passos_' + fichaId);
+  container?.querySelectorAll('.passo-num').forEach((el, i) => el.textContent = i + 1);
+  salvar();
+}
+
+// CATEGORIA COM OUTRO
+function onCat(fichaId, val) {
+  atualizar(fichaId, 'categoriaBase', val);
+  atualizar(fichaId, 'categoria', val);
+  const el = document.getElementById('cat_outro_' + fichaId);
+  if (el) el.style.display = val === 'Outro' ? 'block' : 'none';
+}
+
+// ALERGENICOS
+function toggleAlerg(fichaId, nome, btn) {
+  const f = fichas.find(f => f.id === fichaId);
+  if (!f) return;
+  if (!f.alergenicos) f.alergenicos = [];
+  if (f.alergenicos.includes(nome)) {
+    f.alergenicos = f.alergenicos.filter(a => a !== nome);
+    btn.classList.remove('active');
+  } else {
+    f.alergenicos.push(nome);
+    btn.classList.add('active');
+  }
+  salvar();
+}
+
+// FOTO
+function onFoto(fichaId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const f = fichas.find(f => f.id === fichaId);
+    if (f) { f.foto = e.target.result; salvar(); }
+    const box = document.getElementById('fotoBox_' + fichaId);
+    if (box) {
+      box.innerHTML = `<img src="${e.target.result}" alt="Foto do prato">`;
+      const actions = box.nextElementSibling?.nextElementSibling;
+      if (actions) actions.style.display = 'flex';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removerFoto(fichaId) {
+  const f = fichas.find(f => f.id === fichaId);
+  if (f) { f.foto = null; salvar(); }
+  const box = document.getElementById('fotoBox_' + fichaId);
+  if (box) box.innerHTML = `<div class="foto-placeholder"><div class="foto-placeholder-icon">📷</div><p class="foto-placeholder-text">Foto do prato</p><p class="foto-placeholder-sub">Clique para adicionar</p></div>`;
+}
+
+// PDF INDIVIDUAL
+async function gerarPDF(fichaId) {
+  const { jsPDF } = window.jspdf;
+  const ficha = fichas.find(f => f.id === fichaId);
+  if (!ficha) return;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    await gerarPDFFicha(ficha, new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}), true);
+  } catch(err) {
+    console.error(err);
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+
+// PDF TODAS
+async function exportarTodasPDF() {
+  if (fichas.length === 0) { alert('Nenhuma ficha operacional criada.'); return; }
+  const { jsPDF } = window.jspdf;
+  document.getElementById('pdfOverlay').classList.add('visible');
+  try {
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const nome = document.getElementById('rname').value || 'Meu Restaurante';
+    const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    const W=210, H=297, mg=18;
+
+    // Capa
+    pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+    pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+    pdf.text('MÓDULO O  ·  O3',W-mg,11,{align:'right'});
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(22); pdf.setTextColor(245,240,232); pdf.text('Fichas Técnicas',mg,42);
+    pdf.setFont('helvetica','bolditalic'); pdf.setFontSize(16); pdf.setTextColor(90,158,158); pdf.text('Operacionais',mg,54);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(122,115,105); pdf.text(nome,mg,64);
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,70,W-mg,70);
+    let y=82;
+    fichas.forEach((f,i)=>{ pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(184,150,90);pdf.text(`${i+1}.`,mg,y);pdf.setTextColor(210,200,185);pdf.text(f.nome||'Sem nome',mg+8,y);y+=8; });
+
+    for (const ficha of fichas) {
+      pdf.addPage();
+      await renderPDFFicha(ficha, pdf);
+    }
+
+    const total = pdf.internal.getNumberOfPages();
+    for (let p=1;p<=total;p++) {
+      pdf.setPage(p); pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+      pdf.text('GASTTRO DESIGN',mg,H-10); pdf.text(`${p} / ${total}`,W-mg,H-10,{align:'right'});
+    }
+
+    const nomeArq = `FichasOperacionais-${nome.replace(/\s+/g,'-')}.pdf`;
+    pdf.save(nomeArq);
+  } catch(err) {
+    console.error(err);
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('visible');
+  }
+}
+
+async function gerarPDFFicha(ficha, pdf, salvarArquivo) {
+  const W=210, H=297, mg=18, cw=W-mg*2;
+  pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+  await renderPDFFicha(ficha, pdf);
+  const total = pdf.internal.getNumberOfPages();
+  for (let p=1;p<=total;p++) {
+    pdf.setPage(p); pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,H-14,W-mg,H-14);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(122,115,105);
+    pdf.text('GASTTRO DESIGN',mg,H-10); pdf.text(`${p} / ${total}`,W-mg,H-10,{align:'right'});
+  }
+  if (salvarArquivo) pdf.save(`FichaOp-${(ficha.nome||'prato').replace(/\s+/g,'-')}.pdf`);
+}
+
+async function renderPDFFicha(ficha, pdf) {
+  const W=210, H=297, mg=18, cw=W-mg*2;
+
+  const hdr = () => {
+    pdf.setFillColor(26,24,20); pdf.rect(0,0,W,H,'F');
+    pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.5); pdf.line(mg,14,W-mg,14);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+    pdf.text('GASTTRO DESIGN  ·  SISTEMA D.O.S.E.',mg,11);
+    pdf.text('FICHA TÉCNICA OPERACIONAL',W-mg,11,{align:'right'});
+  };
+
+  hdr();
+
+  // Cabeçalho da ficha
+  const catLabel = ficha.categoriaBase==='Outro'&&ficha.categoriaOutro ? `Outro: ${ficha.categoriaOutro}` : (ficha.categoria||'');
+  let y = 26;
+
+  // Foto à direita
+  const fotoW = 52, fotoH = 52;
+  const fotoX = W - mg - fotoW;
+  const fotoYStart = y;
+
+  if (ficha.foto) {
+    try { pdf.addImage(ficha.foto, 'JPEG', fotoX, fotoYStart, fotoW, fotoH); } catch(e) {
+      pdf.setFillColor(34,32,24); pdf.rect(fotoX, fotoYStart, fotoW, fotoH, 'F');
+    }
+  } else {
+    pdf.setFillColor(34,32,24); pdf.rect(fotoX, fotoYStart, fotoW, fotoH, 'F');
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(80,76,70);
+    pdf.text('SEM FOTO', fotoX + fotoW/2, fotoYStart + fotoH/2, {align:'center'});
+  }
+
+  // Dados à esquerda (restringidos à largura disponível ao lado da foto)
+  const textoW = cw - fotoW - 8;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(18); pdf.setTextColor(245,240,232);
+  const nomeLines = pdf.splitTextToSize(ficha.nome||'Sem nome', textoW);
+  pdf.text(nomeLines.slice(0,2), mg, y + 8); y += nomeLines.slice(0,2).length * 7 + 4;
+
+  if (catLabel) { pdf.setFont('helvetica','normal');pdf.setFontSize(9);pdf.setTextColor(122,115,105);pdf.text(catLabel,mg,y);y+=7; }
+
+  const meta = [
+    ficha.rendimento ? `${ficha.rendimento} porção(ões)` : null,
+    ficha.tempoPreparo ? `Preparo: ${ficha.tempoPreparo} min` : null,
+    ficha.tempServ ? `Serviço: ${ficha.tempServ}` : null,
+    ficha.validade ? `Validade: ${ficha.validade}` : null,
+  ].filter(Boolean);
+
+  if (meta.length > 0) {
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(8.5); pdf.setTextColor(184,150,90);
+    // Quebrar meta em linha se necessário
+    const metaStr = meta.join('  ·  ');
+    const metaLines = pdf.splitTextToSize(metaStr, textoW);
+    pdf.text(metaLines, mg, y); y += metaLines.length * 5 + 4;
+  }
+
+  // Garantir que y passa da borda inferior da foto antes de traçar a linha divisória
+  const fotoYEnd = fotoYStart + fotoH + 4;
+  if (y < fotoYEnd) y = fotoYEnd;
+
+  pdf.setDrawColor(184,150,90); pdf.setLineWidth(0.3); pdf.line(mg,y,W-mg,y); y += 8;
+
+  // INGREDIENTES: começa sempre abaixo da foto
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232); pdf.text('Ingredientes',mg,y); y+=7;
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(184,150,90);
+  pdf.text('INGREDIENTE',mg,y); pdf.text('QTD',mg+100,y); pdf.text('UNIDADE',mg+130,y); y+=5;
+  pdf.setDrawColor(184,150,90,0.3); pdf.line(mg,y,W-mg,y); y+=4;
+
+  ficha.ingredientes.forEach((ing,i) => {
+    if (y > H-35) { pdf.addPage(); hdr(); y=24; }
+    if(i%2===0){pdf.setFillColor(34,32,24);pdf.rect(mg,y-3,cw,9,'F');}
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5);
+    pdf.setTextColor(245,240,232); pdf.text(ing.nome||'', mg, y+3);
+    pdf.setTextColor(184,150,90); pdf.text(String(ing.qtd||''), mg+100, y+3);
+    pdf.setTextColor(122,115,105); pdf.text(ing.unidade||'', mg+130, y+3);
+    y+=9;
+  });
+
+  y+=6;
+
+  // MODO DE PREPARO
+  if (ficha.passos.length > 0) {
+    if (y > H-50) { pdf.addPage(); hdr(); y=24; }
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(245,240,232); pdf.text('Modo de preparo',mg,y); y+=8;
+    ficha.passos.forEach((passo,i) => {
+      if (!passo.texto) return;
+      if (y > H-30) { pdf.addPage(); hdr(); y=24; }
+      pdf.setFillColor(40,38,32); pdf.rect(mg,y-3,12,9,'F');
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(184,150,90); pdf.text(String(i+1), mg+6, y+3, {align:'center'});
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(210,200,185);
+      const lines = pdf.splitTextToSize(passo.texto, cw-16);
+      pdf.text(lines.slice(0,3), mg+14, y+3);
+      y += Math.max(10, lines.slice(0,3).length*5+6);
+    });
+    y+=4;
+  }
+
+  // ALERGÊNICOS
+  if (ficha.alergenicos?.length > 0) {
+    if (y > H-30) { pdf.addPage(); hdr(); y=24; }
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(193,127,42); pdf.text('Alergênicos: ',mg,y);
+    pdf.setFont('helvetica','normal'); pdf.setTextColor(224,150,64);
+    pdf.text(ficha.alergenicos.join('  ·  '), mg+32, y); y+=10;
+  }
+
+  // OBS
+  if (ficha.obs) {
+    if (y > H-30) { pdf.addPage(); hdr(); y=24; }
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(245,240,232); pdf.text('Observações para a equipe',mg,y); y+=7;
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(160,152,140);
+    pdf.text(pdf.splitTextToSize(ficha.obs,cw).slice(0,6),mg,y);
+  }
+}
+</script>
+</body>
+</html>
