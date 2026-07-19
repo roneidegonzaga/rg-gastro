@@ -1,3 +1,5 @@
 .vercel
 .env*
 config.js
+config.dev.js
+backups-supabase/
