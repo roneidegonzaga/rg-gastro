@@ -8,6 +8,8 @@
 -- contra um projeto Supabase de desenvolvimento vazio.
 -- ============================================================
 
+BEGIN;
+
 alter table public.rg_clientes add column if not exists tipo_consultoria text;
 
 create table if not exists public.rg_alunos (
@@ -59,3 +61,5 @@ begin
     execute format('create policy "membros acessam" on public.%I for all using (public.rg_is_member()) with check (public.rg_is_member())', t);
   end loop;
 end $$;
+
+COMMIT;

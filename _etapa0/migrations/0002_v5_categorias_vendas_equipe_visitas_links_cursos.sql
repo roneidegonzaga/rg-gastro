@@ -12,6 +12,8 @@
 -- contra um projeto Supabase de desenvolvimento vazio.
 -- ============================================================
 
+BEGIN;
+
 alter table public.rg_clientes add column if not exists nascimento date;
 alter table public.rg_clientes add column if not exists aniversario_restaurante date;
 alter table public.rg_clientes add column if not exists drive_url text;
@@ -92,3 +94,5 @@ begin
     execute format('create policy "admin acessa" on public.%I for all using (public.rg_is_admin()) with check (public.rg_is_admin())', t);
   end loop;
 end $$;
+
+COMMIT;

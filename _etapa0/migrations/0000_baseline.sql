@@ -6,7 +6,13 @@
 --
 -- NAO EXECUTAR sem autorizacao explicita e sem antes validar
 -- contra um projeto Supabase de desenvolvimento vazio.
+--
+-- Endurecida em 31/07/2026: funcoes SECURITY DEFINER passaram a
+-- fixar search_path = '' (todas as referencias ja eram totalmente
+-- qualificadas por schema). Nenhuma regra de negocio foi alterada.
 -- ============================================================
+
+BEGIN;
 
 -- ===== PERFIS E PAPEIS =====
 create table if not exists public.profiles (
@@ -20,7 +26,9 @@ create table if not exists public.profiles (
 
 -- primeiro usuario cadastrado vira admin automaticamente
 create or replace function public.rg_first_admin()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = ''
+as $$
 begin
   if (select count(*) from public.profiles) = 0 then
     new.role := 'admin';
@@ -34,11 +42,15 @@ create trigger trg_first_admin before insert on public.profiles
 
 -- helpers de permissao (security definer evita recursao de RLS)
 create or replace function public.rg_is_member() returns boolean
-language sql security definer stable as
+language sql security definer stable
+set search_path = ''
+as
 $$ select exists(select 1 from public.profiles where user_id = auth.uid() and aprovado) $$;
 
 create or replace function public.rg_is_admin() returns boolean
-language sql security definer stable as
+language sql security definer stable
+set search_path = ''
+as
 $$ select exists(select 1 from public.profiles where user_id = auth.uid() and aprovado and role = 'admin') $$;
 
 alter table public.profiles enable row level security;
@@ -192,3 +204,5 @@ begin
     execute format('create policy "admin acessa" on public.%I for all using (public.rg_is_admin()) with check (public.rg_is_admin())', t);
   end loop;
 end $$;
+
+COMMIT;
