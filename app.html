@@ -341,6 +341,12 @@ table.tbl { width: 100%; border-collapse: collapse; }
 (function(){
   'use strict';
   var cfg = window.RG_CONFIG || {};
+  if (cfg.APP_ENV === 'development') {
+    var faixaDev = document.createElement('div');
+    faixaDev.textContent = 'AMBIENTE DE DESENVOLVIMENTO';
+    faixaDev.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#f25c54;color:#fff;text-align:center;font-family:sans-serif;font-weight:800;font-size:11px;letter-spacing:2px;padding:4px 0;pointer-events:none;';
+    document.body.prepend(faixaDev);
+  }
   var configured = cfg.SUPABASE_URL && cfg.SUPABASE_URL.indexOf('http') === 0;
   var DEMO = !configured;
   if (!configured && !DEMO) { window.location.replace('index.html'); return; }

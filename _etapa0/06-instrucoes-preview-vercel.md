@@ -1,78 +1,58 @@
-# Proposta de preview da Vercel (Checkpoint 0.8) — revisada em 31/07/2026
+# Preview da Vercel (Checkpoint 0.8) — decisões tomadas em 31/07/2026
 
-**Nada aqui foi executado.** Esta versão substitui o rascunho anterior, escrito antes do schema DEV existir — a análise de hoje encontrou um bloqueio real que o rascunho anterior não tinha identificado, e corrige uma afirmação que se mostrou incorreta ao verificar o código.
+**Nada aqui foi publicado, conectado ou implantado.** Este documento substitui as duas versões anteriores — as decisões abaixo já foram aprovadas, mas a execução (criar remoto, dar push, criar projeto na Vercel, configurar variáveis) continua pendente de autorização, checkpoint a checkpoint.
 
-## ⚠ Bloqueio real identificado antes de qualquer outra coisa
+## ⚠ Fato importante registrado
 
-**Este repositório não tem remoto Git configurado** (`git remote -v` vazio, confirmado agora). A forma padrão de Preview da Vercel — vinculada a um push de branch — depende de a Vercel enxergar o repositório via GitHub/GitLab/Bitbucket. Sem um remoto, e sem autorização para `git push` (proibido pelas suas regras gerais desde o início desta etapa), **esse caminho não está disponível hoje.**
+O projeto `rg-gastro` que já existe na conta Vercel, ligado a `painel.roneidegonzaga.com`, **é uma versão legada que não corresponde ao código atual** (o de `C:\Projetos\rg-gastro-dev`). Ele deve ser tratado como independente:
+- Não será conectado ao novo repositório
+- Não será alterado
+- O domínio `painel.roneidegonzaga.com` não será tocado
+- Um **projeto novo e separado** será criado na Vercel, exclusivamente para desenvolvimento, quando essa etapa for autorizada
 
-Existem duas rotas possíveis. Nenhuma foi executada — é uma decisão sua.
+## Decisões aprovadas para a implementação futura
 
-| Rota | Como funciona | O que exige |
-|---|---|---|
-| **A — Integração Git** | Conectar este repositório a um remoto (GitHub, por exemplo) e deixar a Vercel observar a branch `desenvolvimento`; todo push nela gera um Preview automaticamente | Criar o remoto + autorizar explicitamente um `git push` — hoje fora de escopo, exigiria você revisitar essa regra |
-| **B — Vercel CLI local** | Rodar `vercel deploy` (sem `--prod`) direto da pasta local, sem depender de nenhum remoto Git | Instalar e autenticar a Vercel CLI localmente — ferramenta que não tenho nesta sessão; precisa da sua aprovação explícita para eu instalar algo, ou você mesma roda |
-
-## Correção importante em relação ao rascunho anterior
-
-O rascunho anterior deste documento dizia que o ambiente apareceria identificado visualmente através de `NOME_SISTEMA`/`NOME_SUB` do `config.js`. **Isso estava errado — verifiquei agora e nem `app.html` nem `index.html` usam esses dois campos em lugar nenhum.** A marca "RG Gastrô" está escrita direto no HTML (texto fixo e SVG), não é dinâmica. Ou seja: hoje, preencher `NOME_SISTEMA`/`NOME_SUB` no `config.dev.js` não muda nada visível na tela.
-
-Duas formas honestas de resolver isso:
-1. **Sem tocar no código** (recomendado para agora): confiar na própria **URL do preview**, que a Vercel gera automaticamente e é visivelmente diferente do domínio de produção (`painel.roneidegonzaga.com`) — isso já é um sinal visual forte, só olhando a barra de endereço, sem precisar de nenhuma mudança em `app.html`/`index.html`.
-2. **Com uma pequena mudança de código** (fora do escopo da Etapa 0, exigiria aprovação própria): fazer `app.html`/`index.html` exibirem um aviso ou trocarem o título com base em algum indicador de ambiente. Não recomendo fazer isso agora — é alteração funcional do sistema, e a Etapa 0 foi definida desde o início como "não altere a lógica funcional de `app.html`".
-
-## O que precisa ser configurado na Vercel (independente da rota escolhida)
-
-Como o projeto **não tem etapa de build** (é HTML/CSS/JS puro, servido como está), variáveis de ambiente configuradas no painel da Vercel **não são injetadas automaticamente** em `config.js` — não existe nenhum passo de build que faça essa substituição hoje. Isso muda a proposta original: em vez de "variáveis de ambiente na Vercel", a forma que realmente funciona com a arquitetura atual é **o próprio arquivo `config.js` ter conteúdo diferente por branch**:
-
-- Branch de produção (a que a Vercel já usa hoje) → `config.js` com as credenciais reais de produção, exatamente como já está
-- Branch `desenvolvimento` → `config.js` com as credenciais do projeto `rg-gastro-DEV`
-
-Como a Vercel publica cada branch com o conteúdo que está *naquela branch*, isso garante isolamento por construção — não é uma lógica condicional que possa falhar, é literalmente um arquivo diferente.
-
-## Como garantir que o preview use exclusivamente o Supabase DEV
-
-Só existe um `config.js` por branch — não há dois valores concorrendo, não há lógica de "qual usar". Sem etapa de build, sem variável de ambiente, sem `if`. O `config.js` da branch `desenvolvimento` conteria diretamente os valores do projeto DEV.
-
-## Como impedir fallback para produção
-
-Por construção, não existe fallback possível nesse modelo — não há um valor "padrão" para o qual o código possa recorrer se algo estiver ausente; o arquivo simplesmente contém um valor ou outro, nunca os dois. O único risco real é **erro humano**: alguém copiar o `config.js` errado para a branch errada. Mitigação proposta: nunca copiar `config.js` entre as branches manualmente — sempre usar `config.dev.js` (que já existe, local, fora do Git) como a única fonte dos valores de desenvolvimento, e só então decidir (ver "Decisão pendente" abaixo) se ele deve ou não ser promovido a `config.js` na branch `desenvolvimento`.
-
-## ⚠ Trade-off sobre onde a credencial DEV fica registrada — decisão pendente
-
-Se a `config.js` da branch `desenvolvimento` passar a conter os valores do projeto DEV, isso significa **commitar a URL e a chave anônima do projeto DEV no histórico do Git local** (não no de produção, e sem nenhum push, mas ainda assim fora do padrão de "nenhuma credencial no Git" que seguimos até aqui).
-
-Duas coisas atenuam esse risco, mas não o eliminam:
-- A **chave anônima (publishable key)** do Supabase é projetada, por padrão, para ser pública em código de frontend — a segurança real vem do RLS no banco, não de esconder essa chave. É uma categoria de credencial bem menos sensível que a `service_role key` ou a senha do Postgres.
-- Nada disso sai do seu computador enquanto não houver `push` para um remoto.
-
-Ainda assim, é uma mudança de padrão em relação ao que fizemos até aqui, e por isso não decidi sozinho: **prefere que eu prepare o `config.js` da branch `desenvolvimento` com os valores do DEV (copiando localmente de `config.dev.js`, sem exibir nada aqui), ou prefere manter os dois arquivos fora do Git e resolver isso de outra forma (ex.: só depois de decidir a Rota A ou B acima)?**
-
-## Arquivos locais que precisarão ser ajustados (quando autorizado)
-
-| Arquivo | Ajuste |
+| Tema | Decisão |
 |---|---|
-| `config.js` (só na branch `desenvolvimento`) | Substituído pelo conteúdo de `config.dev.js` — só depois da decisão acima |
-| Nenhum outro arquivo do projeto | `app.html`/`index.html` não precisam de nenhuma alteração para esse esquema funcionar, exatamente porque não há lógica condicional nova — só o conteúdo do `config.js` muda por branch |
+| Rota de Preview | **A — Integração Git**, não a CLI local |
+| Onde a credencial DEV fica | **Variáveis de ambiente da Vercel**, nunca commitada em `config.js` |
+| Geração do `config.js` | Passo mínimo de build (`scripts/generate-config.js`, já criado e testado) |
+| Fallback para produção | Proibido — o script falha explicitamente para qualquer valor de ambiente fora da lista de permissão |
+| Projeto Vercel | **Novo, dedicado só a desenvolvimento** — nunca o projeto legado `rg-gastro`/`painel.roneidegonzaga.com` |
+
+## O que já foi preparado localmente (não commitado até este checkpoint ser fechado)
+
+- `scripts/generate-config.js` — endurecido: só gera `config.js` quando `VERCEL_ENV=preview` ou `LOCAL_TEST_MODE=true` (modo de teste local deliberado); `VERCEL_ENV=production` é tratado como no-op seguro (preserva o `config.js` do repositório); qualquer outro valor falha explicitamente, sem gerar nada. Testado com 5 cenários — todos passaram (ver commit desta etapa).
+- Faixa "AMBIENTE DE DESENVOLVIMENTO" em `app.html` e `index.html` — só aparece quando `cfg.APP_ENV === 'development'`, testada com 5 cenários de valor (inclusive variação de maiúscula/minúscula) — todos passaram.
+
+## Variáveis de ambiente propostas (a configurar só quando o novo projeto Vercel existir)
+
+| Escopo | Variável | Valor |
+|---|---|---|
+| Production (do projeto **novo**, não o legado) | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `APP_ENV=production` | A definir quando esse projeto for criado |
+| Preview (branch `desenvolvimento`) | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (projeto `rg-gastro-DEV`), `APP_ENV=development` | Já disponíveis localmente em `config.dev.js` |
+
+`GOOGLE_CLIENT_ID` fica de fora em ambos por enquanto — só entra na Etapa 4.
+
+## Pendente de autorização (próximos checkpoints, não agora)
+
+1. Criar repositório privado no GitHub e fazer os primeiros pushes (`master`, depois `desenvolvimento`, depois a tag)
+2. Criar o projeto novo e dedicado na Vercel (nunca o legado)
+3. Conectar esse projeto novo ao repositório
+4. Configurar as variáveis de ambiente (tabela acima)
+5. Configurar o Build Command (`node scripts/generate-config.js`) e Output Directory (raiz)
 
 ## Riscos
 
-- Bloqueio de infraestrutura (sem remoto) precisa ser resolvido antes de qualquer preview real existir — rota A ou B, ambas fora do escopo já autorizado até agora
-- Rota B exige instalar uma ferramenta nova (Vercel CLI) — sujeita à regra de sempre apresentar a necessidade antes
-- Commitar a chave anônima DEV no `config.js` da branch de desenvolvimento é uma mudança de padrão, ainda que de risco relativamente baixo (ver acima)
-- Erro humano ao copiar `config.js` entre branches — mitigado por nunca fazer isso manualmente, só a partir de `config.dev.js`
-
-## Testes (a fazer só depois de um preview real existir — não agora)
-
-- Abrir a URL de preview e confirmar visualmente que o domínio é diferente do de produção
-- Inspecionar a aba de rede do navegador (sem registrar nada sensível) e confirmar que as chamadas de API vão para o domínio do projeto `rg-gastro-DEV`, nunca para o de produção
-- Confirmar que a branch de produção continua publicando com as credenciais de produção, sem nenhuma interferência
+- Nenhum risco para o projeto legado/domínio real, porque ele não será tocado em nenhuma etapa deste plano
+- Erro humano ao configurar o escopo de uma variável de ambiente (Production vs. Preview) na Vercel — mitigado revisando cada variável no momento da criação
+- `scripts/generate-config.js` precisa ser validado de verdade dentro do ambiente de build real da Vercel (containers podem se comportar diferente do terminal local) — só será confirmado quando o projeto novo existir
 
 ## Rollback
 
-- Reverter o `config.js` da branch `desenvolvimento` para um estado anterior (ou removê-lo do rastreamento) não afeta produção em nenhum cenário, já que produção vive só na branch/config próprios, nunca tocados nesta etapa
-- Um deploy de preview feito via Vercel CLI pode ser removido diretamente no painel da Vercel (ação da sua conta, não local)
+- Remover `scripts/generate-config.js` e a faixa dev de `app.html`/`index.html` reverte tudo sem deixar resíduo — nenhuma das duas mudanças depende de infraestrutura externa
+- Se o projeto Vercel novo for criado e precisar ser desfeito, isso é uma ação na conta da Vercel, sem nenhum efeito sobre o projeto legado
 
 ---
 
-**Nada foi configurado ainda.** Aguardando decisão sobre: (1) Rota A ou B para viabilizar o preview; (2) se o `config.js` da branch `desenvolvimento` deve ou não receber os valores DEV agora.
+**Nada foi publicado.** Próximo passo: sua aprovação para criar o repositório GitHub privado e fazer os primeiros pushes.
