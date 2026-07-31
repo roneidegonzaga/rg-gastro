@@ -10,8 +10,8 @@ Autorização recebida em: 18/07/2026. Execução restrita à Etapa 0, com parad
 | 0.4 | Inventário do schema local | ✅ Concluído | Documento "Inventário do schema descrito no backup" produzido a partir da leitura integral de `setup-supabase.sql` |
 | 0.5 | Estratégia de migrations | ✅ Concluído (preparação, sem execução) | Três migrations numeradas extraídas verbatim; nenhuma executada |
 | 0.6 | Plano de backup e restauração | ✅ Concluído (documentação, sem execução) | Plano Free confirmado por você; nenhum `pg_dump` executado |
-| 0.7 | Preparação do Supabase de desenvolvimento | ⏸ **Parado — depende de ação manual sua** | Não tenho acesso para criar o projeto; instruções entregues em `05-instrucoes-supabase-dev.md` |
-| 0.8 | Preview da Vercel | ⏸ Proposta escrita, não configurada | Depende do Checkpoint 0.7 estar concluído; proposta em `06-instrucoes-preview-vercel.md` |
-| 0.9 | Teste de isolamento | Não iniciado | Depende dos Checkpoints 0.7 e 0.8 |
+| 0.7 | Preparação do Supabase de desenvolvimento | ✅ **Concluído em 31/07/2026** | Projeto `rg-gastro-DEV` (plano Free) criado por você; `config.dev.js` preenchido localmente; as 3 migrations aplicadas e validadas uma a uma, cada uma em sua própria transação — ver `migrations/status.md` |
+| 0.8 | Preview da Vercel | ⏸ Em andamento — plano apresentado, nada executado | Bloqueio real identificado: não há remoto Git configurado, o que impede o caminho padrão de Preview por integração Git da Vercel sem antes autorizar um `push` (hoje proibido pelas regras gerais). Ver `06-instrucoes-preview-vercel.md` (revisado em 31/07/2026) para as duas rotas possíveis e a decisão pendente |
+| 0.9 | Teste de isolamento | Não iniciado | Depende do Checkpoint 0.8 estar concluído |
 
-**Execução parada no Checkpoint 0.7**, conforme instruído — aguardando você criar o projeto Supabase de desenvolvimento e confirmar (sem colar credenciais) que `config.dev.js` está preenchido localmente.
+**Execução parada no Checkpoint 0.8**, apresentando só o plano — aguardando decisão sobre a rota de preview (Git remoto + push vs. Vercel CLI local) antes de qualquer configuração real.
