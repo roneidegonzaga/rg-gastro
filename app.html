@@ -2250,7 +2250,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
       var feitas = tc.filter(function(t){ return t.status === 'feita'; }).length;
       var pc = tc.length ? Math.round(feitas / tc.length * 100) : 0;
       var nAl = alunos.filter(function(a){ return (a.curso || '').toLowerCase() === (cu.nome || '').toLowerCase(); }).length;
-      var nVd = vendas.filter(function(v){ return (v.produto || '').toLowerCase() === (cu.nome || '').toLowerCase() && v.status === 'Aprovado'; }).length;
+      var nVd = vendas.filter(function(v){ return (v.produto || '').toLowerCase() === (cu.nome || '').toLowerCase() && vendaAtiva(v); }).length;
       return '<div class="card-p proc-card" data-cu="' + cu.id + '"><div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800;font-size:13px;flex:1">' + esc(cu.nome) + '</div><span class="chip ' + (cu.status === 'ativo' ? 'c-green' : 'c-gray') + '">' + esc(cu.status || 'ativo') + '</span></div>' +
         (cu.descricao ? '<div style="font-size:11px;color:var(--ink-muted);margin-top:6px">' + esc(cu.descricao) + '</div>' : '') +
         '<div style="display:flex;align-items:center;gap:9px;margin-top:11px"><div class="bar-wrap" style="flex:1"><div class="bar-fill" style="width:' + pc + '%"></div></div><span style="font-size:10px;color:var(--ink-muted)">' + feitas + '/' + tc.length + ' atividades</span></div>' +
@@ -2367,12 +2367,13 @@ table.tbl { width: 100%; border-collapse: collapse; }
     var m = String(v || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
     return m ? m[3] + '-' + m[2] + '-' + m[1] : null;
   }
+  function vendaAtiva(v){ return v.status === 'Aprovado' || v.status === 'Completo'; }
   var vendasFiltro = 'Aprovado', vendasProduto = '';
   VIEWS.vendas = async function(){
     var vendas = await DB.list('rg_vendas');
     var produtos = [];
     vendas.forEach(function(v){ if (v.produto && produtos.indexOf(v.produto) < 0) produtos.push(v.produto); });
-    var aprovadas = vendas.filter(function(v){ return v.status === 'Aprovado'; });
+    var aprovadas = vendas.filter(vendaAtiva);
     var pendLanc = aprovadas.filter(function(v){ return !v.fin_lancado; });
     var emails = {};
     aprovadas.forEach(function(v){ if (v.email) emails[v.email.toLowerCase()] = 1; });
@@ -2392,10 +2393,10 @@ table.tbl { width: 100%; border-collapse: collapse; }
     h += '</div></div><div id="vd-tbl" style="overflow-x:auto;max-height:480px;overflow-y:auto"></div></div>';
     $('view').innerHTML = h;
 
-    var vis = vendas.filter(function(v){ return (!vendasFiltro || v.status === vendasFiltro) && (!vendasProduto || v.produto === vendasProduto); })
+    var vis = vendas.filter(function(v){ return (!vendasFiltro || (vendasFiltro === 'Aprovado' ? vendaAtiva(v) : v.status === vendasFiltro)) && (!vendasProduto || v.produto === vendasProduto); })
       .sort(function(a,b){ return String(b.data || '').localeCompare(String(a.data || '')); });
     $('vd-tbl').innerHTML = vis.length ? '<table class="tbl"><tr><th>Data</th><th>Aluno</th><th>Contato</th><th>Produto</th><th style="text-align:right">Líquido</th><th>Status</th></tr>' + vis.slice(0, 400).map(function(v){
-      return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (v.status === 'Aprovado' ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + '</td></tr>';
+      return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (vendaAtiva(v) ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + '</td></tr>';
     }).join('') + '</table>' : '<div class="empty">Nada importado ainda. Na Hotmart: Vendas &rarr; Exportar &rarr; CSV, e traz o arquivo aqui.</div>';
 
     $('f-prod').onchange = function(){ vendasProduto = this.value; go('vendas'); };
