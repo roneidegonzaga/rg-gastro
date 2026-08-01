@@ -101,6 +101,15 @@ body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-in
 .seg button.active { background: var(--charcoal); color: var(--cream); }
 .mini-select, .mini-input { border: 1.5px solid var(--line); border-radius: 999px; background: var(--card); font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 600; color: var(--ink-soft); padding: 7px 12px; }
 .mini-select:focus, .mini-input:focus { outline: none; border-color: var(--gold-dark); }
+.prod-multi { position: relative; display: inline-block; }
+.prod-multi summary { list-style: none; cursor: pointer; }
+.prod-multi summary::-webkit-details-marker { display: none; }
+.prod-multi[open] summary { border-color: var(--gold-dark); }
+.prod-multi-panel { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px; width: 260px; max-width: 80vw; box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+.prod-multi-actions { display: flex; gap: 12px; margin: 8px 0; font-size: 10.5px; }
+.prod-multi-actions button { background: none; border: none; color: var(--gold-dark); font-weight: 700; cursor: pointer; padding: 0; }
+.prod-multi-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.prod-multi-item { display: flex; align-items: center; gap: 8px; font-size: 11.5px; cursor: pointer; }
 .filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .filter-bar .fb-sep { font-size: 10px; color: var(--ink-muted); font-weight: 600; }
 .card-p { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 17px 19px; min-width: 0; box-shadow: 0 1px 2px rgba(1,30,52,.03); }
@@ -287,6 +296,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
   .page-head .ph-actions { width: 100%; margin-left: 0; }
   .seg { max-width: 100%; overflow-x: auto; }
   .filter-bar { width: 100%; }
+  .prod-multi-panel { left: 0; right: 0; width: auto; }
   .modal { padding: 18px 16px; }
   .tb-badge { display: none; }
 }
@@ -2383,17 +2393,27 @@ table.tbl { width: 100%; border-collapse: collapse; }
     return m ? m[3] + '-' + m[2] + '-' + m[1] : null;
   }
   function vendaAtiva(v){ return v.status === 'Aprovado' || v.status === 'Completo'; }
-  var vendasFiltro = 'Aprovado', vendasProduto = '';
+  var vendasFiltro = 'Aprovado';
+  var vendasProdutos = null;
   var vendasPer = { p: 'tudo', ini: '', fim: '' };
   var VENDAS_PRESETS = [['7d','7 dias'],['14d','14 dias'],['30d','30 dias'],['60d','60 dias'],['90d','90 dias'],['mes','Mês atual'],['mesant','Mês anterior'],['tudo','Todo o período']];
+  var vendasForaHandler = null;
   VIEWS.vendas = async function(){
     var vendas = await DB.list('rg_vendas');
     var produtos = [];
     vendas.forEach(function(v){ if (v.produto && produtos.indexOf(v.produto) < 0) produtos.push(v.produto); });
+    function produtoOk(p){ return vendasProdutos === null || vendasProdutos.indexOf(p) > -1; }
+    function labelProdutos(){
+      if (vendasProdutos === null) return 'Todos os produtos';
+      if (vendasProdutos.length === 0) return 'Nenhum produto selecionado';
+      if (vendasProdutos.length === 1) return vendasProdutos[0];
+      return vendasProdutos.length + ' produtos selecionados';
+    }
     var r = perRange(vendasPer);
     var perLabel = vendasPer.p === 'tudo' ? 'Todo o período' : (fmtD(r.ini) + ' a ' + fmtD(r.fim));
     var vendasPeriodo = vendas.filter(function(v){ return inRange(v.data, r); });
-    var aprovadas = vendasPeriodo.filter(vendaAtiva);
+    var vendasPeriodoProduto = vendasPeriodo.filter(function(v){ return produtoOk(v.produto); });
+    var aprovadas = vendasPeriodoProduto.filter(vendaAtiva);
     var pendLanc = aprovadas.filter(function(v){ return !v.fin_lancado; });
     var emails = {};
     aprovadas.forEach(function(v){ if (v.email) emails[v.email.toLowerCase()] = 1; });
@@ -2405,23 +2425,47 @@ table.tbl { width: 100%; border-collapse: collapse; }
     h += '<button class="btn btn-p" id="btn-import">&#8682; Importar CSV da Hotmart</button></div></div>';
     h += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(185px,1fr))">';
     h += '<div class="kpi k-green"><div class="k-label">Faturamento líquido</div><div class="k-value">' + brlS(soma(aprovadas, 'liquido')) + '</div><div class="k-foot">vendas aprovadas importadas</div></div>';
-    h += '<div class="kpi k-blue"><div class="k-label">Vendas aprovadas</div><div class="k-value">' + aprovadas.length + '</div><div class="k-foot">de ' + vendasPeriodo.length + ' registros no período</div></div>';
+    h += '<div class="kpi k-blue"><div class="k-label">Vendas aprovadas</div><div class="k-value">' + aprovadas.length + '</div><div class="k-foot">de ' + vendasPeriodoProduto.length + ' registros no período</div></div>';
     h += '<div class="kpi"><div class="k-label">Alunos únicos</div><div class="k-value">' + alunosUnicos + '</div><div class="k-foot">por email, sua base de dados</div></div>';
     h += '<div class="kpi k-purple"><div class="k-label">Ticket médio por aluno</div><div class="k-value">' + brlS(ticketMedio) + '</div><div class="k-foot">líquido por aluno único</div></div>';
     h += '</div>';
     h += '<div class="card-p" style="margin-top:13px"><div class="p-head"><div class="p-title">Vendas</div><div class="ph-actions" style="margin-left:auto">';
-    h += '<select class="mini-select" id="f-prod"><option value="">Todos os produtos</option>' + produtos.map(function(p){ return '<option' + (vendasProduto === p ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select>';
+    h += '<details class="prod-multi" id="prod-multi"><summary class="mini-select">' + esc(labelProdutos()) + '</summary><div class="prod-multi-panel">' +
+      '<input type="text" class="mini-input" id="prod-search" placeholder="Buscar produto..." aria-label="Buscar produto" style="width:100%;box-sizing:border-box;margin-bottom:8px">' +
+      '<div class="prod-multi-actions"><button type="button" id="prod-all">Selecionar todos</button><button type="button" id="prod-clear">Limpar seleção</button></div>' +
+      '<div class="prod-multi-list" id="prod-list">' + produtos.map(function(p){
+        return '<label class="prod-multi-item" data-item><input type="checkbox" data-prod="' + esc(p) + '"' + (produtoOk(p) ? ' checked' : '') + '> ' + esc(p) + '</label>';
+      }).join('') + '</div></div></details>';
     h += '<div class="seg"><button data-vf="Aprovado" class="' + (vendasFiltro === 'Aprovado' ? 'active' : '') + '">Aprovadas</button><button data-vf="" class="' + (vendasFiltro === '' ? 'active' : '') + '">Todas</button></div>';
     h += '</div></div><div id="vd-tbl" style="overflow-x:auto;max-height:480px;overflow-y:auto"></div></div>';
     $('view').innerHTML = h;
 
-    var vis = vendasPeriodo.filter(function(v){ return (!vendasFiltro || (vendasFiltro === 'Aprovado' ? vendaAtiva(v) : v.status === vendasFiltro)) && (!vendasProduto || v.produto === vendasProduto); })
+    var vis = vendasPeriodoProduto.filter(function(v){ return !vendasFiltro || (vendasFiltro === 'Aprovado' ? vendaAtiva(v) : v.status === vendasFiltro); })
       .sort(function(a,b){ return String(b.data || '').localeCompare(String(a.data || '')); });
     $('vd-tbl').innerHTML = vis.length ? '<table class="tbl"><tr><th>Data</th><th>Aluno</th><th>Contato</th><th>Produto</th><th style="text-align:right">Líquido</th><th>Status</th></tr>' + vis.slice(0, 400).map(function(v){
       return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (vendaAtiva(v) ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + '</td></tr>';
     }).join('') + '</table>' : '<div class="empty">Nada importado ainda. Na Hotmart: Vendas &rarr; Exportar &rarr; CSV, e traz o arquivo aqui.</div>';
 
-    $('f-prod').onchange = function(){ vendasProduto = this.value; go('vendas'); };
+    var pm = $('prod-multi');
+    $('view').querySelectorAll('[data-prod]').forEach(function(cb){
+      cb.onchange = function(){
+        var atual = vendasProdutos === null ? produtos.slice() : vendasProdutos.slice();
+        var p = cb.getAttribute('data-prod'), i = atual.indexOf(p);
+        if (cb.checked && i < 0) atual.push(p);
+        if (!cb.checked && i > -1) atual.splice(i, 1);
+        vendasProdutos = (atual.length === produtos.length) ? null : atual;
+        go('vendas');
+      };
+    });
+    $('prod-all').onclick = function(){ vendasProdutos = null; go('vendas'); };
+    $('prod-clear').onclick = function(){ vendasProdutos = []; go('vendas'); };
+    $('prod-search').oninput = function(){
+      var q = this.value.toLowerCase();
+      $('view').querySelectorAll('[data-item]').forEach(function(it){ it.style.display = it.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none'; });
+    };
+    if (vendasForaHandler) document.removeEventListener('click', vendasForaHandler);
+    vendasForaHandler = function(ev){ if (pm && pm.open && !pm.contains(ev.target)) pm.open = false; };
+    document.addEventListener('click', vendasForaHandler);
     $('view').querySelectorAll('[data-vf]').forEach(function(b){ b.onclick = function(){ vendasFiltro = b.getAttribute('data-vf'); go('vendas'); }; });
     bindPerBar(vendasPer, function(){ go('vendas'); }, { customButtons: true, limparPara: 'tudo' });
     $('btn-import').onclick = function(){ $('csv-file').click(); };
