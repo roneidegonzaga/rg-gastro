@@ -656,27 +656,42 @@ table.tbl { width: 100%; border-collapse: collapse; }
   function perRange(st){
     var hoje = hojeISO(), ym = mesAtual();
     if (st.p === 'mes') return { ini: ym + '-01', fim: ym + '-' + String(ultimoDiaMes(ym)).padStart(2,'0') };
+    if (st.p === 'mesant') { var dA = new Date(); dA.setDate(1); dA.setMonth(dA.getMonth() - 1); var ymA = dA.getFullYear() + '-' + String(dA.getMonth()+1).padStart(2,'0'); return { ini: ymA + '-01', fim: ymA + '-' + String(ultimoDiaMes(ymA)).padStart(2,'0') }; }
+    if (st.p === '7d') return { ini: isoAdd(hoje, -6), fim: hoje };
+    if (st.p === '14d') return { ini: isoAdd(hoje, -13), fim: hoje };
     if (st.p === '30d') return { ini: isoAdd(hoje, -29), fim: hoje };
+    if (st.p === '60d') return { ini: isoAdd(hoje, -59), fim: hoje };
     if (st.p === '90d') return { ini: isoAdd(hoje, -89), fim: hoje };
     if (st.p === '12m') { var d = new Date(); d.setMonth(d.getMonth() - 11); return { ini: d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01', fim: hoje }; }
     if (st.p === 'ano') return { ini: hoje.slice(0,4) + '-01-01', fim: hoje.slice(0,4) + '-12-31' };
+    if (st.p === 'tudo') return { ini: '0001-01-01', fim: '9999-12-31' };
     return { ini: st.ini || ym + '-01', fim: st.fim || hoje };
   }
-  function perBarHTML(st, r){
-    var presets = [['mes','Mês atual'],['30d','30 dias'],['90d','90 dias'],['ano','Este ano'],['12m','12 meses']];
+  function perBarHTML(st, r, presets, opts){
+    presets = presets || [['mes','Mês atual'],['30d','30 dias'],['90d','90 dias'],['ano','Este ano'],['12m','12 meses']];
+    opts = opts || {};
     var h = '<div class="filter-bar"><div class="seg">';
     presets.forEach(function(pp){ h += '<button data-per="' + pp[0] + '" class="' + (st.p === pp[0] ? 'active' : '') + '">' + pp[1] + '</button>'; });
-    h += '</div><span class="fb-sep">de</span><input type="date" class="mini-input" id="per-ini" value="' + r.ini + '"><span class="fb-sep">até</span><input type="date" class="mini-input" id="per-fim" value="' + r.fim + '"></div>';
+    h += '</div><span class="fb-sep">de</span><input type="date" class="mini-input" id="per-ini" value="' + (st.p === 'tudo' ? '' : r.ini) + '"><span class="fb-sep">até</span><input type="date" class="mini-input" id="per-fim" value="' + (st.p === 'tudo' ? '' : r.fim) + '">';
+    if (opts.customButtons) h += '<button class="btn btn-o btn-sm" id="per-aplicar">Aplicar</button><button class="btn btn-o btn-sm" id="per-limpar">Limpar</button>';
+    h += '</div>';
     return h;
   }
-  function bindPerBar(st, reload){
+  function bindPerBar(st, reload, opts){
+    opts = opts || {};
     $('view').querySelectorAll('[data-per]').forEach(function(b){
       b.onclick = function(){ st.p = b.getAttribute('data-per'); st.ini = ''; st.fim = ''; reload(); };
     });
     var i = $('per-ini'), f = $('per-fim');
-    function custom(){ if (i.value && f.value && i.value <= f.value) { st.p = 'custom'; st.ini = i.value; st.fim = f.value; reload(); } }
-    if (i) i.onchange = custom;
-    if (f) f.onchange = custom;
+    if (opts.customButtons) {
+      var ap = $('per-aplicar'), lp = $('per-limpar');
+      if (ap) ap.onclick = function(){ if (i.value && f.value && i.value <= f.value) { st.p = 'custom'; st.ini = i.value; st.fim = f.value; reload(); } };
+      if (lp) lp.onclick = function(){ st.p = opts.limparPara || 'tudo'; st.ini = ''; st.fim = ''; reload(); };
+    } else {
+      function custom(){ if (i.value && f.value && i.value <= f.value) { st.p = 'custom'; st.ini = i.value; st.fim = f.value; reload(); } }
+      if (i) i.onchange = custom;
+      if (f) f.onchange = custom;
+    }
   }
   function mesesEntre(ini, fim){
     var out = [], y = +ini.slice(0,4), m = +ini.slice(5,7), yf = +fim.slice(0,4), mf = +fim.slice(5,7), guard = 0;
@@ -2369,23 +2384,30 @@ table.tbl { width: 100%; border-collapse: collapse; }
   }
   function vendaAtiva(v){ return v.status === 'Aprovado' || v.status === 'Completo'; }
   var vendasFiltro = 'Aprovado', vendasProduto = '';
+  var vendasPer = { p: 'tudo', ini: '', fim: '' };
+  var VENDAS_PRESETS = [['7d','7 dias'],['14d','14 dias'],['30d','30 dias'],['60d','60 dias'],['90d','90 dias'],['mes','Mês atual'],['mesant','Mês anterior'],['tudo','Todo o período']];
   VIEWS.vendas = async function(){
     var vendas = await DB.list('rg_vendas');
     var produtos = [];
     vendas.forEach(function(v){ if (v.produto && produtos.indexOf(v.produto) < 0) produtos.push(v.produto); });
-    var aprovadas = vendas.filter(vendaAtiva);
+    var r = perRange(vendasPer);
+    var perLabel = vendasPer.p === 'tudo' ? 'Todo o período' : (fmtD(r.ini) + ' a ' + fmtD(r.fim));
+    var vendasPeriodo = vendas.filter(function(v){ return inRange(v.data, r); });
+    var aprovadas = vendasPeriodo.filter(vendaAtiva);
     var pendLanc = aprovadas.filter(function(v){ return !v.fin_lancado; });
     var emails = {};
     aprovadas.forEach(function(v){ if (v.email) emails[v.email.toLowerCase()] = 1; });
-    var h = '<div class="page-head"><div><h1>Vendas e base de alunos</h1><div class="ph-sub">importe o relatório da Hotmart e tenha base de compradores + financeiro alimentado</div></div>';
-    h += '<div class="ph-actions"><input type="file" id="csv-file" accept=".csv" style="display:none">';
+    var alunosUnicos = Object.keys(emails).length;
+    var ticketMedio = alunosUnicos ? soma(aprovadas, 'liquido') / alunosUnicos : 0;
+    var h = '<div class="page-head"><div><h1>Vendas e base de alunos</h1><div class="ph-sub">' + perLabel + '</div></div>';
+    h += '<div class="ph-actions">' + perBarHTML(vendasPer, r, VENDAS_PRESETS, { customButtons: true, limparPara: 'tudo' }) + '<input type="file" id="csv-file" accept=".csv" style="display:none">';
     h += (pendLanc.length ? '<button class="btn btn-o" id="btn-lancar">Lançar ' + pendLanc.length + ' no financeiro</button>' : '');
     h += '<button class="btn btn-p" id="btn-import">&#8682; Importar CSV da Hotmart</button></div></div>';
     h += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(185px,1fr))">';
     h += '<div class="kpi k-green"><div class="k-label">Faturamento líquido</div><div class="k-value">' + brlS(soma(aprovadas, 'liquido')) + '</div><div class="k-foot">vendas aprovadas importadas</div></div>';
-    h += '<div class="kpi k-blue"><div class="k-label">Vendas aprovadas</div><div class="k-value">' + aprovadas.length + '</div><div class="k-foot">de ' + vendas.length + ' registros importados</div></div>';
-    h += '<div class="kpi"><div class="k-label">Alunos únicos</div><div class="k-value">' + Object.keys(emails).length + '</div><div class="k-foot">por email, sua base de dados</div></div>';
-    h += '<div class="kpi k-purple"><div class="k-label">Ticket médio</div><div class="k-value">' + (aprovadas.length ? brlS(soma(aprovadas, 'liquido') / aprovadas.length) : '--') + '</div><div class="k-foot">líquido por venda</div></div>';
+    h += '<div class="kpi k-blue"><div class="k-label">Vendas aprovadas</div><div class="k-value">' + aprovadas.length + '</div><div class="k-foot">de ' + vendasPeriodo.length + ' registros no período</div></div>';
+    h += '<div class="kpi"><div class="k-label">Alunos únicos</div><div class="k-value">' + alunosUnicos + '</div><div class="k-foot">por email, sua base de dados</div></div>';
+    h += '<div class="kpi k-purple"><div class="k-label">Ticket médio por aluno</div><div class="k-value">' + brlS(ticketMedio) + '</div><div class="k-foot">líquido por aluno único</div></div>';
     h += '</div>';
     h += '<div class="card-p" style="margin-top:13px"><div class="p-head"><div class="p-title">Vendas</div><div class="ph-actions" style="margin-left:auto">';
     h += '<select class="mini-select" id="f-prod"><option value="">Todos os produtos</option>' + produtos.map(function(p){ return '<option' + (vendasProduto === p ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select>';
@@ -2393,7 +2415,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     h += '</div></div><div id="vd-tbl" style="overflow-x:auto;max-height:480px;overflow-y:auto"></div></div>';
     $('view').innerHTML = h;
 
-    var vis = vendas.filter(function(v){ return (!vendasFiltro || (vendasFiltro === 'Aprovado' ? vendaAtiva(v) : v.status === vendasFiltro)) && (!vendasProduto || v.produto === vendasProduto); })
+    var vis = vendasPeriodo.filter(function(v){ return (!vendasFiltro || (vendasFiltro === 'Aprovado' ? vendaAtiva(v) : v.status === vendasFiltro)) && (!vendasProduto || v.produto === vendasProduto); })
       .sort(function(a,b){ return String(b.data || '').localeCompare(String(a.data || '')); });
     $('vd-tbl').innerHTML = vis.length ? '<table class="tbl"><tr><th>Data</th><th>Aluno</th><th>Contato</th><th>Produto</th><th style="text-align:right">Líquido</th><th>Status</th></tr>' + vis.slice(0, 400).map(function(v){
       return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (vendaAtiva(v) ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + '</td></tr>';
@@ -2401,6 +2423,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
 
     $('f-prod').onchange = function(){ vendasProduto = this.value; go('vendas'); };
     $('view').querySelectorAll('[data-vf]').forEach(function(b){ b.onclick = function(){ vendasFiltro = b.getAttribute('data-vf'); go('vendas'); }; });
+    bindPerBar(vendasPer, function(){ go('vendas'); }, { customButtons: true, limparPara: 'tudo' });
     $('btn-import').onclick = function(){ $('csv-file').click(); };
     $('csv-file').addEventListener('change', function(){
       var f = this.files && this.files[0];
