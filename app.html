@@ -1670,7 +1670,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     $('tb-title').textContent = c.nome;
 
     var h = '<div class="page-head"><div><h1>' + esc(c.nome) + '</h1><div class="ph-sub">' + esc(c.restaurante || '') + (c.cidade ? ' · ' + esc(c.cidade) : '') + (c.tipo_consultoria ? ' · <b>' + esc(c.tipo_consultoria) + '</b>' : '') + (c.duracao_meses ? ' · ' + c.duracao_meses + ' meses' : '') + (c.contato ? ' · ' + esc(c.contato) : '') + '</div></div>';
-    h += '<div class="ph-actions"><span class="chip ' + (c.status === 'ativo' ? 'c-green' : 'c-amber') + '">' + c.status + '</span>' + (c.drive_url ? '<button class="btn btn-o btn-sm" id="btn-drive">&#128193; Drive do cliente</button>' : '') + '<button class="btn btn-o" id="btn-edcli">Editar cadastro</button></div></div>';
+    h += '<div class="ph-actions"><span class="chip ' + (c.status === 'ativo' ? 'c-green' : 'c-amber') + '">' + c.status + '</span><button class="btn btn-o btn-sm" id="cli-back">&larr; Clientes</button>' + (c.drive_url ? '<button class="btn btn-o btn-sm" id="btn-drive">&#128193; Drive do cliente</button>' : '') + '<button class="btn btn-o" id="btn-edcli">Editar cadastro</button></div></div>';
 
     var TABS = [['visao','Visão geral'],['indicadores','Indicadores'],['ferramentas','Ferramentas'],['tempo','Linha do tempo'],['visitas','Visitas'],['docs','Documentos']];
     h += '<div class="seg" style="margin-bottom:14px;overflow-x:auto;max-width:100%">' + TABS.map(function(t){
@@ -1679,6 +1679,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     h += '<div id="cli-corpo"></div>';
     $('view').innerHTML = h;
     $('btn-edcli').onclick = function(){ formCliente(c, function(){ go('cliente', id); }); };
+    $('cli-back').onclick = function(){ go('clientes'); };
     if (c.drive_url) $('btn-drive').onclick = function(){ window.open(c.drive_url, '_blank'); };
     $('view').querySelectorAll('[data-tab]').forEach(function(b){
       b.onclick = function(){ cliTab = b.getAttribute('data-tab'); go('cliente', id); };
@@ -2079,7 +2080,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     var prox = sessoes.filter(function(s){ return s.status === 'agendada' && s.data >= hoje; }).sort(function(a,b){ return String(a.data).localeCompare(String(b.data)); })[0];
     $('tb-title').textContent = m.nome;
     var h = '<div class="page-head"><div><h1>' + esc(m.nome) + '</h1><div class="ph-sub">' + esc(m.produto || '') + (m.contato ? ' · ' + esc(m.contato) : '') + ' · desde ' + fmtD(m.inicio) + '</div></div>';
-    h += '<div class="ph-actions"><span class="chip ' + (m.status === 'ativo' ? 'c-green' : 'c-gray') + '">' + m.status + '</span><button class="btn btn-o" id="btn-edmen">Editar cadastro</button><button class="btn btn-p" id="btn-ag">Agendar sessão</button></div></div>';
+    h += '<div class="ph-actions"><span class="chip ' + (m.status === 'ativo' ? 'c-green' : 'c-gray') + '">' + m.status + '</span><button class="btn btn-o btn-sm" id="men-back">&larr; Mentorados</button><button class="btn btn-o" id="btn-edmen">Editar cadastro</button><button class="btn btn-p" id="btn-ag">Agendar sessão</button></div></div>';
     h += '<div class="grid g3">';
     var feitasN = sessoes.filter(function(s){ return s.status === 'realizada'; }).length;
     h += '<div class="kpi k-purple"><div class="k-label">Sessões realizadas</div><div class="k-value">' + feitasN + (m.encontros_total ? '<span style="font-size:14px;color:var(--ink-muted)"> de ' + m.encontros_total + '</span>' : '') + '</div>' + (m.encontros_total ? '<div class="k-foot"><div class="bar-wrap" style="margin-top:4px"><div class="bar-fill" style="width:' + Math.min(100, Math.round(feitasN / m.encontros_total * 100)) + '%"></div></div></div>' : '') + '</div>';
@@ -2119,6 +2120,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     }
     $('btn-ag').onclick = function(){ formSessao(); };
     $('btn-edmen').onclick = function(){ formMentorado(m, function(){ go('mentorado', id); }); };
+    $('men-back').onclick = function(){ go('mentorados'); };
     $('view').querySelectorAll('[data-sed]').forEach(function(b){ b.onclick = function(){ formSessao(byId(sessoes, b.getAttribute('data-sed'))); }; });
   };
 
