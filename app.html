@@ -2933,7 +2933,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
       if (!confirm('Lançar ' + pendLanc.length + ' vendas aprovadas como receita de Infoproduto no financeiro?')) return;
       for (var i = 0; i < pendLanc.length; i++) {
         var v = pendLanc[i];
-        await DB.insert('rg_financeiro', { tipo: 'receita', categoria: 'Infoproduto', descricao: (v.produto || 'Venda Hotmart') + ' · ' + (v.nome || ''), valor: v.liquido || v.valor || 0, data: v.data || hojeISO() });
+        await DB.insert('rg_financeiro', { tipo: 'receita', categoria: 'Infoproduto', descricao: (v.produto || 'Venda Hotmart') + ' · ' + (v.nome || ''), valor: v.liquido || v.valor || 0, data: v.data || hojeISO(), origem_venda_id: v.id });
         await DB.update('rg_vendas', v.id, { fin_lancado: true });
       }
       go('vendas');
