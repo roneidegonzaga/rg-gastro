@@ -2669,11 +2669,11 @@ table.tbl { width: 100%; border-collapse: collapse; }
           return;
         }
 
+        go('vendas');
         mostrarResumoImportacao({
           arquivo: f.name, totalLinhas: totalLinhas, inseridas: inseridas, inalteradas: inalteradas,
           rejeitadas: rejeitadas, rejeicoes: rejeicoes, loteId: loteId
         });
-        go('vendas');
       };
       rd.readAsText(f, 'utf-8');
     });
