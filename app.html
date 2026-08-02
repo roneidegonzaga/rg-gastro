@@ -2577,6 +2577,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
   }
   var vendasFiltro = 'Aprovado';
   var vendasProdutos = null;
+  var vendasBusca = '';
   var vendasPer = { p: 'tudo', ini: '', fim: '' };
   var VENDAS_PRESETS = [['7d','7 dias'],['14d','14 dias'],['30d','30 dias'],['60d','60 dias'],['90d','90 dias'],['mes','Mês atual'],['mesant','Mês anterior'],['tudo','Todo o período']];
   var vendasForaHandler = null;
@@ -2602,6 +2603,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     var vendasPeriodoProduto = vendasPeriodo.filter(function(v){ return produtoOk(v.produto); });
     var aprovadas = vendasPeriodoProduto.filter(vendaAtiva);
     var pendLanc = aprovadas.filter(function(v){ return !v.fin_lancado; });
+    var pendenciasCount = vendasPeriodoProduto.filter(function(v){ return v.pendencia_financeira; }).length;
     var emails = {};
     aprovadas.forEach(function(v){ if (v.email) emails[v.email.toLowerCase()] = 1; });
     var alunosUnicos = Object.keys(emails).length;
@@ -2628,25 +2630,35 @@ table.tbl { width: 100%; border-collapse: collapse; }
     h += '<div class="kpi k-purple"><div class="k-label">Ticket médio por aluno</div><div class="k-value">' + brlS(ticketMedio) + '</div><div class="k-foot">líquido por aluno único</div></div>';
     h += '</div>';
     h += '<div class="card-p" style="margin-top:13px"><div class="p-head"><div class="p-title">Vendas</div><div class="ph-actions" style="margin-left:auto">';
+    h += '<input type="text" id="vd-busca" class="mini-input" placeholder="Buscar por aluno ou transação..." value="' + esc(vendasBusca) + '" style="max-width:220px">';
     h += '<details class="prod-multi" id="prod-multi"><summary class="mini-select">' + esc(labelProdutos()) + '</summary><div class="prod-multi-panel">' +
       '<input type="text" class="mini-input" id="prod-search" placeholder="Buscar produto..." aria-label="Buscar produto" style="width:100%;box-sizing:border-box;margin-bottom:8px">' +
       '<div class="prod-multi-actions"><button type="button" id="prod-all">Selecionar todos</button><button type="button" id="prod-clear">Limpar seleção</button></div>' +
       '<div class="prod-multi-list" id="prod-list">' + produtos.map(function(p){
         return '<label class="prod-multi-item" data-item><input type="checkbox" data-prod="' + esc(p) + '"' + (produtoOk(p) ? ' checked' : '') + '> ' + esc(p) + '</label>';
       }).join('') + '</div></div></details>';
-    h += '<div class="seg"><button data-vf="Aprovado" class="' + (vendasFiltro === 'Aprovado' ? 'active' : '') + '">Aprovadas</button><button data-vf="" class="' + (vendasFiltro === '' ? 'active' : '') + '">Todas</button></div>';
+    h += '<div class="seg"><button data-vf="Aprovado" class="' + (vendasFiltro === 'Aprovado' ? 'active' : '') + '">Aprovadas</button><button data-vf="Pendencia" class="' + (vendasFiltro === 'Pendencia' ? 'active' : '') + '">' + (pendenciasCount > 0 ? '&#9888; Pendências ' + pendenciasCount : 'Pendências') + '</button><button data-vf="" class="' + (vendasFiltro === '' ? 'active' : '') + '">Todas</button></div>';
     h += '</div></div><div id="vd-tbl" style="overflow-x:auto;max-height:480px;overflow-y:auto"></div></div>';
     $('view').innerHTML = h;
 
-    var vis = vendasPeriodoProduto.filter(function(v){ return !vendasFiltro || (vendasFiltro === 'Aprovado' ? vendaAtiva(v) : v.status === vendasFiltro); })
-      .sort(function(a,b){ return String(b.data || '').localeCompare(String(a.data || '')); });
-    $('vd-tbl').innerHTML = vis.length ? '<table class="tbl"><tr><th>Data</th><th>Aluno</th><th>Contato</th><th>Produto</th><th style="text-align:right">Líquido</th><th>Status</th></tr>' + vis.slice(0, 400).map(function(v){
-      return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (vendaAtiva(v) ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + (v.pendencia_financeira ? ' <span class="chip c-red" data-pendencia="' + v.id + '" style="cursor:pointer" title="Pendência financeira — clique para ver o que mudou">&#9888; pendência</span>' : '') + '</td></tr>';
-    }).join('') + '</table>' : '<div class="empty">Nada importado ainda. Na Hotmart: Vendas &rarr; Exportar &rarr; CSV, e traz o arquivo aqui.</div>';
+    function renderTabela(){
+      var vis = vendasPeriodoProduto.filter(function(v){
+        if (vendasFiltro === 'Aprovado') return vendaAtiva(v);
+        if (vendasFiltro === 'Pendencia') return v.pendencia_financeira === true;
+        return true;
+      }).filter(function(v){
+        if (!vendasBusca) return true;
+        return String(v.nome || '').toLowerCase().indexOf(vendasBusca) > -1 || String(v.transacao || '').toLowerCase().indexOf(vendasBusca) > -1;
+      }).sort(function(a,b){ return String(b.data || '').localeCompare(String(a.data || '')); });
+      $('vd-tbl').innerHTML = vis.length ? '<table class="tbl"><tr><th>Data</th><th>Aluno</th><th>Transação</th><th>Contato</th><th>Produto</th><th style="text-align:right">Líquido</th><th>Status</th></tr>' + vis.slice(0, 400).map(function(v){
+        return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.transacao || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (vendaAtiva(v) ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + (v.pendencia_financeira ? ' <span class="chip c-red" data-pendencia="' + v.id + '" style="cursor:pointer" title="Pendência financeira — clique para ver o que mudou">&#9888; PENDÊNCIA</span>' : '') + '</td></tr>';
+      }).join('') + '</table>' : '<div class="empty">Nada importado ainda. Na Hotmart: Vendas &rarr; Exportar &rarr; CSV, e traz o arquivo aqui.</div>';
 
-    $('view').querySelectorAll('[data-pendencia]').forEach(function(el){
-      el.onclick = function(){ mostrarPendenciaFinanceira(parseInt(el.getAttribute('data-pendencia'), 10)); };
-    });
+      $('view').querySelectorAll('[data-pendencia]').forEach(function(el){
+        el.onclick = function(){ mostrarPendenciaFinanceira(parseInt(el.getAttribute('data-pendencia'), 10)); };
+      });
+    }
+    renderTabela();
 
     var pm = $('prod-multi');
     $('view').querySelectorAll('[data-prod]').forEach(function(cb){
@@ -2665,6 +2677,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
       var q = this.value.toLowerCase();
       $('view').querySelectorAll('[data-item]').forEach(function(it){ it.style.display = it.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none'; });
     };
+    $('vd-busca').oninput = function(){ vendasBusca = this.value.toLowerCase(); renderTabela(); };
     if (vendasForaHandler) document.removeEventListener('click', vendasForaHandler);
     vendasForaHandler = function(ev){ if (pm && pm.open && !pm.contains(ev.target)) pm.open = false; };
     document.addEventListener('click', vendasForaHandler);
