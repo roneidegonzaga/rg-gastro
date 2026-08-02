@@ -2265,8 +2265,10 @@ table.tbl { width: 100%; border-collapse: collapse; }
 
   /* ================= CURSOS (GESTÃO) ================= */
   VIEWS.cursos = async function(){
-    var res = await Promise.all([DB.list('rg_cursos'), DB.list('rg_tarefas'), DB.list('rg_alunos'), DB.list('rg_vendas')]);
+    var res = await Promise.all([DB.list('rg_cursos'), DB.list('rg_tarefas'), DB.list('rg_alunos'), DB.list('rg_vendas'), DB.list('rg_vendas_lotes')]);
     var cursos = res[0], tarefas = res[1], alunos = res[2], vendas = res[3];
+    LOTES_POR_ID = {};
+    res[4].forEach(function(l){ LOTES_POR_ID[l.id] = l; });
     var h = '<div class="page-head"><div><h1>Cursos</h1><div class="ph-sub">cada curso gerenciado como projeto: atividades, prazos e responsáveis</div></div>';
     h += '<div class="ph-actions"><button class="btn btn-p" id="btn-curso">+ Novo curso</button></div></div>';
     h += '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(250px,1fr))">';
@@ -2392,14 +2394,67 @@ table.tbl { width: 100%; border-collapse: collapse; }
     var m = String(v || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
     return m ? m[3] + '-' + m[2] + '-' + m[1] : null;
   }
-  function vendaAtiva(v){ return v.status === 'Aprovado' || v.status === 'Completo'; }
+  var LOTES_POR_ID = {};
+  function vendaVisivel(v){
+    if (v.excluido) return false;
+    if (v.lote_id == null) return true;
+    var lote = LOTES_POR_ID[v.lote_id];
+    if (!lote) return false;
+    return lote.status === 'ativo' && v.importacao_concluida === true;
+  }
+  function vendaAtiva(v){ return vendaVisivel(v) && (v.status === 'Aprovado' || v.status === 'Completo'); }
+  async function criarLote(dados){
+    var r = await sb.from('rg_vendas_lotes').insert(dados).select().single();
+    if (r.error) return { ok: false, erro: r.error.message };
+    return { ok: true, data: r.data };
+  }
+  async function inserirVendaLote(row){
+    var r = await sb.from('rg_vendas').insert(row).select().single();
+    if (r.error) return { ok: false, erro: r.error.message };
+    return { ok: true, data: r.data };
+  }
+  async function atualizarLote(id, patch){
+    var r = await sb.from('rg_vendas_lotes').update(patch).eq('id', id).select().single();
+    if (r.error) return { ok: false, erro: r.error.message };
+    return { ok: true, data: r.data };
+  }
+  function mostrarResumoImportacao(r){
+    var LIMITE = 20;
+    var visiveis = r.rejeicoes.slice(0, LIMITE);
+    var resto = r.rejeicoes.length - visiveis.length;
+    var html = '<h3>Resumo da importação</h3>';
+    html += '<div style="font-size:11px;color:var(--ink-muted);margin:-8px 0 13px;font-weight:600">' + esc(r.arquivo) + '</div>';
+    html += '<div class="grid g2" style="margin-bottom:13px">';
+    html += '<div class="kpi"><div class="k-label">Linhas processadas</div><div class="k-value">' + r.totalLinhas + '</div></div>';
+    html += '<div class="kpi k-blue"><div class="k-label">Inseridas</div><div class="k-value">' + r.inseridas + '</div></div>';
+    html += '<div class="kpi"><div class="k-label">Inalteradas</div><div class="k-value">' + r.inalteradas + '</div></div>';
+    html += '<div class="kpi k-red"><div class="k-label">Rejeitadas</div><div class="k-value">' + r.rejeitadas + '</div></div>';
+    html += '</div>';
+    if (visiveis.length) {
+      html += '<div style="font-size:11px;font-weight:800;margin-bottom:6px">Linhas rejeitadas</div>';
+      html += '<div style="max-height:220px;overflow-y:auto;font-size:11px">' + visiveis.map(function(x){
+        return '<div style="padding:5px 0;border-bottom:1px solid var(--line)"><b>Linha ' + x.linha + '</b> — ' + esc(x.motivo) + '</div>';
+      }).join('') + '</div>';
+      if (resto > 0) html += '<div style="font-size:10px;color:var(--ink-muted);margin-top:6px">+ ' + resto + ' rejeições não exibidas aqui</div>';
+    }
+    if (r.loteId) html += '<div style="font-size:10px;color:var(--ink-muted);margin-top:10px">Lote #' + r.loteId + '</div>';
+    html += '<div class="m-actions"><button class="btn btn-p" id="m-cancel">Fechar</button></div>';
+    $('modal').innerHTML = html;
+    $('modal-bg').classList.add('show');
+    modalSave = null; modalDirty = false;
+    $('m-cancel').onclick = closeModal;
+  }
   var vendasFiltro = 'Aprovado';
   var vendasProdutos = null;
   var vendasPer = { p: 'tudo', ini: '', fim: '' };
   var VENDAS_PRESETS = [['7d','7 dias'],['14d','14 dias'],['30d','30 dias'],['60d','60 dias'],['90d','90 dias'],['mes','Mês atual'],['mesant','Mês anterior'],['tudo','Todo o período']];
   var vendasForaHandler = null;
   VIEWS.vendas = async function(){
-    var vendas = await DB.list('rg_vendas');
+    var lotes = await DB.list('rg_vendas_lotes');
+    LOTES_POR_ID = {};
+    lotes.forEach(function(l){ LOTES_POR_ID[l.id] = l; });
+    var vendasTodas = await DB.list('rg_vendas');
+    var vendas = vendasTodas.filter(vendaVisivel);
     var produtos = [];
     vendas.forEach(function(v){ if (v.produto && produtos.indexOf(v.produto) < 0) produtos.push(v.produto); });
     function produtoOk(p){ return vendasProdutos === null || vendasProdutos.indexOf(p) > -1; }
@@ -2483,25 +2538,95 @@ table.tbl { width: 100%; border-collapse: collapse; }
             iEmail = col('email', 'e-mail'), iDDD = col('ddd'), iTel = col('telefone'),
             iLiq = col('faturamento líquido', 'valor que você recebeu convertido', 'valor líquido'), iVal = col('preço total', 'preço do produto', 'valor');
         if (iTrans < 0 || iNome < 0) return alert('Não achei as colunas esperadas (Transação, Nome). Esse CSV é o de vendas da Hotmart?');
+
+        var loteRes = await criarLote({
+          arquivo_nome: f.name,
+          importado_por: perfil.user_id,
+          importado_por_nome: perfil.nome || perfil.email,
+          status: 'processando'
+        });
+        if (!loteRes.ok) { alert('Não foi possível iniciar o lote de importação: ' + loteRes.erro + '. Nada foi importado.'); return; }
+        var loteId = loteRes.data.id;
+
         var existentes = {};
-        vendas.forEach(function(v){ if (v.transacao) existentes[v.transacao] = 1; });
-        var novas = 0, duplicadas = 0;
-        for (var r = 1; r < rows.length; r++) {
-          var rw = rows[r];
-          if (!rw[iTrans]) continue;
-          if (existentes[rw[iTrans]]) { duplicadas++; continue; }
-          existentes[rw[iTrans]] = 1;
+        vendasTodas.forEach(function(v){ if (v.transacao) existentes[v.transacao] = 1; });
+        var totalLinhas = rows.length - 1;
+        var inseridas = 0, inalteradas = 0, rejeitadas = 0, rejeicoes = [], erroFatal = null;
+
+        for (var i = 1; i < rows.length; i++) {
+          var rw = rows[i];
+          if (!rw[iTrans]) { rejeitadas++; rejeicoes.push({ linha: i, motivo: 'sem código de transação' }); continue; }
+          if (existentes[rw[iTrans]]) { inalteradas++; continue; }
           var liq = iLiq > -1 ? numBR(rw[iLiq]) : 0;
           if (!liq && iVal > -1) liq = numBR(rw[iVal]);
-          await DB.insert('rg_vendas', {
+          var res = await inserirVendaLote({
             transacao: rw[iTrans], produto: iProd > -1 ? rw[iProd] : '', nome: rw[iNome] || '',
             email: iEmail > -1 ? rw[iEmail] : '', telefone: ((iDDD > -1 && rw[iDDD] ? '(' + rw[iDDD] + ') ' : '') + (iTel > -1 ? (rw[iTel] || '') : '')).trim(),
             valor: iVal > -1 ? numBR(rw[iVal]) : liq, liquido: liq,
-            status: iStatus > -1 ? rw[iStatus] : '', data: iData > -1 ? dataBR(rw[iData]) : null, fin_lancado: false
+            status: iStatus > -1 ? rw[iStatus] : '', data: iData > -1 ? dataBR(rw[iData]) : null, fin_lancado: false,
+            lote_id: loteId, importacao_concluida: false
           });
-          novas++;
+          if (!res.ok) { erroFatal = { linha: i, detalhe: res.erro }; break; }
+          existentes[rw[iTrans]] = 1;
+          inseridas++;
         }
-        alert(novas + ' venda' + (novas === 1 ? '' : 's') + ' importada' + (novas === 1 ? '' : 's') + (duplicadas ? '. ' + duplicadas + ' já existiam e foram ignoradas (sem duplicar nada).' : '.'));
+
+        if (erroFatal) {
+          await atualizarLote(loteId, {
+            status: 'erro', erro_linha: erroFatal.linha, erro_detalhe: erroFatal.detalhe,
+            total_linhas: totalLinhas, inseridas: inseridas, inalteradas: inalteradas, rejeitadas: rejeitadas,
+            rejeicoes: JSON.stringify(rejeicoes)
+          });
+          alert('Importação interrompida por erro técnico na linha ' + erroFatal.linha + ': ' + erroFatal.detalhe +
+            '. As vendas já inseridas neste lote permanecem ocultas até revisão manual.');
+          go('vendas');
+          return;
+        }
+
+        // Ordem A: lote primeiro, so entao as vendas
+        var loteOk = await atualizarLote(loteId, {
+          status: 'ativo', total_linhas: totalLinhas, inseridas: inseridas, inalteradas: inalteradas, rejeitadas: rejeitadas,
+          rejeicoes: JSON.stringify(rejeicoes)
+        });
+        if (!loteOk.ok) {
+          alert('Falha ao confirmar o lote de importação: ' + loteOk.erro + '. As vendas inseridas permanecem ocultas até revisão manual no Supabase DEV.');
+          go('vendas');
+          return;
+        }
+
+        var vendasOk = await sb.from('rg_vendas').update({ importacao_concluida: true }).eq('lote_id', loteId).eq('importacao_concluida', false);
+        if (vendasOk.error) {
+          var marcarErro1 = await atualizarLote(loteId, { status: 'erro', erro_detalhe: 'Falha na confirmação final: existem vendas do lote ainda não confirmadas.' });
+          if (!marcarErro1.ok) {
+            alert('Não foi possível confirmar o resultado desta importação, nem registrar isso como erro no lote #' + loteId + '. ' +
+              'Erro ao tentar registrar: ' + marcarErro1.erro + '. É necessário revisar manualmente este lote no Supabase DEV.');
+          } else {
+            alert('Falha na confirmação final da importação. As vendas permanecem ocultas até revisão manual.');
+          }
+          go('vendas');
+          return;
+        }
+
+        // validacao obrigatoria pos-confirmacao
+        var confere = await sb.from('rg_vendas').select('id', { count: 'exact', head: true }).eq('lote_id', loteId).eq('importacao_concluida', false);
+        if (confere.error || (confere.count || 0) > 0) {
+          var detalheConfere = confere.error ? ('Falha na consulta de conferência: ' + confere.error.message)
+            : 'Falha na confirmação final: existem vendas do lote ainda não confirmadas.';
+          var marcarErro2 = await atualizarLote(loteId, { status: 'erro', erro_detalhe: detalheConfere });
+          if (!marcarErro2.ok) {
+            alert('Não foi possível confirmar o resultado desta importação, nem registrar isso como erro no lote #' + loteId + '. ' +
+              'Erro ao tentar registrar: ' + marcarErro2.erro + '. É necessário revisar manualmente este lote no Supabase DEV.');
+          } else {
+            alert('A importação não pôde ser confirmada com segurança. As vendas permanecem ocultas até revisão manual no Supabase DEV. Nenhuma venda foi lançada no Financeiro.');
+          }
+          go('vendas');
+          return;
+        }
+
+        mostrarResumoImportacao({
+          arquivo: f.name, totalLinhas: totalLinhas, inseridas: inseridas, inalteradas: inalteradas,
+          rejeitadas: rejeitadas, rejeicoes: rejeicoes, loteId: loteId
+        });
         go('vendas');
       };
       rd.readAsText(f, 'utf-8');
