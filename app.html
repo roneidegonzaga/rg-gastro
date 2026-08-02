@@ -2435,6 +2435,48 @@ table.tbl { width: 100%; border-collapse: collapse; }
     if (r.error) return { ok: false, erro: r.error.message };
     return { ok: true, data: r.data };
   }
+  function valorCsvCanonico(valorBruto){
+    var texto = String(valorBruto == null ? '' : valorBruto).trim();
+    if (!texto) return null;
+    var numero = numBR(texto);
+    if (!Number.isFinite(numero)) {
+      throw new Error('valor numérico inválido: "' + texto + '"');
+    }
+    return numero.toFixed(2);
+  }
+  async function buscarLotesElegiveis(){
+    var lr = await sb.from('rg_vendas_lotes').select('id,arquivo_nome,importado_em,status').eq('status', 'ativo').order('importado_em', { ascending: false });
+    if (lr.error) return { ok: false, erro: lr.error.message };
+    var elegiveis = [];
+    for (var i = 0; i < lr.data.length; i++) {
+      var l = lr.data[i];
+      var cr = await sb.from('rg_vendas').select('id', { count: 'exact', head: true }).eq('lote_id', l.id);
+      if (cr.error) return { ok: false, erro: 'falha ao contar vendas do lote #' + l.id + ': ' + cr.error.message };
+      if ((cr.count || 0) > 0) elegiveis.push({ id: l.id, arquivo_nome: l.arquivo_nome, importado_em: l.importado_em, vendas: cr.count });
+    }
+    return { ok: true, lotes: elegiveis };
+  }
+  async function buscarVendasParaReprocessar(transacoes){
+    var unicas = [];
+    transacoes.forEach(function(t){ if (t && unicas.indexOf(t) < 0) unicas.push(t); });
+    var porTransacao = {};
+    if (!unicas.length) return { ok: true, porTransacao: porTransacao };
+    var BLOCO = 200;
+    for (var i = 0; i < unicas.length; i += BLOCO) {
+      var bloco = unicas.slice(i, i + BLOCO);
+      var r = await sb.from('rg_vendas').select('id,transacao,lote_id,excluido,status,valor,liquido,fin_lancado').in('transacao', bloco);
+      if (r.error) return { ok: false, erro: r.error.message };
+      r.data.forEach(function(row){ porTransacao[normalizarTransacao(row.transacao)] = row; });
+    }
+    return { ok: true, porTransacao: porTransacao };
+  }
+  async function consultarEstadoLote(id){
+    var r = await sb.from('rg_vendas_lotes')
+      .select('id,status,atualizadas,inalteradas,rejeitadas,alteracoes_status,alteracoes_valor,alteracoes_liquido,erro_detalhe')
+      .eq('id', id).single();
+    if (r.error) return { ok: false, erro: r.error.message };
+    return { ok: true, data: r.data };
+  }
   function mostrarResumoImportacao(r){
     var LIMITE = 20;
     var visiveis = r.rejeicoes.slice(0, LIMITE);
@@ -2461,6 +2503,45 @@ table.tbl { width: 100%; border-collapse: collapse; }
     modalSave = null; modalDirty = false;
     $('m-cancel').onclick = closeModal;
   }
+  function mostrarResumoReprocessamento(r){
+    var LIMITE = 20;
+    var visiveis = r.rejeicoes.slice(0, LIMITE);
+    var resto = r.rejeicoes.length - visiveis.length;
+    var html = '<h3>Resumo do reprocessamento</h3>';
+    html += '<div style="font-size:11px;color:var(--ink-muted);margin:-8px 0 13px;font-weight:600">' + esc(r.arquivo) + ' &middot; lote original #' + r.loteOriginalId + '</div>';
+    html += '<div class="grid g2" style="margin-bottom:13px">';
+    html += '<div class="kpi"><div class="k-label">Linhas processadas</div><div class="k-value">' + r.totalLinhas + '</div></div>';
+    html += '<div class="kpi k-blue"><div class="k-label">Atualizadas</div><div class="k-value">' + r.atualizadas + '</div></div>';
+    html += '<div class="kpi"><div class="k-label">Inalteradas</div><div class="k-value">' + r.inalteradas + '</div></div>';
+    html += '<div class="kpi k-red"><div class="k-label">Rejeitadas</div><div class="k-value">' + r.rejeitadas + '</div></div>';
+    html += '</div>';
+    html += '<div class="grid g2" style="margin-bottom:13px">';
+    html += '<div class="kpi"><div class="k-label">Status alterado</div><div class="k-value">' + r.alteracoesStatus + '</div></div>';
+    html += '<div class="kpi"><div class="k-label">Valor alterado</div><div class="k-value">' + r.alteracoesValor + '</div></div>';
+    html += '<div class="kpi"><div class="k-label">Líquido alterado</div><div class="k-value">' + r.alteracoesLiquido + '</div></div>';
+    html += '<div class="kpi"><div class="k-label">Ausentes no CSV</div><div class="k-value">' + r.ausentes.length + '</div></div>';
+    html += '</div>';
+    if (visiveis.length) {
+      html += '<div style="font-size:11px;font-weight:800;margin-bottom:6px">Linhas rejeitadas</div>';
+      html += '<div style="max-height:220px;overflow-y:auto;font-size:11px">' + visiveis.map(function(x){
+        return '<div style="padding:5px 0;border-bottom:1px solid var(--line)"><b>Linha ' + x.linha + '</b>' + (x.transacao ? ' (' + esc(x.transacao) + ')' : '') + ' — ' + esc(x.motivo) + '</div>';
+      }).join('') + '</div>';
+      if (resto > 0) html += '<div style="font-size:10px;color:var(--ink-muted);margin-top:6px">+ ' + resto + ' rejeições não exibidas aqui</div>';
+    }
+    if (r.ausentes.length) {
+      html += '<div style="font-size:11px;font-weight:800;margin:13px 0 6px">Vendas do lote original ausentes deste CSV (informativo — nada foi alterado nelas)</div>';
+      html += '<div style="max-height:150px;overflow-y:auto;font-size:11px">' + r.ausentes.slice(0, LIMITE).map(function(a){
+        return '<div style="padding:4px 0;border-bottom:1px solid var(--line)">' + esc(a.transacao) + (a.excluido ? ' <span class="chip c-gray">excluída</span>' : '') + '</div>';
+      }).join('') + '</div>';
+      if (r.ausentes.length > LIMITE) html += '<div style="font-size:10px;color:var(--ink-muted);margin-top:6px">+ ' + (r.ausentes.length - LIMITE) + ' ausentes não exibidas aqui</div>';
+    }
+    html += '<div style="font-size:10px;color:var(--ink-muted);margin-top:10px">Lote de reprocessamento #' + r.loteId + '</div>';
+    html += '<div class="m-actions"><button class="btn btn-p" id="m-cancel">Fechar</button></div>';
+    $('modal').innerHTML = html;
+    $('modal-bg').classList.add('show');
+    modalSave = null; modalDirty = false;
+    $('m-cancel').onclick = closeModal;
+  }
   var vendasFiltro = 'Aprovado';
   var vendasProdutos = null;
   var vendasPer = { p: 'tudo', ini: '', fim: '' };
@@ -2470,6 +2551,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     var lotes = await DB.list('rg_vendas_lotes');
     LOTES_POR_ID = {};
     lotes.forEach(function(l){ LOTES_POR_ID[l.id] = l; });
+    var lotesElegiveisRes = await buscarLotesElegiveis();
     var vendasTodas = await DB.list('rg_vendas');
     var vendas = vendasTodas.filter(vendaVisivel);
     var produtos = [];
@@ -2491,8 +2573,19 @@ table.tbl { width: 100%; border-collapse: collapse; }
     aprovadas.forEach(function(v){ if (v.email) emails[v.email.toLowerCase()] = 1; });
     var alunosUnicos = Object.keys(emails).length;
     var ticketMedio = alunosUnicos ? soma(aprovadas, 'liquido') / alunosUnicos : 0;
+    var reprocessarHtml;
+    if (!lotesElegiveisRes.ok) {
+      reprocessarHtml = '<span style="font-size:11px;color:var(--red)">Não foi possível carregar lotes elegíveis para reprocessamento: ' + esc(lotesElegiveisRes.erro) + '</span>';
+    } else if (!lotesElegiveisRes.lotes.length) {
+      reprocessarHtml = '<span style="font-size:11px;color:var(--ink-muted)">Nenhum lote elegível para reprocessamento</span>';
+    } else {
+      reprocessarHtml = '<select id="sel-lote-reprocessar" class="mini-select" style="max-width:280px">' + lotesElegiveisRes.lotes.map(function(l){
+        return '<option value="' + l.id + '">Lote #' + l.id + ' — ' + esc(l.arquivo_nome || '(sem nome)') + ' — ' + fmtD(l.importado_em) + ' — ' + l.vendas + ' vendas</option>';
+      }).join('') + '</select><button class="btn btn-o" id="btn-reprocessar">Reprocessar</button>';
+    }
     var h = '<div class="page-head"><div><h1>Vendas e base de alunos</h1><div class="ph-sub">' + perLabel + '</div></div>';
-    h += '<div class="ph-actions">' + perBarHTML(vendasPer, r, VENDAS_PRESETS, { customButtons: true, limparPara: 'tudo' }) + '<input type="file" id="csv-file" accept=".csv" style="display:none">';
+    h += '<div class="ph-actions">' + perBarHTML(vendasPer, r, VENDAS_PRESETS, { customButtons: true, limparPara: 'tudo' }) + '<input type="file" id="csv-file" accept=".csv" style="display:none"><input type="file" id="csv-reprocess-file" accept=".csv" style="display:none">';
+    h += reprocessarHtml;
     h += (pendLanc.length ? '<button class="btn btn-o" id="btn-lancar">Lançar ' + pendLanc.length + ' no financeiro</button>' : '');
     h += '<button class="btn btn-p" id="btn-import">&#8682; Importar CSV da Hotmart</button></div></div>';
     h += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(185px,1fr))">';
@@ -2673,6 +2766,163 @@ table.tbl { width: 100%; border-collapse: collapse; }
         mostrarResumoImportacao({
           arquivo: f.name, totalLinhas: totalLinhas, inseridas: inseridas, inalteradas: inalteradas,
           rejeitadas: rejeitadas, rejeicoes: rejeicoes, loteId: loteId
+        });
+      };
+      rd.readAsText(f, 'utf-8');
+    });
+    var btnReproc = $('btn-reprocessar');
+    if (btnReproc) {
+      btnReproc.onclick = function(){
+        var loteOriginalId = parseInt($('sel-lote-reprocessar').value, 10);
+        var loteInfo = lotesElegiveisRes.lotes.filter(function(l){ return l.id === loteOriginalId; })[0];
+        if (!loteInfo) { alert('Selecione um lote válido.'); return; }
+        var msg = 'Reprocessar o lote #' + loteInfo.id + ' (' + (loteInfo.arquivo_nome || '(sem nome)') + ', ' + loteInfo.vendas + ' vendas vinculadas)?\n\n' +
+          'Só status, valor e líquido das vendas desse lote poderão ser atualizados a partir do novo CSV. Nenhuma venda nova será criada.';
+        if (!confirm(msg)) return;
+        $('csv-reprocess-file').setAttribute('data-lote-original', String(loteInfo.id));
+        $('csv-reprocess-file').click();
+      };
+    }
+    $('csv-reprocess-file').addEventListener('change', function(){
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f) return;
+      var loteOriginalId = parseInt(this.getAttribute('data-lote-original'), 10);
+      var rd = new FileReader();
+      rd.onload = async function(){
+        var rows = parseCSVTexto(rd.result);
+        if (rows.length < 2) return alert('Arquivo vazio ou num formato que não reconheci.');
+        var head = rows[0].map(function(x){ return String(x).trim().toLowerCase(); });
+        function col(){ for (var a = 0; a < arguments.length; a++) { var i = head.indexOf(String(arguments[a]).toLowerCase()); if (i > -1) return i; } return -1; }
+        var iTrans = col('transação', 'transacao', 'código da transação'), iStatus = col('status'),
+            iLiq = col('faturamento líquido', 'valor que você recebeu convertido', 'valor líquido'), iVal = col('preço total', 'preço do produto', 'valor');
+        if (iTrans < 0) return alert('Não achei a coluna de Transação. Esse CSV é o de vendas da Hotmart?');
+
+        var chk1 = await sb.from('rg_vendas_lotes').select('id,status').eq('id', loteOriginalId).single();
+        if (chk1.error || !chk1.data || chk1.data.status !== 'ativo') { alert('Este lote não está mais ativo — atualize a página e tente de novo.'); return; }
+        var chk2 = await sb.from('rg_vendas').select('id', { count: 'exact', head: true }).eq('lote_id', loteOriginalId);
+        if (chk2.error || (chk2.count || 0) === 0) { alert('Este lote não possui mais vendas vinculadas — atualize a página.'); return; }
+
+        var todasDoLoteRes = await sb.from('rg_vendas').select('id,transacao,excluido').eq('lote_id', loteOriginalId);
+        if (todasDoLoteRes.error) { alert('Não foi possível consultar as vendas do lote original: ' + todasDoLoteRes.error.message); return; }
+        var todasDoLote = todasDoLoteRes.data;
+
+        var candidatos = [];
+        for (var c = 1; c < rows.length; c++) { candidatos.push(normalizarTransacao(rows[c][iTrans])); }
+        var buscaRes = await buscarVendasParaReprocessar(candidatos);
+        if (!buscaRes.ok) { alert('Não foi possível consultar as vendas do lote para reprocessamento: ' + buscaRes.erro); return; }
+        var porTransacao = buscaRes.porTransacao;
+
+        var totalLinhas = rows.length - 1;
+        var itens = [], rejeicoes = [], vistosNesteArquivo = {}, vistasNoCsv = {};
+
+        for (var i = 1; i < rows.length; i++) {
+          var numeroLinha = i + 1;
+          var rw = rows[i];
+          var transacaoNorm = normalizarTransacao(rw[iTrans]);
+
+          if (!transacaoNorm) { rejeicoes.push({ linha: numeroLinha, transacao: null, motivo: 'sem código de transação' }); continue; }
+          vistasNoCsv[transacaoNorm] = true;
+
+          if (vistosNesteArquivo[transacaoNorm]) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'transação duplicada neste arquivo' }); continue; }
+          vistosNesteArquivo[transacaoNorm] = true;
+
+          var row = porTransacao[transacaoNorm];
+          if (!row) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'não encontrada no lote reprocessado' }); continue; }
+          if (row.lote_id !== loteOriginalId) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'pertence a outro lote (#' + row.lote_id + ')' }); continue; }
+          if (row.excluido) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'venda excluída — nenhuma alteração aplicada' }); continue; }
+
+          var valorNovo, liquidoNovo;
+          try { valorNovo = valorCsvCanonico(iVal > -1 ? rw[iVal] : null); }
+          catch (e) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'valor inválido: ' + e.message }); continue; }
+          try { liquidoNovo = valorCsvCanonico(iLiq > -1 ? rw[iLiq] : null); }
+          catch (e) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'líquido inválido: ' + e.message }); continue; }
+
+          itens.push({ venda_id: row.id, status: iStatus > -1 ? (rw[iStatus] || null) : null, valor: valorNovo, liquido: liquidoNovo });
+        }
+
+        if (itens.length + rejeicoes.length !== totalLinhas) {
+          alert('Falha interna de contagem ao classificar o CSV. Nada foi enviado. Revise antes de tentar de novo.');
+          return;
+        }
+
+        var ausentes = todasDoLote.filter(function(v){ return !vistasNoCsv[normalizarTransacao(v.transacao)]; })
+          .map(function(v){ return { transacao: v.transacao, excluido: v.excluido }; });
+
+        var loteRes = await criarLote({
+          arquivo_nome: f.name, importado_por: perfil.user_id, importado_por_nome: perfil.nome || perfil.email,
+          status: 'processando', reprocessa_lote_id: loteOriginalId
+        });
+        if (!loteRes.ok) { alert('Não foi possível iniciar o lote de reprocessamento: ' + loteRes.erro + '. Nada foi alterado.'); return; }
+        var novoLoteId = loteRes.data.id;
+
+        var rpcRes = await sb.rpc('rg_reprocessar_lote', {
+          p_lote_original_id: loteOriginalId, p_novo_lote_id: novoLoteId,
+          p_total_linhas: totalLinhas, p_itens: itens, p_rejeicoes: rejeicoes
+        });
+
+        if (rpcRes.error) {
+          var estadoRes = await consultarEstadoLote(novoLoteId);
+          if (!estadoRes.ok) {
+            alert('O reprocessamento falhou na comunicação: ' + rpcRes.error.message + '. Além disso, não foi possível consultar o estado real do lote #' + novoLoteId + ' para confirmar o que aconteceu (' + estadoRes.erro + '). É necessário revisar manualmente o lote #' + novoLoteId + ' no Supabase DEV.');
+            go('vendas');
+            return;
+          }
+          var loteEstado = estadoRes.data;
+          if (loteEstado.status === 'ativo') {
+            console.info('reprocessamento do lote #' + novoLoteId + ': resposta da RPC perdida por falha de comunicação (' + rpcRes.error.message + '), mas o lote consta como ativo no banco — resultado recuperado por consulta direta.');
+            go('vendas');
+            mostrarResumoReprocessamento({
+              arquivo: f.name, loteOriginalId: loteOriginalId, loteId: novoLoteId, totalLinhas: totalLinhas,
+              atualizadas: loteEstado.atualizadas, inalteradas: loteEstado.inalteradas,
+              alteracoesStatus: loteEstado.alteracoes_status, alteracoesValor: loteEstado.alteracoes_valor, alteracoesLiquido: loteEstado.alteracoes_liquido,
+              rejeitadas: loteEstado.rejeitadas, rejeicoes: rejeicoes, ausentes: ausentes
+            });
+            return;
+          }
+          if (loteEstado.status === 'erro') {
+            alert('O reprocessamento não foi concluído — a transação da RPC reverteu qualquer atualização e histórico que teria sido feito. Lote #' + novoLoteId + ' está registrado como erro: ' + (loteEstado.erro_detalhe || '(sem detalhe registrado)') + '. Falha de comunicação também reportada pelo navegador: ' + rpcRes.error.message + '.');
+            go('vendas');
+            return;
+          }
+          if (loteEstado.status === 'processando') {
+            var marcarErro = await atualizarLote(novoLoteId, { status: 'erro', erro_detalhe: 'Falha de comunicação com a RPC, resultado não confirmado: ' + rpcRes.error.message });
+            if (marcarErro.ok) {
+              alert('Não foi possível confirmar o resultado da chamada (' + rpcRes.error.message + '). O lote #' + novoLoteId + ', que ainda estava "processando", foi encerrado como erro. Não é possível afirmar com certeza se alguma venda foi alterada antes da falha de comunicação — revise manualmente o lote #' + novoLoteId + ' e seu histórico no Supabase DEV, se necessário.');
+            } else {
+              alert('Não foi possível confirmar o resultado da chamada (' + rpcRes.error.message + '), e também não foi possível marcar o lote #' + novoLoteId + ' como erro (' + marcarErro.erro + '). O lote permanece "processando". É necessário revisar manualmente o lote #' + novoLoteId + ' no Supabase DEV.');
+            }
+            go('vendas');
+            return;
+          }
+          alert('O reprocessamento falhou na comunicação: ' + rpcRes.error.message + '. O lote #' + novoLoteId + ' está em um estado inesperado ("' + loteEstado.status + '") — é necessário revisar manualmente no Supabase DEV.');
+          go('vendas');
+          return;
+        }
+
+        var data = rpcRes.data;
+        if (!data || data.ok !== true) {
+          var partes = ['O reprocessamento falhou: ' + (data ? data.erro : 'resposta vazia da função') + '.'];
+          if (data && data.sqlstate) partes.push('SQLSTATE: ' + data.sqlstate + '.');
+          if (data && data.lote_marcado_como_erro === true) {
+            partes.push('O lote #' + novoLoteId + ' foi marcado como erro — a transação reverteu qualquer atualização e histórico que teria sido feito. Nenhuma venda foi alterada.');
+          } else if (data) {
+            var detalheMarcacao = data.erro_ao_marcar || data.detalhe_marcacao;
+            partes.push('Não foi possível registrar com segurança o status final do lote #' + novoLoteId + (detalheMarcacao ? ' (' + detalheMarcacao + ')' : '') + '. É necessário revisar manualmente o lote #' + novoLoteId + ' no Supabase DEV.');
+          } else {
+            partes.push('Resposta da função vazia — é necessário revisar manualmente o lote #' + novoLoteId + ' no Supabase DEV.');
+          }
+          alert(partes.join(' '));
+          go('vendas');
+          return;
+        }
+
+        go('vendas');
+        mostrarResumoReprocessamento({
+          arquivo: f.name, loteOriginalId: loteOriginalId, loteId: novoLoteId, totalLinhas: totalLinhas,
+          atualizadas: data.atualizadas, inalteradas: data.inalteradas, alteracoesStatus: data.alteracoes_status,
+          alteracoesValor: data.alteracoes_valor, alteracoesLiquido: data.alteracoes_liquido,
+          rejeitadas: data.rejeitadas, rejeicoes: rejeicoes, ausentes: ausentes
         });
       };
       rd.readAsText(f, 'utf-8');
