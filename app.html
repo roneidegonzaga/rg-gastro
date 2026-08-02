@@ -2829,6 +2829,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
 
           var row = porTransacao[transacaoNorm];
           if (!row) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'não encontrada no lote reprocessado' }); continue; }
+          if (row.lote_id == null) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'venda sem lote vinculado' }); continue; }
           if (row.lote_id !== loteOriginalId) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'pertence a outro lote (#' + row.lote_id + ')' }); continue; }
           if (row.excluido) { rejeicoes.push({ linha: numeroLinha, transacao: transacaoNorm, motivo: 'venda excluída — nenhuma alteração aplicada' }); continue; }
 
