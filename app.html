@@ -2410,8 +2410,25 @@ table.tbl { width: 100%; border-collapse: collapse; }
   }
   async function inserirVendaLote(row){
     var r = await sb.from('rg_vendas').insert(row).select().single();
-    if (r.error) return { ok: false, erro: r.error.message };
+    if (r.error) return { ok: false, erro: r.error.message, codigo: r.error.code };
     return { ok: true, data: r.data };
+  }
+  function normalizarTransacao(valor){
+    return String(valor == null ? '' : valor).trim();
+  }
+  async function buscarTransacoesExistentes(transacoes){
+    var unicas = [];
+    transacoes.forEach(function(t){ if (t && unicas.indexOf(t) < 0) unicas.push(t); });
+    var existentes = {};
+    if (!unicas.length) return { ok: true, existentes: existentes };
+    var BLOCO = 200;
+    for (var i = 0; i < unicas.length; i += BLOCO) {
+      var bloco = unicas.slice(i, i + BLOCO);
+      var r = await sb.from('rg_vendas').select('transacao').in('transacao', bloco);
+      if (r.error) return { ok: false, erro: r.error.message };
+      r.data.forEach(function(row){ existentes[normalizarTransacao(row.transacao)] = 1; });
+    }
+    return { ok: true, existentes: existentes };
   }
   async function atualizarLote(id, patch){
     var r = await sb.from('rg_vendas_lotes').update(patch).eq('id', id).select().single();
@@ -2548,26 +2565,55 @@ table.tbl { width: 100%; border-collapse: collapse; }
         if (!loteRes.ok) { alert('Não foi possível iniciar o lote de importação: ' + loteRes.erro + '. Nada foi importado.'); return; }
         var loteId = loteRes.data.id;
 
-        var existentes = {};
-        vendasTodas.forEach(function(v){ if (v.transacao) existentes[v.transacao] = 1; });
+        var candidatos = [];
+        for (var c = 1; c < rows.length; c++) { candidatos.push(normalizarTransacao(rows[c][iTrans])); }
+        var buscaRes = await buscarTransacoesExistentes(candidatos);
+        if (!buscaRes.ok) {
+          var marcarErroBusca = await atualizarLote(loteId, {
+            status: 'erro', erro_detalhe: 'Falha ao pré-consultar transações existentes: ' + buscaRes.erro,
+            total_linhas: rows.length - 1
+          });
+          if (!marcarErroBusca.ok) {
+            alert('Não foi possível consultar as duplicidades existentes, nem registrar isso como erro no lote #' + loteId + '. ' +
+              'Erro ao tentar registrar: ' + marcarErroBusca.erro + '. Nenhuma venda deste CSV foi inserida por este lote. ' +
+              'É necessário revisar manualmente este lote no Supabase DEV.');
+          } else {
+            alert('Não foi possível verificar duplicidades antes de importar: ' + buscaRes.erro + '. ' +
+              'Nenhuma venda deste CSV foi inserida. Lote #' + loteId + ' marcado como erro.');
+          }
+          go('vendas');
+          return;
+        }
+        var existentes = buscaRes.existentes;
         var totalLinhas = rows.length - 1;
         var inseridas = 0, inalteradas = 0, rejeitadas = 0, rejeicoes = [], erroFatal = null;
 
         for (var i = 1; i < rows.length; i++) {
+          var numeroLinha = i + 1;
           var rw = rows[i];
-          if (!rw[iTrans]) { rejeitadas++; rejeicoes.push({ linha: i, motivo: 'sem código de transação' }); continue; }
-          if (existentes[rw[iTrans]]) { inalteradas++; continue; }
+          var transacaoNorm = normalizarTransacao(rw[iTrans]);
+          if (!transacaoNorm) { rejeitadas++; rejeicoes.push({ linha: numeroLinha, motivo: 'sem código de transação' }); continue; }
+          if (existentes[transacaoNorm]) { inalteradas++; continue; }
           var liq = iLiq > -1 ? numBR(rw[iLiq]) : 0;
           if (!liq && iVal > -1) liq = numBR(rw[iVal]);
           var res = await inserirVendaLote({
-            transacao: rw[iTrans], produto: iProd > -1 ? rw[iProd] : '', nome: rw[iNome] || '',
+            transacao: transacaoNorm, produto: iProd > -1 ? rw[iProd] : '', nome: rw[iNome] || '',
             email: iEmail > -1 ? rw[iEmail] : '', telefone: ((iDDD > -1 && rw[iDDD] ? '(' + rw[iDDD] + ') ' : '') + (iTel > -1 ? (rw[iTel] || '') : '')).trim(),
             valor: iVal > -1 ? numBR(rw[iVal]) : liq, liquido: liq,
             status: iStatus > -1 ? rw[iStatus] : '', data: iData > -1 ? dataBR(rw[iData]) : null, fin_lancado: false,
             lote_id: loteId, importacao_concluida: false
           });
-          if (!res.ok) { erroFatal = { linha: i, detalhe: res.erro }; break; }
-          existentes[rw[iTrans]] = 1;
+          if (!res.ok) {
+            if (res.codigo === '23505') {
+              inalteradas++;
+              existentes[transacaoNorm] = 1;
+              console.warn('rg_vendas: transação já existente detectada só no INSERT (23505) — linha ' + numeroLinha + ': ' + res.erro);
+              continue;
+            }
+            erroFatal = { linha: numeroLinha, detalhe: res.erro };
+            break;
+          }
+          existentes[transacaoNorm] = 1;
           inseridas++;
         }
 
