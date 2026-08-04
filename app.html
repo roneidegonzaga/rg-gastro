@@ -2456,6 +2456,18 @@ table.tbl { width: 100%; border-collapse: collapse; }
     }
     return { ok: true, lotes: elegiveis };
   }
+  async function buscarLotesElegiveisParaDesfazer(){
+    var lr = await sb.from('rg_vendas_lotes').select('id,arquivo_nome,importado_em,status,reprocessa_lote_id').eq('status', 'ativo').is('reprocessa_lote_id', null).order('importado_em', { ascending: false });
+    if (lr.error) return { ok: false, erro: lr.error.message };
+    var elegiveis = [];
+    for (var i = 0; i < lr.data.length; i++) {
+      var l = lr.data[i];
+      var cr = await sb.from('rg_vendas').select('id', { count: 'exact', head: true }).eq('lote_id', l.id);
+      if (cr.error) return { ok: false, erro: 'falha ao contar vendas do lote #' + l.id + ': ' + cr.error.message };
+      if ((cr.count || 0) > 0) elegiveis.push({ id: l.id, arquivo_nome: l.arquivo_nome, importado_em: l.importado_em, vendas: cr.count });
+    }
+    return { ok: true, lotes: elegiveis };
+  }
   async function buscarVendasParaReprocessar(transacoes){
     var unicas = [];
     transacoes.forEach(function(t){ if (t && unicas.indexOf(t) < 0) unicas.push(t); });
@@ -2586,6 +2598,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
     LOTES_POR_ID = {};
     lotes.forEach(function(l){ LOTES_POR_ID[l.id] = l; });
     var lotesElegiveisRes = await buscarLotesElegiveis();
+    var lotesParaDesfazerRes = await buscarLotesElegiveisParaDesfazer();
     var vendasTodas = await DB.list('rg_vendas');
     var vendas = vendasTodas.filter(vendaVisivel);
     var produtos = [];
@@ -2618,9 +2631,20 @@ table.tbl { width: 100%; border-collapse: collapse; }
         return '<option value="' + l.id + '">Lote #' + l.id + ' — ' + esc(l.arquivo_nome || '(sem nome)') + ' — ' + fmtD(l.importado_em) + ' — ' + l.vendas + ' vendas</option>';
       }).join('') + '</select><button class="btn btn-o" id="btn-reprocessar">Reprocessar</button>';
     }
+    var desfazerHtml;
+    if (!lotesParaDesfazerRes.ok) {
+      desfazerHtml = '<span style="font-size:11px;color:var(--red)">Não foi possível carregar lotes elegíveis para desfazer: ' + esc(lotesParaDesfazerRes.erro) + '</span>';
+    } else if (!lotesParaDesfazerRes.lotes.length) {
+      desfazerHtml = '<span style="font-size:11px;color:var(--ink-muted)">Nenhum lote elegível para desfazer</span>';
+    } else {
+      desfazerHtml = '<select id="sel-lote-desfazer" class="mini-select" style="max-width:280px">' + lotesParaDesfazerRes.lotes.map(function(l){
+        return '<option value="' + l.id + '">Lote #' + l.id + ' — ' + esc(l.arquivo_nome || '(sem nome)') + ' — ' + fmtD(l.importado_em) + ' — ' + l.vendas + ' vendas</option>';
+      }).join('') + '</select><button class="btn btn-o" id="btn-desfazer">Desfazer lote</button>';
+    }
     var h = '<div class="page-head"><div><h1>Vendas e base de alunos</h1><div class="ph-sub">' + perLabel + '</div></div>';
     h += '<div class="ph-actions">' + perBarHTML(vendasPer, r, VENDAS_PRESETS, { customButtons: true, limparPara: 'tudo' }) + '<input type="file" id="csv-file" accept=".csv" style="display:none"><input type="file" id="csv-reprocess-file" accept=".csv" style="display:none">';
     h += reprocessarHtml;
+    h += desfazerHtml;
     h += (pendLanc.length ? '<button class="btn btn-o" id="btn-lancar">Lançar ' + pendLanc.length + ' no financeiro</button>' : '');
     h += '<button class="btn btn-p" id="btn-import">&#8682; Importar CSV da Hotmart</button></div></div>';
     h += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(185px,1fr))">';
@@ -2831,6 +2855,47 @@ table.tbl { width: 100%; border-collapse: collapse; }
         if (!confirm(msg)) return;
         $('csv-reprocess-file').setAttribute('data-lote-original', String(loteInfo.id));
         $('csv-reprocess-file').click();
+      };
+    }
+    var btnDesfazer = $('btn-desfazer');
+    if (btnDesfazer) {
+      btnDesfazer.onclick = async function(){
+        var loteId = parseInt($('sel-lote-desfazer').value, 10);
+        var loteInfo = lotesParaDesfazerRes.lotes.filter(function(l){ return l.id === loteId; })[0];
+        if (!loteInfo) { alert('Selecione um lote válido.'); return; }
+        var motivo = prompt('Por que deseja desfazer o lote #' + loteInfo.id + ' (' + (loteInfo.arquivo_nome || '(sem nome)') + ', ' + loteInfo.vendas + ' vendas vinculadas)?\n\nO motivo é obrigatório.');
+        if (motivo === null) return;
+        motivo = motivo.trim();
+        if (!motivo) { alert('É necessário informar um motivo para desfazer o lote.'); return; }
+        if (!confirm('Confirma desfazer o lote #' + loteInfo.id + '? Todas as ' + loteInfo.vendas + ' vendas vinculadas deixarão de aparecer no sistema (nenhum dado é apagado). Esta ação é bloqueada se qualquer venda já estiver lançada no financeiro.')) return;
+
+        var rpcRes = await sb.rpc('rg_desfazer_lote', { p_lote_id: loteId, p_motivo: motivo });
+
+        if (rpcRes.error) {
+          var estadoRes = await consultarEstadoLote(loteId);
+          if (!estadoRes.ok) {
+            alert('Falha na comunicação ao desfazer o lote: ' + rpcRes.error.message + '. Além disso, não foi possível consultar o estado real do lote #' + loteId + ' para confirmar o que aconteceu (' + estadoRes.erro + '). É necessário revisar manualmente no Supabase DEV.');
+            go('vendas');
+            return;
+          }
+          if (estadoRes.data.status === 'desfeito') {
+            alert('O lote #' + loteId + ' foi desfeito com sucesso — a confirmação se perdeu por uma falha de comunicação, mas o resultado foi recuperado do banco.');
+          } else {
+            alert('Não foi possível desfazer o lote: ' + rpcRes.error.message + '. O lote #' + loteId + ' continua ativo — nada foi alterado.');
+          }
+          go('vendas');
+          return;
+        }
+
+        var data = rpcRes.data;
+        if (!data || data.ok !== true) {
+          alert('Não foi possível desfazer o lote: ' + (data ? data.erro : 'resposta vazia da função') + '. Nada foi alterado.');
+          go('vendas');
+          return;
+        }
+
+        alert('Lote #' + loteId + ' desfeito. ' + data.vendas_ocultadas + ' venda(s) deixaram de aparecer no sistema.');
+        go('vendas');
       };
     }
     $('csv-reprocess-file').addEventListener('change', function(){
