@@ -2489,6 +2489,22 @@ table.tbl { width: 100%; border-collapse: collapse; }
     if (r.error) return { ok: false, erro: r.error.message };
     return { ok: true, data: r.data };
   }
+  async function buscarAprovadasNaoLancadas(rpcIni, rpcFim, produtos){
+    var todas = [];
+    var pagina = 1, totalPaginas = 1;
+    do {
+      var resp = await sb.rpc('rg_vendas_listar', {
+        p_ini: rpcIni, p_fim: rpcFim, p_produtos: produtos,
+        p_filtro: 'Aprovado', p_busca: null, p_pagina: pagina, p_por_pagina: 100
+      });
+      if (resp.error) return { ok: false, erro: resp.error.message };
+      var dados = resp.data.dados || [];
+      dados.forEach(function(v){ if (!v.fin_lancado) todas.push(v); });
+      totalPaginas = resp.data.total_paginas || 1;
+      pagina++;
+    } while (pagina <= totalPaginas);
+    return { ok: true, vendas: todas };
+  }
   function mostrarResumoImportacao(r){
     var LIMITE = 20;
     var visiveis = r.rejeicoes.slice(0, LIMITE);
@@ -2590,6 +2606,8 @@ table.tbl { width: 100%; border-collapse: collapse; }
   var vendasFiltro = 'Aprovado';
   var vendasProdutos = null;
   var vendasBusca = '';
+  var vendasPagina = 1;
+  var vendasBuscaTimer = null;
   var vendasPer = { p: 'tudo', ini: '', fim: '' };
   var VENDAS_PRESETS = [['7d','7 dias'],['14d','14 dias'],['30d','30 dias'],['60d','60 dias'],['90d','90 dias'],['mes','Mês atual'],['mesant','Mês anterior'],['tudo','Todo o período']];
   var vendasForaHandler = null;
@@ -2599,10 +2617,10 @@ table.tbl { width: 100%; border-collapse: collapse; }
     lotes.forEach(function(l){ LOTES_POR_ID[l.id] = l; });
     var lotesElegiveisRes = await buscarLotesElegiveis();
     var lotesParaDesfazerRes = await buscarLotesElegiveisParaDesfazer();
-    var vendasTodas = await DB.list('rg_vendas');
-    var vendas = vendasTodas.filter(vendaVisivel);
-    var produtos = [];
-    vendas.forEach(function(v){ if (v.produto && produtos.indexOf(v.produto) < 0) produtos.push(v.produto); });
+
+    var produtosRes = await sb.rpc('rg_vendas_produtos_distintos');
+    var produtos = (!produtosRes.error && produtosRes.data) ? produtosRes.data : [];
+
     function produtoOk(p){ return vendasProdutos === null || vendasProdutos.indexOf(p) > -1; }
     function labelProdutos(){
       if (vendasProdutos === null) return 'Todos os produtos';
@@ -2612,15 +2630,24 @@ table.tbl { width: 100%; border-collapse: collapse; }
     }
     var r = perRange(vendasPer);
     var perLabel = vendasPer.p === 'tudo' ? 'Todo o período' : (fmtD(r.ini) + ' a ' + fmtD(r.fim));
-    var vendasPeriodo = vendas.filter(function(v){ return inRange(v.data, r); });
-    var vendasPeriodoProduto = vendasPeriodo.filter(function(v){ return produtoOk(v.produto); });
-    var aprovadas = vendasPeriodoProduto.filter(vendaAtiva);
-    var pendLanc = aprovadas.filter(function(v){ return !v.fin_lancado; });
-    var pendenciasCount = vendasPeriodoProduto.filter(function(v){ return v.pendencia_financeira; }).length;
-    var emails = {};
-    aprovadas.forEach(function(v){ if (v.email) emails[v.email.toLowerCase()] = 1; });
-    var alunosUnicos = Object.keys(emails).length;
-    var ticketMedio = alunosUnicos ? soma(aprovadas, 'liquido') / alunosUnicos : 0;
+    var rpcIni = vendasPer.p === 'tudo' ? null : r.ini;
+    var rpcFim = vendasPer.p === 'tudo' ? null : r.fim;
+
+    var kpisRes = await sb.rpc('rg_vendas_kpis', { p_ini: rpcIni, p_fim: rpcFim, p_produtos: vendasProdutos });
+    var pendenciasCount = 0;
+    var kpiHtml;
+    if (kpisRes.error) {
+      kpiHtml = '<div class="empty" style="color:var(--red)">Não foi possível carregar os indicadores: ' + esc(kpisRes.error.message) + '</div>';
+    } else {
+      var k = kpisRes.data;
+      pendenciasCount = k.pendencias_financeiras || 0;
+      kpiHtml = '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(185px,1fr))">' +
+        '<div class="kpi k-green"><div class="k-label">Faturamento líquido</div><div class="k-value">' + brlS(k.faturamento_liquido) + '</div><div class="k-foot">vendas aprovadas importadas</div></div>' +
+        '<div class="kpi k-blue"><div class="k-label">Vendas aprovadas</div><div class="k-value">' + k.vendas_aprovadas + '</div><div class="k-foot">de ' + k.total_registros + ' registros no período</div></div>' +
+        '<div class="kpi"><div class="k-label">Alunos únicos</div><div class="k-value">' + k.alunos_unicos + '</div><div class="k-foot">por email, sua base de dados</div></div>' +
+        '<div class="kpi k-purple"><div class="k-label">Ticket médio por aluno</div><div class="k-value">' + brlS(k.ticket_medio) + '</div><div class="k-foot">líquido por aluno único</div></div>' +
+      '</div>';
+    }
     var reprocessarHtml;
     if (!lotesElegiveisRes.ok) {
       reprocessarHtml = '<span style="font-size:11px;color:var(--red)">Não foi possível carregar lotes elegíveis para reprocessamento: ' + esc(lotesElegiveisRes.erro) + '</span>';
@@ -2645,14 +2672,9 @@ table.tbl { width: 100%; border-collapse: collapse; }
     h += '<div class="ph-actions">' + perBarHTML(vendasPer, r, VENDAS_PRESETS, { customButtons: true, limparPara: 'tudo' }) + '<input type="file" id="csv-file" accept=".csv" style="display:none"><input type="file" id="csv-reprocess-file" accept=".csv" style="display:none">';
     h += reprocessarHtml;
     h += desfazerHtml;
-    h += (pendLanc.length ? '<button class="btn btn-o" id="btn-lancar">Lançar ' + pendLanc.length + ' no financeiro</button>' : '');
+    h += '<button class="btn btn-o" id="btn-lancar">Lançar aprovadas pendentes no financeiro</button>';
     h += '<button class="btn btn-p" id="btn-import">&#8682; Importar CSV da Hotmart</button></div></div>';
-    h += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(185px,1fr))">';
-    h += '<div class="kpi k-green"><div class="k-label">Faturamento líquido</div><div class="k-value">' + brlS(soma(aprovadas, 'liquido')) + '</div><div class="k-foot">vendas aprovadas importadas</div></div>';
-    h += '<div class="kpi k-blue"><div class="k-label">Vendas aprovadas</div><div class="k-value">' + aprovadas.length + '</div><div class="k-foot">de ' + vendasPeriodoProduto.length + ' registros no período</div></div>';
-    h += '<div class="kpi"><div class="k-label">Alunos únicos</div><div class="k-value">' + alunosUnicos + '</div><div class="k-foot">por email, sua base de dados</div></div>';
-    h += '<div class="kpi k-purple"><div class="k-label">Ticket médio por aluno</div><div class="k-value">' + brlS(ticketMedio) + '</div><div class="k-foot">líquido por aluno único</div></div>';
-    h += '</div>';
+    h += kpiHtml;
     h += '<div class="card-p" style="margin-top:13px"><div class="p-head"><div class="p-title">Vendas</div><div class="ph-actions" style="margin-left:auto">';
     h += '<input type="text" id="vd-busca" class="mini-input" placeholder="Buscar por aluno ou transação..." value="' + esc(vendasBusca) + '" style="max-width:220px">';
     h += '<details class="prod-multi" id="prod-multi"><summary class="mini-select">' + esc(labelProdutos()) + '</summary><div class="prod-multi-panel">' +
@@ -2662,27 +2684,42 @@ table.tbl { width: 100%; border-collapse: collapse; }
         return '<label class="prod-multi-item" data-item><input type="checkbox" data-prod="' + esc(p) + '"' + (produtoOk(p) ? ' checked' : '') + '> ' + esc(p) + '</label>';
       }).join('') + '</div></div></details>';
     h += '<div class="seg"><button data-vf="Aprovado" class="' + (vendasFiltro === 'Aprovado' ? 'active' : '') + '">Aprovadas</button><button data-vf="Pendencia" class="' + (vendasFiltro === 'Pendencia' ? 'active' : '') + '">' + (pendenciasCount > 0 ? '&#9888; Pendências ' + pendenciasCount : 'Pendências') + '</button><button data-vf="" class="' + (vendasFiltro === '' ? 'active' : '') + '">Todas</button></div>';
-    h += '</div></div><div id="vd-tbl" style="overflow-x:auto;max-height:480px;overflow-y:auto"></div></div>';
+    h += '</div></div><div id="vd-tbl" style="overflow-x:auto;max-height:480px;overflow-y:auto"></div><div id="vd-pag" style="display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:10px 0;font-size:12px"></div></div>';
     $('view').innerHTML = h;
 
-    function renderTabela(){
-      var vis = vendasPeriodoProduto.filter(function(v){
-        if (vendasFiltro === 'Aprovado') return vendaAtiva(v);
-        if (vendasFiltro === 'Pendencia') return v.pendencia_financeira === true;
-        return true;
-      }).filter(function(v){
-        if (!vendasBusca) return true;
-        return String(v.nome || '').toLowerCase().indexOf(vendasBusca) > -1 || String(v.transacao || '').toLowerCase().indexOf(vendasBusca) > -1;
-      }).sort(function(a,b){ return String(b.data || '').localeCompare(String(a.data || '')); });
-      $('vd-tbl').innerHTML = vis.length ? '<table class="tbl"><tr><th>Data</th><th>Aluno</th><th>Transação</th><th>Contato</th><th>Produto</th><th style="text-align:right">Líquido</th><th>Status</th></tr>' + vis.slice(0, 400).map(function(v){
-        return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.transacao || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (vendaAtiva(v) ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + (v.pendencia_financeira ? ' <span class="chip c-red" data-pendencia="' + v.id + '" style="cursor:pointer" title="Pendência financeira — clique para ver o que mudou">&#9888; PENDÊNCIA</span>' : '') + '</td></tr>';
-      }).join('') + '</table>' : '<div class="empty">Nada importado ainda. Na Hotmart: Vendas &rarr; Exportar &rarr; CSV, e traz o arquivo aqui.</div>';
+    async function atualizarTabelaVendas(){
+      $('vd-tbl').innerHTML = '<div class="empty">Carregando...</div>';
+      $('vd-pag').innerHTML = '';
+      var resp = await sb.rpc('rg_vendas_listar', {
+        p_ini: rpcIni, p_fim: rpcFim, p_produtos: vendasProdutos,
+        p_filtro: vendasFiltro || null, p_busca: vendasBusca || null,
+        p_pagina: vendasPagina, p_por_pagina: 50
+      });
+      if (resp.error) {
+        $('vd-tbl').innerHTML = '<div class="empty" style="color:var(--red)">Não foi possível carregar as vendas: ' + esc(resp.error.message) + '</div>';
+        $('vd-pag').innerHTML = '';
+        return;
+      }
+      var d = resp.data;
+      vendasPagina = d.pagina;
+      var vis = d.dados || [];
+      $('vd-tbl').innerHTML = vis.length ? '<table class="tbl"><tr><th>Data</th><th>Aluno</th><th>Transação</th><th>Contato</th><th>Produto</th><th style="text-align:right">Líquido</th><th>Status</th></tr>' + vis.map(function(v){
+        var ativa = v.status === 'Aprovado' || v.status === 'Completo';
+        return '<tr><td style="width:76px">' + fmtDcurta(v.data) + '</td><td style="font-weight:700">' + esc(v.nome || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.transacao || '') + '</td><td style="font-size:11px;color:var(--ink-muted)">' + esc(v.email || '') + (v.telefone ? '<br>' + esc(v.telefone) : '') + '</td><td style="font-size:11px">' + esc(v.produto || '') + '</td><td style="text-align:right;font-weight:800;color:var(--green)">' + brl(v.liquido) + '</td><td><span class="chip ' + (ativa ? 'c-green' : v.status === 'Reembolsado' || v.status === 'Cancelado' ? 'c-red' : 'c-amber') + '">' + esc(v.status || '') + '</span>' + (v.fin_lancado ? ' <span class="chip c-gray" title="Já está no financeiro">fin &#10003;</span>' : '') + (v.pendencia_financeira ? ' <span class="chip c-red" data-pendencia="' + v.id + '" style="cursor:pointer" title="Pendência financeira — clique para ver o que mudou">&#9888; PENDÊNCIA</span>' : '') + '</td></tr>';
+      }).join('') + '</table>' : '<div class="empty">Nada encontrado para os filtros atuais.</div>';
 
       $('view').querySelectorAll('[data-pendencia]').forEach(function(el){
         el.onclick = function(){ mostrarPendenciaFinanceira(parseInt(el.getAttribute('data-pendencia'), 10)); };
       });
+
+      $('vd-pag').innerHTML = '<button class="btn btn-o btn-sm" id="vd-pag-ant"' + (d.pagina <= 1 ? ' disabled' : '') + '>Anterior</button>' +
+        '<span>Página ' + d.pagina + ' de ' + d.total_paginas + ' &middot; ' + d.total + ' vendas</span>' +
+        '<button class="btn btn-o btn-sm" id="vd-pag-prox"' + (d.pagina >= d.total_paginas ? ' disabled' : '') + '>Próxima</button>';
+      var btnAnt = $('vd-pag-ant'), btnProx = $('vd-pag-prox');
+      if (btnAnt) btnAnt.onclick = function(){ vendasPagina = Math.max(1, vendasPagina - 1); atualizarTabelaVendas(); };
+      if (btnProx) btnProx.onclick = function(){ vendasPagina = vendasPagina + 1; atualizarTabelaVendas(); };
     }
-    renderTabela();
+    atualizarTabelaVendas();
 
     var pm = $('prod-multi');
     $('view').querySelectorAll('[data-prod]').forEach(function(cb){
@@ -2692,21 +2729,37 @@ table.tbl { width: 100%; border-collapse: collapse; }
         if (cb.checked && i < 0) atual.push(p);
         if (!cb.checked && i > -1) atual.splice(i, 1);
         vendasProdutos = (atual.length === produtos.length) ? null : atual;
+        vendasPagina = 1;
         go('vendas');
       };
     });
-    $('prod-all').onclick = function(){ vendasProdutos = null; go('vendas'); };
-    $('prod-clear').onclick = function(){ vendasProdutos = []; go('vendas'); };
+    $('prod-all').onclick = function(){ vendasProdutos = null; vendasPagina = 1; go('vendas'); };
+    $('prod-clear').onclick = function(){ vendasProdutos = []; vendasPagina = 1; go('vendas'); };
     $('prod-search').oninput = function(){
       var q = this.value.toLowerCase();
       $('view').querySelectorAll('[data-item]').forEach(function(it){ it.style.display = it.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none'; });
     };
-    $('vd-busca').oninput = function(){ vendasBusca = this.value.toLowerCase(); renderTabela(); };
+    $('vd-busca').oninput = function(){
+      var valor = this.value;
+      if (vendasBuscaTimer) clearTimeout(vendasBuscaTimer);
+      vendasBuscaTimer = setTimeout(function(){
+        vendasBusca = valor.trim().toLowerCase();
+        vendasPagina = 1;
+        atualizarTabelaVendas();
+      }, 300);
+    };
     if (vendasForaHandler) document.removeEventListener('click', vendasForaHandler);
     vendasForaHandler = function(ev){ if (pm && pm.open && !pm.contains(ev.target)) pm.open = false; };
     document.addEventListener('click', vendasForaHandler);
-    $('view').querySelectorAll('[data-vf]').forEach(function(b){ b.onclick = function(){ vendasFiltro = b.getAttribute('data-vf'); go('vendas'); }; });
-    bindPerBar(vendasPer, function(){ go('vendas'); }, { customButtons: true, limparPara: 'tudo' });
+    $('view').querySelectorAll('[data-vf]').forEach(function(b){
+      b.onclick = function(){
+        vendasFiltro = b.getAttribute('data-vf');
+        vendasPagina = 1;
+        $('view').querySelectorAll('[data-vf]').forEach(function(bb){ bb.classList.toggle('active', bb === b); });
+        atualizarTabelaVendas();
+      };
+    });
+    bindPerBar(vendasPer, function(){ vendasPagina = 1; go('vendas'); }, { customButtons: true, limparPara: 'tudo' });
     $('btn-import').onclick = function(){ $('csv-file').click(); };
     $('csv-file').addEventListener('change', function(){
       var f = this.files && this.files[0];
@@ -3047,6 +3100,12 @@ table.tbl { width: 100%; border-collapse: collapse; }
     });
     var btnL = $('btn-lancar');
     if (btnL) btnL.onclick = async function(){
+      btnL.disabled = true;
+      var pendRes = await buscarAprovadasNaoLancadas(rpcIni, rpcFim, vendasProdutos);
+      btnL.disabled = false;
+      if (!pendRes.ok) { alert('Não foi possível verificar as vendas pendentes de lançamento: ' + pendRes.erro); return; }
+      var pendLanc = pendRes.vendas;
+      if (!pendLanc.length) { alert('Nenhuma venda aprovada pendente de lançamento no financeiro, no período/produto atual.'); return; }
       if (!confirm('Lançar ' + pendLanc.length + ' vendas aprovadas como receita de Infoproduto no financeiro?')) return;
       for (var i = 0; i < pendLanc.length; i++) {
         var v = pendLanc[i];
